@@ -133,3 +133,4 @@ dist
 # Custom Additions
 baileys_*
 *logs*.txt
+database.json
