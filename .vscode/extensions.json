@@ -1,0 +1,11 @@
+{
+	"recommendations": [
+		"dbaeumer.vscode-eslint",
+		"eamodio.gitlens",
+		"esbenp.prettier-vscode",
+		"aaron-bond.better-comments",
+		"Gruntfuggly.todo-tree",
+		"Orta.vscode-jest",
+		"DavidAnson.vscode-markdownlint"
+	]
+}

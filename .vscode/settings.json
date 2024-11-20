@@ -1,0 +1,25 @@
+{
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit"
+	},
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.detectIndentation": false,
+	"editor.formatOnSave": true,
+	"files.insertFinalNewline": true,
+	"files.trimFinalNewlines": true,
+	"files.trimTrailingWhitespace": true,
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[markdown]": {
+		"editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+	},
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"jest.runMode": {
+		"type": "on-demand"
+	},
+	"deepscan.enable": true,
+	"[properties]": {
+		"editor.defaultFormatter": "foxundermoon.shell-format"
+	}
+}
