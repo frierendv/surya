@@ -2,6 +2,7 @@ import config from "../config.js";
 import { logger } from "../shared/logger.js";
 import wrap from "../shared/wrap.js";
 import db from "./database.js";
+import queue from "./queue.js";
 
 /**
  * @param {import("surya").IClientSocket} client
@@ -22,6 +23,7 @@ export default async function handler(client, api, msg, features) {
 	)
 		.map((n) => n.replace(/[^\d]/g, "") + "@s.whatsapp.net")
 		.includes(sender);
+
 	const isAdmin =
 		isGroup && groupMetadata
 			? groupMetadata.participants
@@ -48,6 +50,7 @@ export default async function handler(client, api, msg, features) {
 		user.premium_expired = 0;
 	}
 
+	let executed_feature;
 	try {
 		for (const feature of Object.values(features)) {
 			const isCommand = [
@@ -98,6 +101,10 @@ export default async function handler(client, api, msg, features) {
 					command
 				)
 			) {
+				if (queue.exist(sender, feature)) {
+					reply("You are still using this command");
+					continue;
+				}
 				if (feature.owner && !isOwner) {
 					reply("Only the owner can use this command.");
 					continue;
@@ -123,6 +130,8 @@ export default async function handler(client, api, msg, features) {
 					}
 				}
 
+				executed_feature = feature;
+				queue.add(sender, executed_feature);
 				await wrap(
 					() => feature.execute(msg, extras),
 					(error) =>
@@ -147,6 +156,7 @@ export default async function handler(client, api, msg, features) {
 	} catch (error) {
 		logger.error(error);
 	}
+	queue.remove(sender, executed_feature);
 }
 
 /**
