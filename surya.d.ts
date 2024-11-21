@@ -55,4 +55,4 @@ export type Feature = Omit<FeatureSchema, "execute"> & {
 		msg: IParsedMessage,
 		extras: IHandlerExtras
 	) => Promise<void | any>;
-};
+} & Record<string, any>;
