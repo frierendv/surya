@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * @type {import("surya").Feature}
  */

@@ -48,6 +48,17 @@ export default {
 				{ quoted: m.message }
 			);
 		}
+		if (type === "image" && download?.music) {
+			await sock.sendMessage(
+				m.from,
+				// @ts-ignore
+				{
+					audio: { url: download.music },
+					mimetype: "audio/mp4",
+				},
+				{ quoted: m.message }
+			);
+		}
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
