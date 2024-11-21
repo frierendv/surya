@@ -13,7 +13,6 @@ export default {
 	private: false,
 
 	execute: async function (m, _extras) {
-		console.log(_extras);
 		m.reply("Test command executed");
 	},
 	failed: "Failed to execute the %cmd command\n%error",
