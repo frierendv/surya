@@ -57,9 +57,14 @@ export default async function handler(client, api, msg, features) {
 			const text = isCommand
 				? params?.slice(1 + params.slice(1).split(" ")[0].length + 1)
 				: params;
+
 			const args = text?.split(" ");
-			const prefix = config.prefix.find((p) => params?.startsWith(p));
-			const command = isCommand ? params?.split(" ")[0].slice(1) : null;
+			const prefix =
+				config.prefix.find((p) => params?.startsWith(p)) ?? "";
+
+			const command = isCommand
+				? params?.split(" ")[0].slice(prefix.length)
+				: null;
 
 			const extras = {
 				text,
@@ -87,7 +92,12 @@ export default async function handler(client, api, msg, features) {
 				);
 			}
 
-			if (isCommand && feature.command.includes(command)) {
+			if (
+				isCommand &&
+				[...feature.command, ...(feature.customPrefix ?? [])].includes(
+					command
+				)
+			) {
 				if (feature.owner && !isOwner) {
 					reply("Only the owner can use this command.");
 					continue;
