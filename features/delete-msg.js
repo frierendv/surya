@@ -17,7 +17,8 @@ export default {
 			return;
 		}
 		// if is group and bot admin anf is admin or owner
-		if (isGroup && isBotAdmin && (isAdmin || isOwner)) {
+		// const shouldDelete = isGroup && isBotAdmin && (isAdmin || isOwner);
+		if (this.shouldDelete(isGroup, isAdmin, isBotAdmin, isOwner)) {
 			await m.quoted.delete();
 			return;
 		}
@@ -26,6 +27,14 @@ export default {
 			await m.quoted.delete();
 			return;
 		}
+	},
+	shouldDelete: function (
+		/** @type {boolean} */ isGroup,
+		/** @type {boolean} */ isAdmin,
+		/** @type {boolean} */ isBotAdmin,
+		/** @type {boolean} */ isOwner
+	) {
+		return isGroup && isBotAdmin && (isAdmin || isOwner);
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,

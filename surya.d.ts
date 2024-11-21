@@ -8,12 +8,15 @@ export type GroupMetadataReturnType = Awaited<
 	ReturnType<Required<Socket>["groupMetadata"]>
 >;
 
+type MappedRequired<T> = {
+	[K in keyof T]: NonNullable<T[K]>;
+};
 export interface IClientSocket extends ClientSocket {
-	sock: Socket;
+	sock: MappedRequired<Socket>;
 	store: Store;
 }
 
-export interface IHandlerExtras {
+export interface IHandlerExtrasBase {
 	text: string;
 	args: string[];
 	prefix: string;
@@ -22,13 +25,21 @@ export interface IHandlerExtras {
 	isAdmin: boolean;
 	isOwner: boolean;
 	isBotAdmin: boolean;
-	groupMetadata: GroupMetadataReturnType;
+	groupMetadata: GroupMetadataReturnType | null;
 	api: Api.Client;
 	sock: Socket;
 	store: Baileys.WASocket["store"];
 	db: import("./database").Database;
 	features: import("./feature-loader").default["features"];
+	feature: Feature;
 }
+export type IHandlerExtras<T = IHandlerExtrasBase> = T extends "isGroup"
+	? {
+			[K in Exclude<keyof T, "isGroup">]: T[K];
+		} & {
+			groupMetadata: GroupMetadataReturnType;
+		}
+	: IHandlerExtrasBase;
 
 type ConstructorToType<T> = T extends typeof Array
 	? any[]
@@ -55,4 +66,29 @@ export type Feature = Omit<FeatureSchema, "execute"> & {
 		msg: IParsedMessage,
 		extras: IHandlerExtras
 	) => Promise<void | any>;
+	/**
+	 * The function that will be executed before the command is called.
+	 */
+	before?: (
+		msg: IParsedMessage,
+		extras: IHandlerExtras
+	) => Promise<void | any>;
+	/**
+	 * The function that will be executed after the command is called.
+	 */
+	after?: (
+		msg: IParsedMessage,
+		extras: IHandlerExtras
+	) => Promise<void | any>;
 } & Record<string, any>;
+
+export interface IConfig {
+	prefix: string | string[];
+	owners: string | string[];
+	bot_name: string;
+	bot_number: string;
+
+	database?: {
+		mongo_url: string;
+	};
+}

@@ -76,7 +76,7 @@ export default class FeatureLoader {
 			const importedModule = (await import(`${filePath}?t=${Date.now()}`))
 				.default;
 			this.features[file] = importedModule;
-			this.features[file].filePath = filePath;
+			this.features[file].filePath = join(this._path, file);
 		} catch (error) {
 			logger.error(`Failed to import ${file}: ${error}`);
 		}

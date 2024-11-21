@@ -1,3 +1,6 @@
+/**
+ * @type {import("surya").IConfig}
+ */
 export default {
 	prefix: ["!", "/", "."],
 	owners: ["628385818401"],

@@ -3,8 +3,8 @@ import Cronjob from "./cronjob.js";
 export default class Support {
 	/**
 	 * @param {string} name
-	 * @param {{}} data
-	 * @param {Record<string, unknown>} schema
+	 * @param {Record<string, any>} data
+	 * @param {Record<string, any>} schema
 	 */
 	constructor(name, data, schema) {
 		this.name = name;
@@ -15,6 +15,7 @@ export default class Support {
 
 	/**
 	 * @param {string | number} key
+	 * @returns {Record<string, any>}
 	 */
 	get(key) {
 		return this[this.name][key] ?? null;
@@ -22,6 +23,7 @@ export default class Support {
 
 	/**
 	 * @param {string} key
+	 * @returns {Record<string, any>}
 	 */
 	set(key) {
 		if (!this[this.name][key]) {
@@ -40,6 +42,7 @@ export default class Support {
 
 	/**
 	 * @param {string | number} key
+	 * @returns {boolean}
 	 */
 	isExist(key) {
 		return !!this[this.name][key];
@@ -47,15 +50,22 @@ export default class Support {
 
 	/**
 	 * @param {string | number} key
+	 * @returns {void}
 	 */
 	delete(key) {
 		delete this[this.name][key];
 	}
 
+	/**
+	 * @returns {void}
+	 */
 	clear() {
 		this[this.name] = {};
 	}
 
+	/**
+	 * @returns {Record<string, any>}
+	 */
 	get all() {
 		return this[this.name];
 	}
