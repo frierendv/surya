@@ -1,6 +1,6 @@
 export default {
 	prefix: ["!", "/", "."],
-	owner: ["628385818401"],
+	owners: ["628385818401"],
 	bot_name: "Frieren",
 	bot_number: "6281278380339",
 

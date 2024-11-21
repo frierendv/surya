@@ -19,7 +19,7 @@ export default async function handler(client, api, msg, features) {
 	wrap(() => sock.readMessages([msg.message.key]), logger.error);
 
 	const isOwner = (
-		Array.isArray(config.owner) ? config.owner : [config.owner]
+		Array.isArray(config.owners) ? config.owners : [config.owners]
 	)
 		.map((n) => n.replace(/[^\d]/g, "") + "@s.whatsapp.net")
 		.includes(sender);
