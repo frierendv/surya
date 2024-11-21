@@ -13,10 +13,13 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (m, { text }) {
-		const str = `async function run() {  ${text} }; run();`;
+	execute: async function (
+		m,
+		// eslint-disable-next-line no-unused-vars
+		{ text, sock, groupMetadata, store, db, api, features }
+	) {
 		try {
-			let result = await eval(str);
+			let result = await eval(text);
 			if (typeof result === "object") {
 				result = JSON.stringify(result, null, 2);
 			}
