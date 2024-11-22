@@ -37,6 +37,7 @@ export default {
 		}
 
 		for (const { url } of result.contents) {
+			// @ts-ignore
 			const { type, data } = await getType(url);
 			if (!type) {
 				continue;
