@@ -1,4 +1,5 @@
 import uploader from "../libs/uploader.js";
+import { logger } from "../shared/logger.js";
 
 /**
  * @type {import("surya").Feature}
@@ -55,10 +56,11 @@ export default {
 	 * @param {string} task_id
 	 */
 	poll: async (api, task_id) => {
+		logger.info(`Polling task id: ${task_id}`);
 		let taskStatus = "";
 
 		let pollCount = 0;
-		const MAX_POLL = 10;
+		const MAX_POLL = 15;
 
 		while (taskStatus !== "completed" && taskStatus !== "error") {
 			if (pollCount >= MAX_POLL) {
@@ -74,6 +76,7 @@ export default {
 			if (error) {
 				return [false, error.message];
 			}
+			logger.info(`Polling result: ${JSON.stringify(data)}`);
 			const { status, message, result } = data;
 			if (!status || !result) {
 				return [false, message];
@@ -85,7 +88,7 @@ export default {
 			}
 
 			pollCount++;
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+			await new Promise((resolve) => setTimeout(resolve, 1000));
 		}
 	},
 	execute: async function (m, { sock, text, api, prefix }) {
@@ -106,6 +109,9 @@ export default {
 			options[key] = value;
 		}
 
+		logger.info(
+			`Creating differentMe with options: ${JSON.stringify(options)}`
+		);
 		const { task_id, error } = await this.create(api, {
 			init_image,
 			...options,
@@ -114,6 +120,10 @@ export default {
 			m.reply(error);
 			return;
 		}
+		logger.info(`Task id: ${task_id}`);
+		m.reply("Processing...");
+
+		logger.info(`Polling task id: ${task_id}`);
 		const [status, images] = await this.poll(api, task_id);
 		if (!status) {
 			m.reply(images);
@@ -122,7 +132,10 @@ export default {
 		for (const url of images) {
 			await sock.sendMessage(
 				m.from,
-				{ image: { url } },
+				{
+					image: { url },
+					caption: `Here your image style *${options.style_id}*`,
+				},
 				{ quoted: m.message }
 			);
 		}
