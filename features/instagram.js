@@ -20,7 +20,8 @@ export default {
 		if (!url) {
 			return m.reply("Please provide a Instagram link");
 		}
-		const { error, data } = await api.get("/instagram/get_content", {
+
+		const { error, data } = await api.get("/instagram/download", {
 			params: {
 				query: {
 					url,
@@ -34,7 +35,8 @@ export default {
 		if (!status || !result?.contents) {
 			return m.reply(message);
 		}
-		for (const url of result.contents) {
+
+		for (const { url } of result.contents) {
 			const { type, data } = await getType(url);
 			if (!type) {
 				continue;
@@ -49,6 +51,36 @@ export default {
 				{ quoted: m.message }
 			);
 		}
+
+		// const { error, data } = await api.get("/instagram/get_content", {
+		// 	params: {
+		// 		query: {
+		// 			url,
+		// 		},
+		// 	},
+		// });
+		// if (error) {
+		// 	return m.reply(error.message || "Failed to fetch the data");
+		// }
+		// const { status, message, result } = data;
+		// if (!status || !result?.contents) {
+		// 	return m.reply(message);
+		// }
+		// for (const url of result.contents) {
+		// 	const { type, data } = await getType(url);
+		// 	if (!type) {
+		// 		continue;
+		// 	}
+		// 	await sock.sendMessage(
+		// 		m.from,
+		// 		// @ts-ignore
+		// 		{
+		// 			// @ts-ignore
+		// 			[type]: data,
+		// 		},
+		// 		{ quoted: m.message }
+		// 	);
+		// }
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
