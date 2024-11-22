@@ -20,7 +20,7 @@ export default {
 			return m.reply("I'm not an admin");
 		}
 
-		const user = m.quoted ? m.quoted.sender : text;
+		const user = m.quoted ? m.quoted.sender : m.mentionedJid?.[0];
 		if (!user) {
 			return m.reply("Please provide a user to kick");
 		}
