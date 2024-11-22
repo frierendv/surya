@@ -12,10 +12,7 @@ export default {
 	limit: false,
 	private: false,
 
-	execute: async function (
-		m,
-		{ text, sock, isOwner, isBotAdmin, groupMetadata }
-	) {
+	execute: async function (m, { text, sock, isBotAdmin, groupMetadata }) {
 		if (!isBotAdmin) {
 			return m.reply("I'm not an admin");
 		}
