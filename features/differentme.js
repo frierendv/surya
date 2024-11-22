@@ -87,7 +87,7 @@ export default {
 
 			pollCount++;
 			// recomended to wait 5 seconds. Becareful with rate limit
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			await new Promise((resolve) => setTimeout(resolve, 5000));
 		}
 	},
 	execute: async function (m, { sock, text, api, prefix }) {
