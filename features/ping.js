@@ -13,7 +13,7 @@ export default {
 	category: "Message",
 
 	// If true, only the owner listed in config.js can call the command
-	owner: true,
+	owner: false,
 	// Only admin in the group can call the command
 	admin: false,
 	// If hidden, the command will not be shown in the menu
