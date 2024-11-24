@@ -1,5 +1,5 @@
 import { readdirSync, watch } from "fs";
-import FeatureLoader from "../../libs/feature-loader";
+import FeatureLoader from "../../libs/feature-loader.js";
 import { logger } from "../../shared/logger.js";
 
 jest.mock("fs", () => ({

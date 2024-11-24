@@ -3,7 +3,7 @@
  */
 export default {
 	command: ["=>"],
-	customPrefix: ["=>"],
+	ignorePrefix: true,
 	description: "Evaluate a JavaScript code",
 	category: "Owner",
 	owner: true,

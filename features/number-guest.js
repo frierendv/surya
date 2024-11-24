@@ -35,7 +35,7 @@ export default {
 		);
 	},
 
-	after: async function (m, { db, text }) {
+	before: async function (m, { db, text }) {
 		const user = db.users.get(m.sender);
 		if (!user?.games?.numberGuest?.active || !m.text) {
 			return;

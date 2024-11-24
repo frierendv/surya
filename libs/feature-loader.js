@@ -1,4 +1,4 @@
-import { readdirSync, watch } from "fs";
+import { existsSync, readdirSync, watch } from "fs";
 import { join } from "path";
 import { logger } from "../shared/logger.js";
 
@@ -51,6 +51,12 @@ export default class FeatureLoader {
 			// @ts-ignore
 			async (event, file) => {
 				if (event === "change") {
+					// if file deleted delete from features
+					if (!existsSync(join(this._path, file))) {
+						logger.info(`Deleting ${file}`);
+						delete this.features[file];
+						return;
+					}
 					await this.import(file);
 				}
 			}
@@ -75,10 +81,39 @@ export default class FeatureLoader {
 		try {
 			const importedModule = (await import(`${filePath}?t=${Date.now()}`))
 				.default;
-			this.features[file] = importedModule;
+
+			const fp = this.s(importedModule);
+			if (!fp) {
+				return;
+			}
+			this.features[file] = fp;
 			this.features[file].filePath = join(this._path, file);
 		} catch (error) {
 			logger.error(`Failed to import ${file}: ${error}`);
 		}
+	}
+
+	/**
+	 * @param {import("surya").Feature} fp
+	 */
+	s(fp) {
+		const keys = Object.keys(fp);
+		if (!keys.includes("command")) {
+			logger.error("Feature is missing a command");
+			return null;
+		}
+		if (!keys.includes("execute")) {
+			logger.error("Feature is missing an execute function");
+			return null;
+		}
+		let command = fp.command;
+		if (typeof command === "string") {
+			fp.command = [command];
+		}
+		if (!Array.isArray(command)) {
+			logger.error("Command must be a string or an array");
+			return null;
+		}
+		return fp;
 	}
 }

@@ -24,32 +24,31 @@ function truncate(text, maxLength = 20, replacer = "...") {
 
 /**
  *
- * @param {import("@frierendv/frieren").Baileys.IParsedMessage} msg
+ * @param {import("surya").IHandlerExtras} ctx
  * @param {import("surya").GroupMetadataReturnType | null} groupMetadata
  */
-export function printer(msg, groupMetadata) {
-	const timestamp = msg?.message?.messageTimestamp
-		? new Date(msg.message.messageTimestamp * 1000).toLocaleTimeString(
-				"id-ID",
-				{
-					timeZone: "Asia/Jakarta",
-				}
-			)
-		: null;
+export function printer(ctx, groupMetadata) {
+	const _ts = Number(ctx.message?.messageTimestamp) || Date.now();
+	const timestamp = new Date(_ts * 1000).toLocaleTimeString("id-ID", {
+		timeZone: "Asia/Jakarta",
+	});
 
 	const head = `${chalk.bgBlue(
-		chalk.whiteBright(chalk.bold(`[${timestamp || msg.type}]`))
+		chalk.whiteBright(chalk.bold(`[${timestamp || ctx.type}]`))
 	)}`;
 	const name = chalk
 		.hex("#FF00FF")
-		.bold(truncate(msg.name?.split("\n")[0], 10, ""));
-	const phone = chalk.hex("#e5dfc3").redBright(msg.phone);
+		.bold(truncate(ctx.name?.split("\n")[0], 10, ""));
+	const phone = chalk.hex("#e5dfc3").redBright(ctx.phone);
 	const where = chalk.bold(
-		msg.isGroup
+		ctx.isGroup
 			? `Group: ${truncate(groupMetadata?.subject ?? chalk.redBright("Unknown"), 6)}`
 			: "Private Chat"
 	);
-	const text = `${msg.text ? `${chalk.redBright(":")} ${chalk.whiteBright(truncate(msg.text, 70))}` : chalk.dim("(No Message Text)")}`;
+	const command = ctx.command
+		? `(${chalk.hex("#FF00FF").bold(ctx.command)}) `
+		: "";
+	const text = `${chalk.redBright(":")} ${command}${ctx.text ? `${chalk.whiteBright(truncate(ctx.text, 70))}` : chalk.dim("(No Message Text)")}`;
 
 	console.log(
 		`${head} ${chalk.dim("|")} ${chalk

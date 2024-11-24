@@ -7,11 +7,9 @@
 		"allowImportingTsExtensions": true,
 		"strictNullChecks": true,
 		"strictFunctionTypes": true,
+		"allowSyntheticDefaultImports": true,
 		"baseUrl": "./",
-		"types": ["node", "jest", "./surya.d.ts"],
-		"paths": {
-			"@/*": ["./*"]
-		}
+		"types": ["node", "jest", "./surya.d.ts"]
 	},
 	"exclude": ["node_modules", "**/node_modules/*"]
 }

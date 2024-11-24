@@ -5,7 +5,7 @@ import { exec } from "child_process";
  */
 export default {
 	command: ["$"],
-	customPrefix: ["$"],
+	ignorePrefix: true,
 	description: "Call shell commands",
 	category: "Owner",
 	owner: true,

@@ -1,10 +1,11 @@
-import { Api, Baileys } from "@frierendv/frieren";
+import { Api } from "@frierendv/frieren";
 import { join } from "desm";
 import { config as dotEnvConfig } from "dotenv";
-import Pino from "pino";
+import client from "./libs/client.js";
 import db from "./libs/database.js";
+import featureHandler from "./libs/feature-handler.js";
 import FeatureLoader from "./libs/feature-loader.js";
-import handler from "./libs/handler.js";
+import { middleware } from "./libs/middleware.js";
 import { logger } from "./shared/logger.js";
 
 dotEnvConfig();
@@ -19,23 +20,25 @@ const api = new Api.Client({
 	baseUrl: "https://api.itsrose.rest",
 });
 
-const client = new Baileys.WASocket({
-	logger: Pino({ level: "silent" }),
-});
+client.use(middleware);
 
-// @ts-expect-error
-client.store.bind(client);
-
-client.on("message", (msg) =>
-	// @ts-expect-error
-	handler(client, msg, api, featureLoader.features)
+client.on("message", (ctx) =>
+	featureHandler(
+		// @ts-expect-error
+		ctx,
+		api,
+		featureLoader.features
+	)
 );
+
 client.on("connection.update", (update) => {
 	const { connection, receivedPendingNotifications } = update;
 	if (connection === "open") {
 		logger.success("Connection opened");
 	}
 	if (receivedPendingNotifications) {
-		logger.success("Ready to receive pending notifications");
+		logger.success("Receive pending notifications");
 	}
 });
+
+client.launch();

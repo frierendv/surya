@@ -1,5 +1,6 @@
+// @ts-check
 import { Api, Baileys } from "@frierendv/frieren";
-import { IParsedMessage } from "@frierendv/frieren/dist/baileys";
+import { IContextMessage } from "@frierendv/frieren/dist/baileys";
 
 export type ClientSocket = NonNullable<Required<Baileys.WASocket>>;
 export type Socket = NonNullable<ClientSocket["sock"]>;
@@ -16,11 +17,7 @@ export interface IClientSocket extends ClientSocket {
 	store: Store;
 }
 
-export interface IHandlerExtrasBase {
-	text: string;
-	args: string[];
-	prefix: string;
-	command: string;
+export interface IHandlerExtrasBase extends Required<IContextMessage> {
 	isGroup: boolean;
 	isAdmin: boolean;
 	isOwner: boolean;
@@ -58,26 +55,26 @@ export type Feature = Omit<FeatureSchema, "execute"> & {
 	/**
 	 * Custom prefixes for the command.
 	 */
-	customPrefix?: string[];
+	ignorePrefix?: boolean;
 	/**
 	 * The function that will be executed when the command is called.
 	 */
 	execute: (
-		msg: IParsedMessage,
+		ctx: IContextMessage,
 		extras: IHandlerExtras
 	) => Promise<void | any>;
 	/**
 	 * The function that will be executed before the command is called.
 	 */
 	before?: (
-		msg: IParsedMessage,
+		ctx: IContextMessage,
 		extras: IHandlerExtras
 	) => Promise<void | any>;
 	/**
 	 * The function that will be executed after the command is called.
 	 */
 	after?: (
-		msg: IParsedMessage,
+		ctx: IContextMessage,
 		extras: IHandlerExtras
 	) => Promise<void | any>;
 } & Record<string, any>;

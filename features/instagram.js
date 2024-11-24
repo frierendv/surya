@@ -52,36 +52,6 @@ export default {
 				{ quoted: m.message }
 			);
 		}
-
-		// const { error, data } = await api.get("/instagram/get_content", {
-		// 	params: {
-		// 		query: {
-		// 			url,
-		// 		},
-		// 	},
-		// });
-		// if (error) {
-		// 	return m.reply(error.message || "Failed to fetch the data");
-		// }
-		// const { status, message, result } = data;
-		// if (!status || !result?.contents) {
-		// 	return m.reply(message);
-		// }
-		// for (const url of result.contents) {
-		// 	const { type, data } = await getType(url);
-		// 	if (!type) {
-		// 		continue;
-		// 	}
-		// 	await sock.sendMessage(
-		// 		m.from,
-		// 		// @ts-ignore
-		// 		{
-		// 			// @ts-ignore
-		// 			[type]: data,
-		// 		},
-		// 		{ quoted: m.message }
-		// 	);
-		// }
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
