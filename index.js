@@ -27,7 +27,10 @@ client.on("message", (ctx) =>
 		// @ts-expect-error
 		ctx,
 		api,
-		featureLoader.features
+		{
+			features: featureLoader.features,
+			_features: featureLoader._features,
+		}
 	)
 );
 
