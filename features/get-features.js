@@ -4,8 +4,8 @@ import { readFileSync } from "fs";
  * @type {import("surya").Feature}
  */
 export default {
-	command: ["getfeature", "getplug", "gp"],
-	description: "Grab feature.",
+	command: ["getfeature", "getfeat", "gf"],
+	description: "Get feature.",
 	category: "Owner",
 	owner: true,
 	admin: false,
@@ -19,27 +19,16 @@ export default {
 			return m.reply(`*Usage*: ${prefix + command} <feature name>`);
 		}
 
-		let found = false;
+		const feature = features
+			.values()
+			.find((f) => f.command.includes(text.toLowerCase()));
 
-		for (const key in features) {
-			if (key === text || features[key].command.includes(text)) {
-				found = features[key].filePath;
-				break;
-			}
-		}
-
-		if (!found) {
-			const featureList = Object.keys(features)
-				.sort()
-				.map((name, index) => `${index + 1}. ${name}`)
-				.join("\n");
-			return m.reply(
-				`'${text}' not found\n\nFound this:\n${featureList}`
-			);
+		if (!feature) {
+			return m.reply("Feature not found.");
 		}
 
 		// @ts-ignore
-		m.reply(readFileSync(found, "utf-8"));
+		m.reply(readFileSync(feature.filePath, "utf-8"));
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
