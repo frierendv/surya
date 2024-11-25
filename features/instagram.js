@@ -15,10 +15,10 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (m, { sock, api, args }) {
+	execute: async function (ctx, { sock, api, args }) {
 		const url = args[0];
 		if (!url) {
-			return m.reply("Please provide a Instagram link");
+			return ctx.reply("Please provide a Instagram link");
 		}
 
 		const { error, data } = await api.get("/instagram/download", {
@@ -29,11 +29,11 @@ export default {
 			},
 		});
 		if (error) {
-			return m.reply(error.message || "Failed to fetch the data");
+			return ctx.reply(error.message || "Failed to fetch the data");
 		}
 		const { status, message, result } = data;
 		if (!status || !result?.contents) {
-			return m.reply(message);
+			return ctx.reply(message);
 		}
 
 		for (const { url } of result.contents) {
@@ -43,13 +43,13 @@ export default {
 				continue;
 			}
 			await sock.sendMessage(
-				m.from,
+				ctx.from,
 				// @ts-ignore
 				{
 					// @ts-ignore
 					[type]: data,
 				},
-				{ quoted: m.message }
+				{ quoted: ctx.message }
 			);
 		}
 	},

@@ -14,9 +14,9 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (m, { features, text, prefix, command }) {
+	execute: async function (ctx, { features, text, prefix, command }) {
 		if (!text) {
-			return m.reply(`*Usage*: ${prefix + command} <feature name>`);
+			return ctx.reply(`*Usage*: ${prefix + command} <feature name>`);
 		}
 
 		const feature = features
@@ -24,11 +24,11 @@ export default {
 			.find((f) => f.command.includes(text.toLowerCase()));
 
 		if (!feature) {
-			return m.reply("Feature not found.");
+			return ctx.reply("Feature not found.");
 		}
 
 		// @ts-ignore
-		m.reply(readFileSync(feature.filePath, "utf-8"));
+		ctx.reply(readFileSync(feature.filePath, "utf-8"));
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,

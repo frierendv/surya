@@ -12,8 +12,8 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (m, _extras) {
-		m.reply("Test command executed");
+	execute: async function (ctx, _extras) {
+		ctx.reply("Test command executed");
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,

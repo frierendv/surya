@@ -12,14 +12,17 @@ export default {
 	limit: false,
 	private: false,
 
-	execute: async function (m, { sock, isOwner, isBotAdmin, groupMetadata }) {
+	execute: async function (
+		ctx,
+		{ sock, isOwner, isBotAdmin, groupMetadata }
+	) {
 		if (!isBotAdmin) {
-			return m.reply("I'm not an admin");
+			return ctx.reply("I'ctx not an admin");
 		}
 
-		const user = m.quoted ? [m.quoted.sender] : m.mentionedJid;
+		const user = ctx.quoted ? [ctx.quoted.sender] : ctx.mentionedJid;
 		if (!user || user.length === 0) {
-			return m.reply("Please provide a user to kick");
+			return ctx.reply("Please provide a user to kick");
 		}
 
 		const groupAdmins = groupMetadata?.participants
@@ -27,7 +30,7 @@ export default {
 			.map((participant) => participant.id);
 
 		if (user.some((u) => groupAdmins?.includes(u)) && !isOwner) {
-			return m.reply("You can't kick an admin");
+			return ctx.reply("You can't kick an admin");
 		}
 
 		// const kickedUser = user.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
@@ -36,11 +39,11 @@ export default {
 		);
 
 		await sock
-			.groupParticipantsUpdate(m.from, kickedUser, "remove")
+			.groupParticipantsUpdate(ctx.from, kickedUser, "remove")
 			.catch(() => {});
 
 		sock.sendMessage(
-			m.from,
+			ctx.from,
 			{
 				text: `Kicked ${kickedUser
 					.map((u) => `@${u.replace(/[^0-9]/g, "")}`)
@@ -49,7 +52,7 @@ export default {
 					)} from ${groupMetadata?.subject ?? "this group"}`,
 				mentions: kickedUser,
 			},
-			{ quoted: m.message }
+			{ quoted: ctx.message }
 		);
 	},
 

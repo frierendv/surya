@@ -12,19 +12,19 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (m, { isGroup, isAdmin, isBotAdmin, isOwner }) {
-		if (!m.quoted) {
+	execute: async function (ctx, { isGroup, isAdmin, isBotAdmin, isOwner }) {
+		if (!ctx.quoted) {
 			return;
 		}
 		// if is group and bot admin anf is admin or owner
 		// const shouldDelete = isGroup && isBotAdmin && (isAdmin || isOwner);
 		if (this.shouldDelete(isGroup, isAdmin, isBotAdmin, isOwner)) {
-			await m.quoted.delete();
+			await ctx.quoted.delete();
 			return;
 		}
 		// if is bot message or owner
-		if (m.quoted?.message?.key?.fromMe || isOwner) {
-			await m.quoted.delete();
+		if (ctx.quoted?.message?.key?.fromMe || isOwner) {
+			await ctx.quoted.delete();
 			return;
 		}
 	},

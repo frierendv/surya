@@ -15,7 +15,7 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (m, { text }) {
+	execute: async function (ctx, { text }) {
 		try {
 			const result = await new Promise((resolve, reject) => {
 				exec(text, (error, stdout, stderr) => {
@@ -26,9 +26,9 @@ export default {
 					}
 				});
 			});
-			m.reply(`${result}`.trim());
+			ctx.reply(`${result}`.trim());
 		} catch (error) {
-			m.reply(`${error}`.trim());
+			ctx.reply(`${error}`.trim());
 		}
 	},
 	failed: "Failed to execute the %cmd command\n%error",

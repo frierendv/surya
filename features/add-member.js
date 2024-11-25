@@ -12,14 +12,14 @@ export default {
 	limit: false,
 	private: false,
 
-	execute: async function (m, { text, sock, isBotAdmin, groupMetadata }) {
+	execute: async function (ctx, { text, sock, isBotAdmin, groupMetadata }) {
 		if (!isBotAdmin) {
-			return m.reply("I'm not an admin");
+			return ctx.reply("I'ctx not an admin");
 		}
 
-		const user = m.quoted ? m.quoted.sender : text;
+		const user = ctx.quoted ? ctx.quoted.sender : text;
 		if (!user) {
-			return m.reply("Please provide a user to add");
+			return ctx.reply("Please provide a user to add");
 		}
 
 		const addedUser = user.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
@@ -28,20 +28,20 @@ export default {
 			.onWhatsApp(addedUser)
 			.catch(() => [{ exists: false }]);
 		if (!exists) {
-			return m.reply("User not found");
+			return ctx.reply("User not found");
 		}
 
 		await sock
-			.groupParticipantsUpdate(m.from, [addedUser], "add")
+			.groupParticipantsUpdate(ctx.from, [addedUser], "add")
 			.catch(() => {});
 
 		sock.sendMessage(
-			m.from,
+			ctx.from,
 			{
 				text: `Added ${`@${addedUser.replace(/[^0-9]/g, "")}`} to ${groupMetadata?.subject ?? "this group"}`,
 				mentions: [addedUser],
 			},
-			{ quoted: m.message }
+			{ quoted: ctx.message }
 		);
 	},
 

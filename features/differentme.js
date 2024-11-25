@@ -90,10 +90,12 @@ export default {
 			await new Promise((resolve) => setTimeout(resolve, 5000));
 		}
 	},
-	execute: async function (m, { sock, text, api, prefix }) {
-		const media = m.quoted?.media ?? m.media;
+	execute: async function (ctx, { sock, text, api, prefix }) {
+		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/image/i.test(media.mimetype)) {
-			return m.reply(`Reply/send image with *${prefix + this.command}*`);
+			return ctx.reply(
+				`Reply/send image with *${prefix + this.command}*`
+			);
 		}
 		const buffer = await media.download();
 		const init_image = await uploader.providers.tmpfiles.upload(buffer);
@@ -108,29 +110,29 @@ export default {
 			options[key] = value;
 		}
 
-		m.reply("Processing...");
+		ctx.reply("Processing...");
 		const { task_id, error } = await this.create(api, {
 			init_image,
 			...options,
 		});
 		if (error) {
-			m.reply(error);
+			ctx.reply(error);
 			return;
 		}
 
 		const [status, images] = await this.poll(api, task_id);
 		if (!status) {
-			m.reply(images);
+			ctx.reply(images);
 			return;
 		}
 		for (const url of images) {
 			await sock.sendMessage(
-				m.from,
+				ctx.from,
 				{
 					image: { url },
 					caption: `Here your image style *${options.style_id}*`,
 				},
-				{ quoted: m.message }
+				{ quoted: ctx.message }
 			);
 		}
 	},

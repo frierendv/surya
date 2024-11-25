@@ -12,10 +12,10 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (m, { sock, api, args }) {
+	execute: async function (ctx, { sock, api, args }) {
 		const url = args[0];
 		if (!url) {
-			return m.reply("Please provide a Tiktok link");
+			return ctx.reply("Please provide a Tiktok link");
 		}
 		// @ts-ignore
 		const { error, data } = await api.get("/tiktok/get", {
@@ -26,37 +26,37 @@ export default {
 			},
 		});
 		if (error) {
-			return m.reply(error.message || "Failed to fetch the data");
+			return ctx.reply(error.message || "Failed to fetch the data");
 		}
 		// @ts-ignore
 		const { status, message, result } = data;
 		if (!status || !result) {
-			return m.reply(message);
+			return ctx.reply(message);
 		}
 		const { type: _type, download } = result;
+		if (!download) {
+			return ctx.reply("Failed to fetch the data");
+		}
 		const type = _type === "images" ? "image" : "video";
-		for (const url of type === "image"
+		for (const url of type === "image" && download.images
 			? [...download.images]
 			: [download.nowm ?? download.wm]) {
-			await sock.sendMessage(
-				m.from,
+			await sock.sendFile(
+				ctx.from,
 				// @ts-ignore
-				{
-					// @ts-ignore
-					[type]: { url },
-				},
-				{ quoted: m.message }
+				url,
+				{ quoted: ctx }
 			);
 		}
-		if (type === "image" && download?.music) {
+		if (type === "image" && download.music) {
 			await sock.sendMessage(
-				m.from,
+				ctx.from,
 				// @ts-ignore
 				{
 					audio: { url: download.music },
 					mimetype: "audio/mp4",
 				},
-				{ quoted: m.message }
+				{ quoted: ctx.message }
 			);
 		}
 	},

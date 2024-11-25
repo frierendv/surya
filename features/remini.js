@@ -14,10 +14,10 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (m, { sock, api, prefix, command }) {
-		const media = m.quoted?.media ?? m.media;
+	execute: async function (ctx, { sock, api, prefix, command }) {
+		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/image/i.test(media?.mimetype)) {
-			m.reply(`Reply/send image with *${prefix + command}*`);
+			ctx.reply(`Reply/send image with *${prefix + command}*`);
 			return;
 		}
 		const buffer = await media.download();
@@ -36,19 +36,19 @@ export default {
 			},
 		});
 		if (error) {
-			m.reply(error.message);
+			ctx.reply(error.message);
 			return;
 		}
 		const { status, result, message } = data;
 		if (!status || !result?.images) {
-			m.reply(message);
+			ctx.reply(message);
 			return;
 		}
 		for (const url of result.images) {
 			await sock.sendMessage(
-				m.from,
+				ctx.from,
 				{ image: { url } },
-				{ quoted: m.message }
+				{ quoted: ctx.message }
 			);
 		}
 	},

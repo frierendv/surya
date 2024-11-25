@@ -14,7 +14,7 @@ export default {
 	private: false,
 
 	execute: async function (
-		m,
+		ctx,
 		// eslint-disable-next-line no-unused-vars
 		{ text, sock, groupMetadata, store, db, api, features }
 	) {
@@ -23,9 +23,9 @@ export default {
 			if (typeof result === "object") {
 				result = JSON.stringify(result, null, 2);
 			}
-			m.reply(`${result}`.trim());
+			ctx.reply(`${result}`.trim());
 		} catch (error) {
-			m.reply(`Error: ${error.message}`);
+			ctx.reply(`Error: ${error.message}`);
 		}
 	},
 	failed: "Failed to execute the %cmd command\n%error",

@@ -12,14 +12,14 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (m, { db }) {
-		const user = db.users.get(m.sender);
+	execute: async function (ctx, { db }) {
+		const user = db.users.get(ctx.sender);
 		if (!user.games) {
 			user.games = {};
 		}
 		const numberGuest = user.games.numberGuest || {};
 		if (numberGuest.active) {
-			return m.reply("You have an active game");
+			return ctx.reply("You have an active game");
 		}
 		numberGuest.active = true;
 		numberGuest.number = Math.floor(Math.random() * 10) + 1;
@@ -30,20 +30,20 @@ export default {
 
 		user.games.numberGuest = numberGuest;
 
-		return m.reply(
+		return ctx.reply(
 			"*[Number Guest]* I have chosen a number between 1 and 10, you have 5 chances to guess it. What is the number?"
 		);
 	},
 
-	before: async function (m, { db, text }) {
-		const user = db.users.get(m.sender);
-		if (!user?.games?.numberGuest?.active || !m.text) {
+	before: async function (ctx, { db, text }) {
+		const user = db.users.get(ctx.sender);
+		if (!user?.games?.numberGuest?.active || !ctx.text) {
 			return;
 		}
 		const numberGuest = user.games.numberGuest;
 		if (isNaN(Number(text.replace(/\s/g, "")))) {
 			if (text.toLocaleLowerCase() === "cancel") {
-				await m.reply("Number guest game has been cancelled");
+				await ctx.reply("Number guest game has been cancelled");
 				delete user.games.numberGuest;
 			}
 			return;
@@ -54,7 +54,7 @@ export default {
 			numberGuest.active = false;
 
 			delete user.games.numberGuest;
-			return m.reply(
+			return ctx.reply(
 				`*[Number Guest]* Congratulations! You have guessed the number. You have won *${"$" + numberGuest.prize}*`
 			);
 		}
@@ -63,7 +63,7 @@ export default {
 		if (numberGuest.chance <= 0) {
 			numberGuest.active = false;
 			delete user.games.numberGuest;
-			return m.reply(
+			return ctx.reply(
 				`*[Number Guest]* You have run out of chances, the number was *${numberGuest.number}*`
 			);
 		}
@@ -73,10 +73,12 @@ export default {
 			guess + 1 === numberGuest.number ||
 			guess - 1 === numberGuest.number
 		) {
-			return m.reply("*[Number Guest]* You are very close to the number");
+			return ctx.reply(
+				"*[Number Guest]* You are very close to the number"
+			);
 		}
 
-		m.reply(
+		ctx.reply(
 			`*[Number Guest]* The number is ${guess > numberGuest.number ? "lower" : "higher"} than ${guess}`
 		);
 	},

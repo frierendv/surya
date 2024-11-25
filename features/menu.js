@@ -13,7 +13,7 @@ export default {
 	private: false,
 
 	execute: async function (
-		m,
+		ctx,
 		{ text, prefix, isOwner, isAdmin, features: _features }
 	) {
 		const c = text?.toLowerCase() ?? "";
@@ -67,7 +67,7 @@ export default {
 		}
 
 		// send the message
-		m.reply(message.trim());
+		ctx.reply(message.trim());
 	},
 
 	failed: "Failed to execute the %cmd command\n%error",
