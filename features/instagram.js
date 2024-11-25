@@ -1,6 +1,3 @@
-import { fileTypeFromBuffer } from "file-type";
-import { fetch } from "undici";
-
 /**
  * @type {import("surya").Feature}
  */
