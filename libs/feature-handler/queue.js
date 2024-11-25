@@ -1,4 +1,3 @@
-// File://home/rose/BOT/SuryaRB/Libs/Queue.js
 class User {
 	constructor() {
 		this.list = {};
@@ -33,10 +32,13 @@ class Queue {
 	 * @param {string} feature
 	 */
 	remove(jid, feature) {
-		if (!this.queue.list[jid]) {
-			return;
+		if (this.list[jid]) {
+			const index = this.list[jid].indexOf(feature);
+
+			if (index > -1) {
+				this.list[jid].splice(index, 1);
+			}
 		}
-		this.queue.list[jid].splice(this.queue.list[jid].indexOf(feature), 1);
 	}
 	get list() {
 		return this.queue.list;
