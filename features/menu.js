@@ -18,9 +18,7 @@ export default {
 	) {
 		const c = text?.toLowerCase() ?? "";
 
-		const filterded = Object.fromEntries(
-			Object.entries(_features).filter(([_, feature]) => !feature.hidden)
-		);
+		const filterded = Object.fromEntries(_features.entries());
 		const features = Object.entries(filterded).reduce((acc, [_, value]) => {
 			const category = value.category?.trim() || "Unknown";
 			acc[category] = acc[category] || [];
@@ -33,23 +31,24 @@ export default {
 			if (c && category?.toLowerCase() !== c) {
 				continue;
 			}
-			message += `*${category}*\n`;
+			message += `━━━━ \`\`\`${category}\`\`\` ━━━━\n`;
 
 			for (const feature of features[category]) {
+				let _prefix = feature.ignorePrefix ? "" : prefix;
 				const command = Array.isArray(feature.customPrefix)
 					? feature.customPrefix[0]
 					: feature.customPrefix || Array.isArray(feature.command)
-						? prefix + feature.command[0]
-						: prefix + feature.command;
+						? _prefix + feature.command[0]
+						: _prefix + feature.command;
 
 				// command
 				message +=
 					((feature.owner && !isOwner) || (feature.admin && !isAdmin)
-						? `~${command}~`
-						: `> ${command}`) + "\n";
+						? `- ~${command}~`
+						: `- *${command}*`) + "\n";
 
 				// description
-				message += `${feature.description}\n`;
+				message += `> ${feature.description}\n`;
 
 				// aliases
 				const aliases =
@@ -57,7 +56,7 @@ export default {
 						? feature.command.slice(1).join(", ")
 						: null) || null;
 				if (aliases) {
-					message += `Aliases: ${aliases}\n`;
+					message += `> Aliases: ${aliases}\n`;
 				}
 			}
 		}
