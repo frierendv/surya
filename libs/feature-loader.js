@@ -1,11 +1,19 @@
-import { existsSync, readdirSync, watch } from "fs";
+import { watch } from "fs";
+import { readdir } from "fs/promises";
 import { join } from "path";
 import { logger } from "../shared/logger.js";
+import { Trie } from "./feature-handler/trie.js";
 
 export default class FeatureLoader {
 	_initialized = false;
-
-	features = {};
+	/**
+	 * @type {Trie}
+	 */
+	features;
+	/**
+	 * @type {Map<string, import("surya").Feature>}
+	 */
+	_features = new Map();
 	/**
 	 * @type {string}
 	 */
@@ -16,10 +24,9 @@ export default class FeatureLoader {
 	 * @param {string} opts.dir
 	 */
 	constructor(opts) {
-		const { dir: _folderDir } = opts;
-
-		this._path = _folderDir;
-		this.features = {};
+		const { dir: folderDir } = opts;
+		this._path = folderDir;
+		this.features = new Trie();
 	}
 
 	async initialize() {
@@ -27,18 +34,14 @@ export default class FeatureLoader {
 			return;
 		}
 		this._initialized = true;
-
 		await this.loadFeatures();
 		await this.watchFeatures();
 	}
 
 	async loadFeatures() {
-		// @ts-ignore
-		const files = readdirSync(this._path);
+		const files = await readdir(this._path);
 		const jsFiles = files.filter((file) => file.endsWith(".js"));
-		for (const file of jsFiles) {
-			await this.import(file);
-		}
+		await Promise.all(jsFiles.map((file) => this.import(file)));
 	}
 
 	async watchFeatures() {
@@ -46,17 +49,10 @@ export default class FeatureLoader {
 			this._path,
 			/**
 			 * @param {import("fs").WatchEventType} event
-			 * @param {string} file
+			 * @param {string | null} file
 			 */
-			// @ts-ignore
 			async (event, file) => {
-				if (event === "change") {
-					// if file deleted delete from features
-					if (!existsSync(join(this._path, file))) {
-						logger.info(`Deleting ${file}`);
-						delete this.features[file];
-						return;
-					}
+				if (event === "change" && file) {
 					await this.import(file);
 				}
 			}
@@ -73,31 +69,39 @@ export default class FeatureLoader {
 		);
 		logger.info(`Importing ${file}`);
 
-		if (this.features[file]) {
+		if (this.features.findOne(file)) {
 			logger.info(`Re-importing ${file}`);
-			delete this.features[file];
+			this.features.removeOne(file);
 		}
 
 		try {
-			const importedModule = (await import(`${filePath}?t=${Date.now()}`))
-				.default;
+			const moduleUrl = `${filePath}?t=${Date.now()}`;
+			const importedModule = (await import(moduleUrl)).default;
 
-			const fp = this.s(importedModule);
-			if (!fp) {
+			const feature = this.validateFeature(importedModule);
+			if (!feature) {
 				return;
 			}
-			this.features[file] = fp;
-			this.features[file].filePath = join(this._path, file);
+			feature.filePath = join(this._path, file);
+			const _feature = Object.fromEntries(
+				Object.entries(feature).filter(([key]) => key !== "execute")
+			);
+			this._features.set(
+				file,
+				// @ts-expect-error
+				_feature
+			);
+			this.features.insertMany(feature.command, feature);
 		} catch (error) {
 			logger.error(`Failed to import ${file}: ${error}`);
 		}
 	}
 
 	/**
-	 * @param {import("surya").Feature} fp
+	 * @param {import("surya").Feature} feature
 	 */
-	s(fp) {
-		const keys = Object.keys(fp);
+	validateFeature(feature) {
+		const keys = Object.keys(feature);
 		if (!keys.includes("command")) {
 			logger.error("Feature is missing a command");
 			return null;
@@ -106,14 +110,16 @@ export default class FeatureLoader {
 			logger.error("Feature is missing an execute function");
 			return null;
 		}
-		let command = fp.command;
-		if (typeof command === "string") {
-			fp.command = [command];
-		}
-		if (!Array.isArray(command)) {
+		if (typeof feature.command === "string") {
+			feature.command = [feature.command];
+		} else if (!Array.isArray(feature.command)) {
 			logger.error("Command must be a string or an array");
 			return null;
 		}
-		return fp;
+		if (typeof feature.execute !== "function") {
+			logger.error("Execute must be a function");
+			return null;
+		}
+		return feature;
 	}
 }
