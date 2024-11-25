@@ -25,6 +25,7 @@ export default {
 			image = await media.download();
 		}
 
+		const [updateMsg] = await m.reply("...");
 		let path = "/gpt/chat";
 		let body = {
 			model: "gpt-4o-mini",
@@ -49,15 +50,15 @@ export default {
 			body,
 		});
 		if (error) {
-			m.reply(error.message);
+			await updateMsg(error.message);
 			return;
 		}
 		const { status, result, message } = data;
 		if (!status || !result?.message?.content) {
-			m.reply(message);
+			await updateMsg(message);
 			return;
 		}
-		m.reply(result.message.content);
+		await updateMsg(result.message.content);
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
