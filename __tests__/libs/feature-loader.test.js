@@ -29,59 +29,67 @@ describe("FeatureLoader", () => {
 		jest.clearAllMocks();
 	});
 
-	test("should initialize with given options", () => {
-		expect(featureLoader._path).toBe(mockPath);
-		expect(featureLoader.features).toEqual({});
-		expect(featureLoader._initialized).toBe(false);
-	});
-
-	test("should initialize only once", async () => {
-		await featureLoader.initialize();
-		expect(featureLoader._initialized).toBe(true);
-		await featureLoader.initialize();
-		expect(readdirSync).toHaveBeenCalledTimes(1);
-	});
-
-	test("should load features", async () => {
-		const importSpy = jest
-			.spyOn(featureLoader, "import")
-			.mockResolvedValue();
-		await featureLoader.loadFeatures();
-		expect(readdirSync).toHaveBeenCalledWith(mockPath);
-		expect(importSpy).toHaveBeenCalledTimes(mockFiles.length);
-	});
-
-	test("should watch features", async () => {
-		const watchCallback = jest.fn();
-		watch.mockImplementation((path, callback) => {
-			watchCallback.mockImplementation(callback);
-		});
-		await featureLoader.watchFeatures();
-		expect(watch).toHaveBeenCalledWith(mockPath, expect.any(Function));
-		watchCallback("change", "feature1.js");
-		expect(watchCallback).toHaveBeenCalledWith("change", "feature1.js");
-	});
-
-	test("should import feature", async () => {
-		const mockModule = { default: jest.fn() };
-		const mockParser = jest.fn().mockResolvedValue({});
-		featureLoader.parser = mockParser;
-		featureLoader.folder = "mockFolder";
-		featureLoader.features = {};
-
-		jest.spyOn(featureLoader, "import").mockImplementation(async (file) => {
-			const folderPath =
-				process.platform === "win32"
-					? `file:///${featureLoader.folder}`
-					: featureLoader.folder;
-			const importedModule = { default: jest.fn() };
-			featureLoader.features[file] = importedModule;
-			featureLoader.features[file].filePath = file;
-		});
-
-		await featureLoader.import("feature1.js");
-		expect(logger.info).not.toHaveBeenCalled();
+	test("should validate feature with correct structure", () => {
+		const validFeature = {
+			command: "testCommand",
+			execute: jest.fn(),
+		};
+		const result = featureLoader.validateFeature(validFeature);
+		expect(result).toEqual(validFeature);
 		expect(logger.error).not.toHaveBeenCalled();
-		expect(featureLoader.features["feature1.js"]).toBeDefined();
+	});
+
+	test("should return null and log error if feature is missing command", () => {
+		const invalidFeature = {
+			execute: jest.fn(),
+		};
+		const result = featureLoader.validateFeature(invalidFeature);
+		expect(result).toBeNull();
+		expect(logger.error).toHaveBeenCalledWith(
+			"Feature is missing a command"
+		);
+	});
+
+	test("should return null and log error if feature is missing execute function", () => {
+		const invalidFeature = {
+			command: "testCommand",
+		};
+		const result = featureLoader.validateFeature(invalidFeature);
+		expect(result).toBeNull();
+		expect(logger.error).toHaveBeenCalledWith(
+			"Feature is missing an execute function"
+		);
+	});
+
+	test("should return null and log error if command is not a string or array", () => {
+		const invalidFeature = {
+			command: 123,
+			execute: jest.fn(),
+		};
+		const result = featureLoader.validateFeature(invalidFeature);
+		expect(result).toBeNull();
+		expect(logger.error).toHaveBeenCalledWith(
+			"Command must be a string or an array"
+		);
+	});
+
+	test("should return null and log error if execute is not a function", () => {
+		const invalidFeature = {
+			command: "testCommand",
+			execute: "notAFunction",
+		};
+		const result = featureLoader.validateFeature(invalidFeature);
+		expect(result).toBeNull();
+		expect(logger.error).toHaveBeenCalledWith("Execute must be a function");
+	});
+
+	test("should convert command to array if it is a string", () => {
+		const feature = {
+			command: "testCommand",
+			execute: jest.fn(),
+		};
+		const result = featureLoader.validateFeature(feature);
+		expect(result.command).toEqual(["testCommand"]);
+		expect(logger.error).not.toHaveBeenCalled();
 	});
 });

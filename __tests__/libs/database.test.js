@@ -57,11 +57,7 @@ describe("Database", () => {
 		mongoose.connect.mockResolvedValue({});
 		await db.initializeMongoDB();
 		expect(mongoose.connect).toHaveBeenCalledWith(
-			"mongodb://localhost:27017/test",
-			{
-				useNewUrlParser: true,
-				useUnifiedTopology: true,
-			}
+			"mongodb://localhost:27017/test"
 		);
 		expect(db._model).not.toBeNull();
 	});
