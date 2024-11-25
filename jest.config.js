@@ -5,7 +5,7 @@ const config = {
 		"^(\\.{1,2}/.*)\\.js$": "$1",
 	},
 	transform: {
-		"^.+\\.(t|j)sx?$": ["@swc/jest", { sourceMaps: "inline" }],
+		"^.+\\.(t|j)s?$": ["@swc/jest", { sourceMaps: "inline" }],
 	},
 	collectCoverage: true,
 	coverageDirectory: "coverage",
