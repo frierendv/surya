@@ -9,7 +9,7 @@
 		"strictFunctionTypes": true,
 		"allowSyntheticDefaultImports": true,
 		"baseUrl": "./",
-		"types": ["node", "jest", "./surya.d.ts"]
+		"types": ["node", "jest", "./surya.d.ts", "@types/jest"]
 	},
-	"exclude": ["node_modules", "**/node_modules/*"]
+	"exclude": ["node_modules", "**/node_modules/*", "__tests__/**/*"]
 }
