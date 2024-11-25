@@ -1,12 +1,26 @@
 import chalk from "chalk";
 
+/**
+ * @param {string} level
+ * @param {string} icon
+ * @param {import("chalk").ChalkInstance} color
+ * @param {unknown} message
+ */
+const formatMessage = (level, icon, color, message) => {
+	console.log(
+		`${chalk.bold(color(`${icon} ${level}`))}: ${chalk.white(message)}`
+	);
+};
+
 export const logger = {
-	info: (/** @type {unknown} */ message) => console.log(chalk.blue(message)),
+	info: (/** @type {unknown} */ message) =>
+		formatMessage("INFO", "ℹ️", chalk.blue, message),
 	warn: (/** @type {unknown} */ message) =>
-		console.log(chalk.yellow(message)),
-	error: (/** @type {unknown} */ message) => console.log(chalk.red(message)),
+		formatMessage("WARN", "⚠️", chalk.yellow, message),
+	error: (/** @type {unknown} */ message) =>
+		formatMessage("ERROR", "❌", chalk.red, message),
 	success: (/** @type {unknown} */ message) =>
-		console.log(chalk.green(message)),
+		formatMessage("SUCCESS", "✅", chalk.green, message),
 };
 
 /**
