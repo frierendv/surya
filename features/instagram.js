@@ -38,46 +38,10 @@ export default {
 
 		for (const { url } of result.contents) {
 			// @ts-ignore
-			const { type, data } = await getType(url);
-			if (!type) {
-				continue;
-			}
-			await sock.sendMessage(
-				ctx.from,
-				// @ts-ignore
-				{
-					// @ts-ignore
-					[type]: data,
-				},
-				{ quoted: ctx.message }
-			);
+			await sock.sendFile(ctx.from, url, { quoted: ctx });
 		}
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
 	done: null,
-};
-
-/**
- * Get the media type from the url
- * @param {string} url
- * @returns {Promise<{type: "video" | "audio" | "image"; data: Buffer;}>}
- */
-const getType = async (url) => {
-	const response = await fetch(url);
-	const data = await response.arrayBuffer();
-
-	const fileType = await fileTypeFromBuffer(data);
-	if (!fileType) {
-		throw new Error("Unable to determine file type");
-	}
-	const { mime } = fileType;
-	return {
-		type: mime.includes("video")
-			? "video"
-			: mime.includes("audio")
-				? "audio"
-				: "image",
-		data: Buffer.from(data),
-	};
 };
