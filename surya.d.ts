@@ -26,8 +26,8 @@ export interface IHandlerExtrasBase extends Required<IContextMessage> {
 	api: Api.Client;
 	sock: Socket;
 	store: Baileys.WASocket["store"];
-	db: import("./database").Database;
-	features: import("./feature-loader").default["features"];
+	db: import("./libs/database").Database;
+	features: import("./libs/feature-loader").default["_features"];
 	feature: Feature;
 }
 export type IHandlerExtras<T = IHandlerExtrasBase> = T extends "isGroup"
@@ -77,7 +77,7 @@ export type Feature = Omit<FeatureSchema, "execute"> & {
 		ctx: IContextMessage,
 		extras: IHandlerExtras
 	) => Promise<void | any>;
-} & Record<string, any>;
+} & Partial<Record<string, any | Promise<any>>>;
 
 export interface IConfig {
 	prefix: string | string[];
