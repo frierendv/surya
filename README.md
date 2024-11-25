@@ -1,6 +1,6 @@
 # **SURYA** *EXCLUSIVE*
 
-Previously on [SuryaRB]((https://github.com/xct007/SuryaRB)), we have now moved to a new organization and repository.
+Previously on [SuryaRB](https://github.com/xct007/SuryaRB), we have now moved to a new organization and repository.
 
 We have increased the performance and added new features.
 
