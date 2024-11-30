@@ -15,15 +15,48 @@ export default {
 	private: false,
 
 	execute: async function (ctx, { sock, api, prefix, command }) {
+		const media = await this.getValidImage(ctx, prefix, command);
+		if (!media) {
+			return;
+		}
+
+		const init_image = await this.prepareImage(media);
+		const processedImages = await this.processImage(api, init_image, ctx);
+		if (processedImages) {
+			await this.sendImages(sock, ctx, processedImages);
+		}
+	},
+
+	getValidImage: async function (ctx, prefix, command) {
 		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/image/i.test(media?.mimetype)) {
 			ctx.reply(`Reply/send image with *${prefix + command}*`);
-			return;
+			return null;
 		}
-		const buffer = await media.download();
-		const init_image = await uploader.providers.tmpfiles.upload(buffer);
+		return media;
+	},
 
-		const { data, error } = await api.post("/image/unblur", {
+	prepareImage: async function (media) {
+		const buffer = await media.download();
+		return await uploader.providers.tmpfiles.upload(buffer);
+	},
+
+	processImage: async function (api, init_image, ctx) {
+		const { data, error } = await this.unblurImage(api, init_image);
+		if (error) {
+			ctx.reply(error.message);
+			return null;
+		}
+		const { status, result, message } = data;
+		if (!status || !result?.images) {
+			ctx.reply(message);
+			return null;
+		}
+		return result.images;
+	},
+
+	unblurImage: async function (api, init_image) {
+		return await api.post("/image/unblur", {
 			body: {
 				init_image,
 				pipeline: {
@@ -35,16 +68,10 @@ export default {
 				},
 			},
 		});
-		if (error) {
-			ctx.reply(error.message);
-			return;
-		}
-		const { status, result, message } = data;
-		if (!status || !result?.images) {
-			ctx.reply(message);
-			return;
-		}
-		for (const url of result.images) {
+	},
+
+	sendImages: async function (sock, ctx, images) {
+		for (const url of images) {
 			await sock.sendMessage(
 				ctx.from,
 				{ image: { url } },
