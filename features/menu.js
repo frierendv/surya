@@ -12,61 +12,74 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (
-		ctx,
-		{ text, prefix, isOwner, isAdmin, features: _features }
-	) {
-		const c = text?.toLowerCase() ?? "";
+	generateCommandMessage(command, isOwner, isAdmin, prefix) {
+		let _prefix = command.ignorePrefix ? "" : prefix;
+		const cmdText = Array.isArray(command.customPrefix)
+			? command.customPrefix[0]
+			: command.customPrefix || Array.isArray(command.command)
+				? _prefix + command.command[0]
+				: _prefix + command.command;
 
-		const filterded = Object.fromEntries(_features.entries());
-		const features = Object.entries(filterded).reduce((acc, [_, value]) => {
+		let message = "";
+		// command
+		message +=
+			((command.owner && !isOwner) || (command.admin && !isAdmin)
+				? `- ~${cmdText}~`
+				: `- *${cmdText}*`) + "\n";
+
+		// description
+		message += `> ${command.description}\n`;
+
+		// aliases
+		const aliases =
+			(Array.isArray(command.command)
+				? command.command.slice(1).join(", ")
+				: null) || null;
+		if (aliases) {
+			message += `> Aliases: ${aliases}\n`;
+		}
+		return message;
+	},
+
+	groupFeaturesByCategory(features) {
+		const filtered = Object.fromEntries(features.entries());
+		return Object.entries(filtered).reduce((acc, [_, value]) => {
 			const category = value.category?.trim() || "Unknown";
 			acc[category] = acc[category] || [];
 			acc[category].push(value);
 			return acc;
 		}, {});
+	},
+
+	execute: async function (
+		ctx,
+		{ text, prefix, isOwner, isAdmin, features: _features }
+	) {
+		const categoryFilter = text?.toLowerCase() ?? "";
+		const features = this.groupFeaturesByCategory(_features);
 		const categories = Object.keys(features).sort();
+
 		let message = "";
 		for (const category of categories) {
-			if (c && category?.toLowerCase() !== c) {
+			if (categoryFilter && category?.toLowerCase() !== categoryFilter) {
 				continue;
 			}
 			message += `━━━━ \`\`\`${category}\`\`\` ━━━━\n`;
 
 			for (const feature of features[category]) {
-				let _prefix = feature.ignorePrefix ? "" : prefix;
-				const command = Array.isArray(feature.customPrefix)
-					? feature.customPrefix[0]
-					: feature.customPrefix || Array.isArray(feature.command)
-						? _prefix + feature.command[0]
-						: _prefix + feature.command;
-
-				// command
-				message +=
-					((feature.owner && !isOwner) || (feature.admin && !isAdmin)
-						? `- ~${command}~`
-						: `- *${command}*`) + "\n";
-
-				// description
-				message += `> ${feature.description}\n`;
-
-				// aliases
-				const aliases =
-					(Array.isArray(feature.command)
-						? feature.command.slice(1).join(", ")
-						: null) || null;
-				if (aliases) {
-					message += `> Aliases: ${aliases}\n`;
-				}
+				message += this.generateCommandMessage(
+					feature,
+					isOwner,
+					isAdmin,
+					prefix
+				);
 			}
 		}
 
-		// if no command found for category
-		if (!message && c) {
-			message = `No command found for category \`${c}\``;
+		if (!message && categoryFilter) {
+			message = `No command found for category \`${categoryFilter}\``;
 		}
 
-		// send the message
 		ctx.reply(message.trim());
 	},
 
