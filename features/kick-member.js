@@ -17,7 +17,7 @@ export default {
 		{ sock, isOwner, isBotAdmin, groupMetadata }
 	) {
 		if (!isBotAdmin) {
-			return ctx.reply("I'ctx not an admin");
+			return ctx.reply("I'm not an admin");
 		}
 
 		const user = ctx.quoted ? [ctx.quoted.sender] : ctx.mentionedJid;
@@ -33,7 +33,6 @@ export default {
 			return ctx.reply("You can't kick an admin");
 		}
 
-		// const kickedUser = user.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
 		const kickedUser = user.map(
 			(u) => u.replace(/[^0-9]/g, "") + "@s.whatsapp.net"
 		);
