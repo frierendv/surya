@@ -14,6 +14,23 @@ export async function middleware(ctx, next) {
 	const { groupMetadata, isOwner, isAdmin, isBotAdmin } =
 		await extractPermission(ctx, sock, config);
 
+	handleUser(ctx, sender);
+	handleSettings(ctx, sock, isGroup);
+
+	if (isGroup && groupMetadata) {
+		handleGroup(ctx, groupMetadata, isOwner);
+	}
+
+	wrap(() => sock.readMessages([ctx.message.key]), logger.error);
+	Object.assign(ctx, { groupMetadata, isOwner, isAdmin, isBotAdmin });
+	await next();
+}
+
+/**
+ * @param {import("@frierendv/frieren/dist/baileys/types.js").IContextMessage} ctx
+ * @param {string} sender
+ */
+function handleUser(ctx, sender) {
 	const user = db.users.set(sender);
 	user.name = ctx.name;
 
@@ -21,23 +38,32 @@ export async function middleware(ctx, next) {
 		user.premium = false;
 		user.premium_expired = 0;
 	}
+}
 
+/**
+ * @param {import("@frierendv/frieren/dist/baileys/types.js").IContextMessage} ctx
+ * @param {import("@frierendv/frieren/dist/baileys/types.js").WASocketType} sock
+ * @param {boolean} isGroup
+ */
+function handleSettings(ctx, sock, isGroup) {
 	const settings = db.settings.set(sock.user?.id ?? "");
 	if (shouldSkipMessage(settings, isGroup)) {
 		logger.info("Skipping message");
 		return;
 	}
+}
 
-	if (isGroup && groupMetadata) {
-		const group = db.groups.set(ctx.from);
-		if (group.banned && !isOwner) {
-			return;
-		}
-		group.name = groupMetadata.subject;
+/**
+ * @param {import("@frierendv/frieren/dist/baileys/types.js").IContextMessage} ctx
+ * @param {import("baileys").GroupMetadata} groupMetadata
+ * @param {boolean} isOwner
+ */
+function handleGroup(ctx, groupMetadata, isOwner) {
+	const group = db.groups.set(ctx.from);
+	if (group.banned && !isOwner) {
+		return;
 	}
-	wrap(() => sock.readMessages([ctx.message.key]), logger.error);
-	Object.assign(ctx, { groupMetadata, isOwner, isAdmin, isBotAdmin });
-	await next();
+	group.name = groupMetadata.subject;
 }
 
 /**
