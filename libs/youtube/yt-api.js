@@ -1,34 +1,21 @@
-import axios from "axios";
+// import axios from "axios";
 import { fetch, setGlobalOrigin } from "undici";
 import { CONFIG } from "./config.js";
 
 export class YouTubeAPI {
 	constructor() {
-		// this.fetch = fetch;
+		this.fetch = fetch;
 		this.currentCookies = {};
-		// setGlobalOrigin(CONFIG.BASE_URL);
-		this.fetch = axios.create({
-			baseURL: CONFIG.BASE_URL,
-			headers: {
-				"User-Agent": CONFIG.USER_AGENT,
-			},
-		});
+		setGlobalOrigin(CONFIG.BASE_URL);
 	}
 
 	async makeRequest(path, options) {
 		const { headers } = options;
-		// return this.fetch(path, {
-		// 	...options,
-		// 	headers: {
-		// 		...headers,
-		// 		"User-Agent": CONFIG.USER_AGENT,
-		// 		cookie: this.getCookieString(),
-		// 	},
-		// });
 		return this.fetch(path, {
 			...options,
 			headers: {
 				...headers,
+				"User-Agent": CONFIG.USER_AGENT,
 				cookie: this.getCookieString(),
 			},
 		});
@@ -59,8 +46,8 @@ export class YouTubeAPI {
 			"/youtubei/v1/player?prettyPrint=false",
 			{
 				method: "POST",
-				// body: JSON.stringify(this.createRequestBody(videoId)),
-				data: this.createRequestBody(videoId),
+				body: JSON.stringify(this.createRequestBody(videoId)),
+				// data: this.createRequestBody(videoId),
 				headers: {
 					Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 					Cookie: this.getCookieString(),
@@ -71,12 +58,12 @@ export class YouTubeAPI {
 				},
 			}
 		);
-		return response.data;
+		return response.json();
 	}
 
 	updateCookies(headers) {
-		// const cookies = headers.get("set-cookie");
-		const cookies = headers["set-cookie"].join("; ");
+		const cookies = headers.get("set-cookie");
+		// const cookies = headers["set-cookie"].join("; ");
 		if (!cookies) {
 			return;
 		}
