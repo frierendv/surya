@@ -23,14 +23,10 @@ export default {
 			.map((user) => user.id)
 			.filter((id) => id !== ctx.sock.user?.id);
 
-		await ctx.sock.sendMessage(
-			ctx.from,
-			{
-				text,
-				mentions,
-			},
-			{ quoted: ctx.message }
-		);
+		await ctx.sock.sendMessage(ctx.from, {
+			text,
+			mentions,
+		});
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
