@@ -4,8 +4,8 @@ import youtube from "../libs/youtube.js";
  * @type {import("surya").Feature}
  */
 export default {
-	command: ["ytmp3"],
-	description: "Download youtube video as mp3",
+	command: ["ytmp4"],
+	description: "Download youtube video as mp4",
 	category: "Downloader",
 	owner: false,
 	admin: false,
@@ -20,20 +20,21 @@ export default {
 		}
 		const [ytUrl] = args;
 
-		const { title, audio } = await youtube.get(ytUrl);
-		if (!audio || !audio.mp3) {
+		const { title, video } = await youtube.get(ytUrl);
+		if (!video || !video.auto) {
 			return ctx.reply("Failed to get video");
 		}
 
 		const [, deleteMsg] = await ctx.reply(
-			`Downloading audio *${title}*...`
+			`Downloading video *${title}*...`
 		);
-		const url = await audio.mp3.get();
+		const url = await video.auto.get();
 		await ctx.sock.sendMessage(
 			ctx.from,
 			{
-				audio: { url },
-				fileName: `${title}.mp3`,
+				video: { url },
+				caption: title,
+				fileName: `${title}.mp4`,
 			},
 			{ quoted: ctx.message }
 		);
