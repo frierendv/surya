@@ -18,27 +18,22 @@ export default {
 		if (!args[0]) {
 			return ctx.reply("Please provide a youtube link");
 		}
-		const [url, quality] = args;
+		const [ytUrl] = args;
 
-		const { title, audio } = await youtube.get(url, quality);
-		if (!audio) {
+		const { title, audio } = await youtube.get(ytUrl);
+		if (!audio || !audio.mp3) {
 			return ctx.reply("Failed to get video");
 		}
 
 		const [, deleteMsg] = await ctx.reply(
 			`Downloading audio *${title}* quality *${audio.quality}*...`
 		);
-		const stream = await audio.stream();
-		// Probably dont work :/
+		const url = await audio.mp3.get();
 		await ctx.sock.sendMessage(
 			ctx.from,
 			{
-				// audio: {
-				// 	stream,
-				// },
-				audio: { stream },
+				audio: { url },
 				fileName: `${title}.mp3`,
-				mimetype: audio.mimeType,
 			},
 			{ quoted: ctx.message }
 		);
