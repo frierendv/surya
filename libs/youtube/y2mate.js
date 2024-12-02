@@ -1,10 +1,9 @@
-import { fetch, setGlobalOrigin } from "undici";
+import { fetch } from "undici";
 import { CONFIG } from "./config.js";
 
 export class Y2Mate {
 	constructor() {
 		this.fetch = fetch;
-		setGlobalOrigin(CONFIG.BASE_URL);
 	}
 
 	async convert(videoId, key) {
@@ -51,7 +50,7 @@ export class Y2Mate {
 	async _makeRequest(endpoint, params) {
 		try {
 			const body = new URLSearchParams(params);
-			const response = await this.fetch(endpoint, {
+			const response = await this.fetch(`${CONFIG.BASE_URL}${endpoint}`, {
 				method: "POST",
 				body,
 				headers: CONFIG.DEFAULT_HEADERS,
