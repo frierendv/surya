@@ -22,6 +22,48 @@ npm login --scope=@frierendv --auth-type=legacy --registry=https://npm.pkg.githu
 > Password: TOKEN
 ```
 
+After you have authenticated with the GitHub package registry.
+
+### Clone the repository
+
+```bash
+git clone https://github.com/frierendv/surya
+```
+
+### Configuration
+
+1. **Script configuration**
+
+   - Open `config.js` file
+   - Fill in the required fields
+   - Save the file
+
+2. **API configuration**
+
+   - Rename `.env.example` to `.env`
+   - Fill in the required fields
+   - Save the file
+
+### Install the dependencies
+
+You can use other package managers like `yarn` or `pnpm`
+
+```bash
+npm install
+```
+
+### Run the script
+
+```bash
+node index.js
+```
+
+or
+
+```bash
+npm start
+```
+
 ## Acknowledgements
 
 - [Baileys](https://www.npmjs.com/package/baileys)
