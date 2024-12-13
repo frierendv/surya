@@ -72,6 +72,7 @@ export default class FeatureLoader {
 		if (this.features.findOne(file)) {
 			logger.info(`Re-importing ${file}`);
 			this.features.removeOne(file);
+			this._features.delete(file);
 		}
 
 		try {
