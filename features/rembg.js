@@ -46,7 +46,7 @@ export default {
 				document: {
 					url: result.images[0],
 				},
-				fileName: `rembg-${ctx.from}.png`,
+				fileName: `rembg-${ctx.sender}_${Date.now() / 1000}.png`,
 				mimetype: "image/png",
 			},
 			{ quoted: ctx.message }
