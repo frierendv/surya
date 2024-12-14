@@ -1,4 +1,3 @@
-// TODO: VIDEO MP4
 import { Y2Mate } from "./youtube/y2mate.js";
 
 export class YouTube {
