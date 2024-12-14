@@ -13,54 +13,112 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (m, { api, text, prefix, command }) {
+	async callGpt(api, body) {
+		return api.post("/gpt/chat", {
+			body,
+		});
+	},
+	async callGptVision(api, body, image) {
+		const form = new FormData();
+		const blob = new Blob([image], { type: "image/jpeg" });
+		form.append("image", blob, "image.jpg");
+		form.append("data", JSON.stringify(body));
+		return api.post("/gpt/vision", {
+			body: form,
+		});
+	},
+
+	execute: async function (ctx, { api, text, prefix, command }) {
 		if (!text) {
-			m.reply(`Please provide a text with *${prefix + command}*`);
+			ctx.reply(`Please provide a text with *${prefix + command}*`);
 			return;
 		}
 
 		let image;
-		const media = m.quoted?.media ?? m.media;
+		const media = ctx.quoted?.media ?? ctx.media;
 		if (media && /image/i.test(media?.mimetype)) {
 			image = await media.download();
 		}
 
-		const [updateMsg] = await m.reply("...");
-		let path = "/gpt/chat";
+		const [updateMsg] = await ctx.reply("...");
 		let body = {
 			model: "gpt-4o-mini",
 			messages: [
 				{
 					role: "user",
 					content: text,
-					name: m.name,
+					name: ctx.name,
 				},
 			],
+			internal_functions: ["create_ai_art", "brainly"],
+			functions: [sendFileTools],
 		};
-		if (image) {
-			path = "/gpt/vision";
-			const form = new FormData();
-			const blob = new Blob([image], { type: "image/jpeg" });
-			form.append("image", blob, "image.jpg");
-			form.append("data", JSON.stringify(body));
-			body = form;
-		}
 
-		const { data, error } = await api.post(path, {
-			body,
-		});
+		const { data, error } = await this[
+			!image ? "callGpt" : "callGptVision"
+		](api, body, image);
+
 		if (error) {
 			await updateMsg(error.message);
 			return;
 		}
 		const { status, result, message } = data;
-		if (!status || !result?.message?.content) {
+
+		if (!status || !result?.message) {
 			await updateMsg(message);
 			return;
 		}
+
+		let gptMessage = result.message;
+		const fn_response = gptMessage?.function_call || null;
+
+		// Be sure to modify the code to fit your needs
+		if (fn_response && fn_response.name === "sendFile") {
+			const sent = await sendFile(ctx, JSON.parse(fn_response.arguments));
+			await updateMsg(sent);
+			return;
+		}
+
 		await updateMsg(result.message.content);
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
 	done: null,
+};
+
+/**
+ * Be sure modify the code to fit your needs
+ *
+ * @param {import("surya").IClientSocket} ctx
+ * @param {*} opts
+ * @returns
+ */
+const sendFile = async (ctx, opts) => {
+	const { content, caption } = opts;
+	const media = await ctx.sock.sendFile(ctx.from, content, {
+		caption,
+		quoted: ctx,
+	});
+	return media ? "File sent" : "Failed to send file";
+};
+// Tooling
+const sendFileTools = {
+	name: "sendFile",
+	description:
+		"Return this only if you want to send a file like image, video, etc",
+	parameters: {
+		properties: {
+			content: {
+				description:
+					"content (Buffer, URL, Base64), preferably file url",
+				type: "string",
+			},
+			caption: {
+				description: "Caption for the content",
+				type: "string",
+			},
+		},
+		type: "object",
+		required: ["content"],
+	},
 };
