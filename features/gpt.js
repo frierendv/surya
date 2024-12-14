@@ -69,17 +69,17 @@ export default {
 			return;
 		}
 
-		let gptMessage = result.message;
+		const gptMessage = result.message;
 		const fn_response = gptMessage?.function_call || null;
 
 		// Be sure to modify the code to fit your needs
 		if (fn_response && fn_response.name === "sendFile") {
 			const sent = await sendFile(ctx, JSON.parse(fn_response.arguments));
-			await updateMsg(sent);
+			await updateMsg(sent || "Failed to send file");
 			return;
 		}
 
-		await updateMsg(result.message.content);
+		await updateMsg(gptMessage ? gptMessage.content : "No response");
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
