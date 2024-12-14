@@ -41,7 +41,7 @@ export default {
 		}
 
 		const [updateMsg] = await ctx.reply("...");
-		let body = {
+		const body = {
 			model: "gpt-4o-mini",
 			messages: [
 				{
@@ -59,7 +59,7 @@ export default {
 		](api, body, image);
 
 		if (error) {
-			await updateMsg(error.message);
+			await updateMsg(error.message || "Failed to execute the command");
 			return;
 		}
 		const { status, result, message } = data;
@@ -79,7 +79,11 @@ export default {
 			return;
 		}
 
-		await updateMsg(gptMessage ? gptMessage.content : "No response");
+		await updateMsg(
+			gptMessage?.content
+				? gptMessage.content
+				: "No response, please try again with cleared instruction"
+		);
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
@@ -105,7 +109,7 @@ const sendFile = async (ctx, opts) => {
 const sendFileTools = {
 	name: "sendFile",
 	description:
-		"Return this to send a file like image, video, etc. Any media (url) should be sent as a file not as a message",
+		"Return this to send a file like image, video, etc. Any media (url) from your response should be sent as a file not as a message",
 	parameters: {
 		properties: {
 			content: {
