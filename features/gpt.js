@@ -65,7 +65,7 @@ export default {
 		const { status, result, message } = data;
 
 		if (!status || !result?.message) {
-			await updateMsg(message);
+			await updateMsg(message || "No response, try again");
 			return;
 		}
 
