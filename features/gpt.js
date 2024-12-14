@@ -62,6 +62,7 @@ export default {
 			await updateMsg(error.message || "Failed to execute the command");
 			return;
 		}
+
 		const { status, result, message } = data;
 
 		if (!status || !result?.message) {
@@ -73,7 +74,7 @@ export default {
 		const fn_response = gptMessage?.function_call || null;
 
 		// Be sure to modify the code to fit your needs
-		if (fn_response && fn_response.name === "sendFile") {
+		if (fn_response?.name === "sendFile") {
 			const sent = await sendFile(ctx, JSON.parse(fn_response.arguments));
 			await updateMsg(sent || "Failed to send file");
 			return;
