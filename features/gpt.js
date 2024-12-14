@@ -105,7 +105,7 @@ const sendFile = async (ctx, opts) => {
 const sendFileTools = {
 	name: "sendFile",
 	description:
-		"Return this only if you want to send a file like image, video, etc",
+		"Return this to send a file like image, video, etc. Any media (url) should be sent as a file not as a message",
 	parameters: {
 		properties: {
 			content: {
@@ -114,7 +114,7 @@ const sendFileTools = {
 				type: "string",
 			},
 			caption: {
-				description: "Caption for the content",
+				description: "Caption for the content only for image and video",
 				type: "string",
 			},
 		},
