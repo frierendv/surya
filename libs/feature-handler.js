@@ -17,6 +17,9 @@ export default async function featureHandler(
 ) {
 	let _execute_time = Date.now();
 	const {
+		command,
+		text,
+		args,
 		groupMetadata,
 		isOwner,
 		isAdmin,
@@ -25,30 +28,14 @@ export default async function featureHandler(
 		store,
 		sender,
 		isGroup,
-		args,
 		prefix,
-		command,
 	} = ctx;
 	const user = db.users.get(sender);
 
-	let _command = command;
-	let _text = ctx.text;
-	let _args = ctx.args;
-
-	const feature = features.findOne(_command || args[0]);
-	if (!feature) {
-		return;
-	}
-	if (feature.ignorePrefix) {
-		_command = args[0];
-		_text = ctx.text.replace(_command, "").trim();
-		_args = ctx.text.split(" ");
-	}
-
 	const extras = {
-		command: _command,
-		text: _text,
-		args: _args,
+		command,
+		text,
+		args,
 		prefix,
 		isGroup,
 		isAdmin,
@@ -61,6 +48,20 @@ export default async function featureHandler(
 		db,
 		features: _features,
 	};
+
+	const feature = features.findOne(command || args[0]);
+	if (!feature) {
+		return;
+	}
+
+	if (feature.ignorePrefix) {
+		Object.assign(extras, {
+			command: args[0],
+			text: ctx.text.replace(command, "").trim(),
+			args: ctx.text.split(" "),
+		});
+	}
+
 	if (feature.before && typeof feature.before === "function") {
 		await wrap(
 			// @ts-ignore
@@ -69,10 +70,20 @@ export default async function featureHandler(
 			() => {}
 		);
 	}
+
 	// @ts-ignore
 	await executor(ctx, extras, feature, user);
+
+	if (feature.after && typeof feature.after === "function") {
+		await wrap(
+			// @ts-ignore
+			() => feature.after(ctx, extras),
+			(error) => handleFeatureError(feature, command, error, ctx.reply),
+			() => {}
+		);
+	}
 	logger.info(
-		`[FEATURE HANDLER] ${_command} executed in ${
+		`[FEATURE HANDLER] ${extras.command} executed in ${
 			Date.now() - _execute_time
 		}ms`
 	);
