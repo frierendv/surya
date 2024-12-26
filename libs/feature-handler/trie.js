@@ -37,7 +37,7 @@ export class Trie {
 	}
 	/**
 	 * @param {string} key
-	 * @returns {any}
+	 * @returns {import("surya").Feature | null}
 	 */
 	findOne(key) {
 		let node = this.root;
@@ -52,13 +52,14 @@ export class Trie {
 	/**
 	 *
 	 * @param {string[]} keys
-	 * @returns {any[]}
+	 * @returns {(import("surya").Feature | null)[]}
 	 */
 	findMany(keys) {
 		return keys.map((key) => this.findOne(key));
 	}
 	/**
 	 * @param {string} key
+	 * @returns {void}
 	 */
 	removeOne(key) {
 		this._remove(this.root, key, 0);
