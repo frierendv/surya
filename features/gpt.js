@@ -28,6 +28,14 @@ export default {
 		});
 	},
 
+	sendStreamText: (chunks, updateMsg) => {
+		let streamText = "";
+		chunks.forEach((part) => {
+			streamText += part;
+			updateMsg(streamText);
+		});
+	},
+
 	execute: async function (ctx, { api, text, prefix, command }) {
 		if (!text) {
 			ctx.reply(`Please provide a text with *${prefix + command}*`);
@@ -80,11 +88,15 @@ export default {
 			return;
 		}
 
-		await updateMsg(
+		const chunks = (
 			gptMessage?.content
 				? gptMessage.content
 				: "No response, please try again with cleared instruction"
-		);
+		).split("");
+
+		ctx.isGroup
+			? updateMsg(chunks.join(""))
+			: this.sendStreamText(chunks, updateMsg);
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
