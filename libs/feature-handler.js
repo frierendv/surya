@@ -62,6 +62,7 @@ export default async function featureHandler(
 		});
 	}
 
+	// TODO: Fix the execution of 'before' function.
 	if (feature.before && typeof feature.before === "function") {
 		await wrap(
 			// @ts-ignore
