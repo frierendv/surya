@@ -1,3 +1,4 @@
+// Idk bruvh, its getting hard to read the code. I'm sorry for that.
 import uploader from "../libs/uploader.js";
 
 /**
@@ -14,16 +15,35 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (ctx, { sock, api, prefix, command }) {
+	execute: async function (ctx, { api, prefix, command }) {
 		const media = await this.getValidImage(ctx, prefix, command);
 		if (!media) {
 			return;
 		}
 
+		const [updateMsg, deleteMsg] = await ctx.reply("Processing image...");
+
 		const init_image = await this.prepareImage(media);
-		const processedImages = await this.processImage(api, init_image, ctx);
+
+		const processedImages = await this.processImage(
+			api,
+			init_image,
+			updateMsg
+		);
+
 		if (processedImages) {
-			await this.sendImages(sock, ctx, processedImages);
+			for (const url of processedImages) {
+				await ctx.sock.sendMessage(
+					ctx.from,
+					{
+						image: { url },
+						caption: "Here is the result",
+					},
+					{ quoted: ctx.message }
+				);
+			}
+
+			deleteMsg();
 		}
 	},
 
@@ -41,15 +61,17 @@ export default {
 		return await uploader.providers.tmpfiles.upload(buffer);
 	},
 
-	processImage: async function (api, init_image, ctx) {
+	processImage: async function (api, init_image, updateMsg) {
+		updateMsg("Processing image... (2/2)");
+
 		const { data, error } = await this.unblurImage(api, init_image);
 		if (error) {
-			ctx.reply(error.message);
+			updateMsg(error.message);
 			return null;
 		}
 		const { status, result, message } = data;
 		if (!status || !result?.images) {
-			ctx.reply(message);
+			updateMsg(message);
 			return null;
 		}
 		return result.images;
@@ -70,15 +92,6 @@ export default {
 		});
 	},
 
-	sendImages: async function (sock, ctx, images) {
-		for (const url of images) {
-			await sock.sendMessage(
-				ctx.from,
-				{ image: { url } },
-				{ quoted: ctx.message }
-			);
-		}
-	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
 	done: null,
