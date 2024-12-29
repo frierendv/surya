@@ -86,11 +86,11 @@ export default {
 			}
 
 			pollCount++;
-			// recomended to wait 5 seconds. Becareful with rate limit
-			await new Promise((resolve) => setTimeout(resolve, 5000));
+			// Becareful with rate limit
+			await new Promise((resolve) => setTimeout(resolve, 2000));
 		}
 	},
-	execute: async function (ctx, { sock, text, api, prefix }) {
+	execute: async function (ctx, { sock, args, api, prefix }) {
 		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/image/i.test(media.mimetype)) {
 			return ctx.reply(
@@ -100,37 +100,34 @@ export default {
 		const buffer = await media.download();
 		const init_image = await uploader.providers.tmpfiles.upload(buffer);
 		const options = {
-			style_id: "3d_cartoon",
+			style_id: args[0] || "3d_cartoon",
 		};
 
-		const regex = /--(\w+)\s+([\w-]+)/g;
-		let match;
-		while ((match = regex.exec(text))) {
-			const [, key, value] = match;
-			options[key] = value;
-		}
-
-		ctx.reply("Processing...");
+		const [updateMsg] = await ctx.reply("Processing...");
 		const { task_id, error } = await this.create(api, {
 			init_image,
 			...options,
 		});
 		if (error) {
-			ctx.reply(error);
+			updateMsg(error);
 			return;
 		}
 
+		updateMsg("Getting ready...");
+
 		const [status, images] = await this.poll(api, task_id);
 		if (!status) {
-			ctx.reply(images);
+			updateMsg(images);
 			return;
 		}
+
+		updateMsg(`Here your image style *${options.style_id}*`);
+
 		for (const url of images) {
 			await sock.sendMessage(
 				ctx.from,
 				{
 					image: { url },
-					caption: `Here your image style *${options.style_id}*`,
 				},
 				{ quoted: ctx.message }
 			);
