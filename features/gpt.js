@@ -111,12 +111,15 @@ export default {
  * @returns
  */
 const sendFile = async (ctx, opts) => {
-	const { content, caption } = opts;
-	const media = await ctx.sock.sendFile(ctx.from, content, {
-		caption,
-		quoted: ctx,
-	});
-	return media ? "File sent" : "Failed to send file";
+	const { contents, caption } = opts;
+	for (const content of contents) {
+		await ctx.sock
+			.sendFile(ctx.from, content, {
+				quoted: ctx,
+			})
+			.catch(() => {});
+	}
+	return caption || "File sent";
 };
 // Tooling
 const sendFileTools = {
@@ -125,10 +128,13 @@ const sendFileTools = {
 		"Return this to send a file like image, video, etc. Any media (url) from your response should be sent as a file not as a message",
 	parameters: {
 		properties: {
-			content: {
+			contents: {
 				description:
-					"content (Buffer, URL, Base64), preferably file url",
-				type: "string",
+					"A Array of content (Buffer, URL, Base64), preferably file url",
+				type: "array",
+				items: {
+					type: "string",
+				},
 			},
 			caption: {
 				description: "Caption for the content only for image and video",
@@ -136,6 +142,6 @@ const sendFileTools = {
 			},
 		},
 		type: "object",
-		required: ["content"],
+		required: ["contents"],
 	},
 };
