@@ -131,12 +131,11 @@ const sendFile = async (ctx, opts) => {
 const sendFileTools = {
 	name: "sendFile",
 	description:
-		"Return this to send a file like image, video, etc. Any media (url) from your response should be sent as a file not as a message",
+		"Always call this to send a file like images, videos, etc. Any media (URL) from your response should be sent as a file not as a message",
 	parameters: {
 		properties: {
 			contents: {
-				description:
-					"A Array of content (Buffer, URL, Base64), preferably file url",
+				description: "A Array of content (Buffer, URL, Base64)",
 				type: "array",
 				items: {
 					type: "string",
