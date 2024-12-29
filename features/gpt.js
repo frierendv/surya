@@ -83,8 +83,14 @@ export default {
 
 		// Be sure to modify the code to fit your needs
 		if (fn_response?.name === "sendFile") {
-			const sent = await sendFile(ctx, JSON.parse(fn_response.arguments));
-			await updateMsg(sent || "Failed to send file");
+			const fn_args = JSON.parse(fn_response.arguments);
+
+			await updateMsg(fn_args?.caption || "Sending file...");
+
+			const sent = await sendFile(ctx, fn_args);
+
+			sent !== fn_args?.caption && updateMsg(sent);
+
 			return;
 		}
 
