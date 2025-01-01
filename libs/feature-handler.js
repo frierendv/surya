@@ -57,7 +57,7 @@ export default async function featureHandler(
 	if (feature.ignorePrefix) {
 		Object.assign(extras, {
 			command: args[0],
-			text: ctx.text.replace(command, "").trim(),
+			text: ctx.text.replace(args[0], "").trim(),
 			args: ctx.text.split(" "),
 		});
 	}
