@@ -58,8 +58,6 @@ export default {
 					name: ctx.name,
 				},
 			],
-			internal_functions: ["create_ai_art", "brainly"],
-			functions: [sendFileTools],
 		};
 
 		const { data, error } = await this[
@@ -78,75 +76,33 @@ export default {
 			return;
 		}
 
-		const gptMessage = result.message;
-		const fn_response = gptMessage?.function_call || null;
-
-		// Be sure to modify the code to fit your needs
-		if (fn_response?.name === "sendFile") {
-			const fn_args = JSON.parse(fn_response.arguments);
-
-			await updateMsg(fn_args?.caption || "Sending file...");
-
-			const sent = await sendFile(ctx, fn_args);
-
-			sent !== fn_args?.caption && updateMsg(sent);
-
-			return;
-		}
+		const { content, images } = result.message;
 
 		const chunks = (
-			gptMessage?.content
-				? gptMessage.content
-				: "No response, please try again with cleared instruction"
+			content
+				? content
+				: "No response, please try again with cleared instruction."
 		).split(" ");
 
 		ctx.isGroup
 			? updateMsg(chunks.join(" "))
 			: this.sendStreamText(chunks, updateMsg);
+
+		if (images) {
+			for (const image of images) {
+				await ctx.sock
+					.sendMessage(
+						ctx.from,
+						{
+							image: Buffer.from(image, "base64"),
+						},
+						{ quoted: ctx.message }
+					)
+					.catch(() => {});
+			}
+		}
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
 	done: null,
-};
-
-/**
- * Be sure modify the code to fit your needs
- *
- * @param {import("surya").IClientSocket} ctx
- * @param {*} opts
- * @returns
- */
-const sendFile = async (ctx, opts) => {
-	const { contents, caption } = opts;
-	for (const content of contents) {
-		await ctx.sock
-			.sendFile(ctx.from, content, {
-				quoted: ctx,
-			})
-			.catch(() => {});
-	}
-	return caption || "File sent";
-};
-// Tooling
-const sendFileTools = {
-	name: "sendFile",
-	description:
-		"Always call this to send a file like images, videos, etc. Any media (URL) from your response should be sent as a file not as a message",
-	parameters: {
-		properties: {
-			contents: {
-				description: "A Array of content (Buffer, URL, Base64)",
-				type: "array",
-				items: {
-					type: "string",
-				},
-			},
-			caption: {
-				description: "Caption for the content only for image and video",
-				type: "string",
-			},
-		},
-		type: "object",
-		required: ["contents"],
-	},
 };
