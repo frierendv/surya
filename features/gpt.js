@@ -98,10 +98,10 @@ export default {
 			gptMessage?.content
 				? gptMessage.content
 				: "No response, please try again with cleared instruction"
-		).split("");
+		).split(" ");
 
 		ctx.isGroup
-			? updateMsg(chunks.join(""))
+			? updateMsg(chunks.join(" "))
 			: this.sendStreamText(chunks, updateMsg);
 	},
 	failed: "Failed to execute the %cmd command\n%error",
