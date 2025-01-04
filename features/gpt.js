@@ -31,8 +31,8 @@ export default {
 	sendStreamText: (chunks, updateMsg) => {
 		let streamText = "";
 		chunks.forEach((part) => {
-			streamText += part;
-			updateMsg(streamText);
+			streamText += " " + part;
+			updateMsg(streamText.trim());
 		});
 	},
 
