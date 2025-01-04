@@ -55,7 +55,8 @@ export default {
 				{
 					role: "user",
 					content: text,
-					name: ctx.name,
+					// replace non abc characters
+					name: ctx.name.replace(/[^a-zA-Z]/g, ""),
 				},
 			],
 		};
