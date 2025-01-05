@@ -21,6 +21,7 @@ export default {
 		}
 		const options = {
 			voice_id: "EXAVITQu4vr4xnSDxMaL",
+			model_id: "eleven_multilingual_sts_v2",
 		};
 		const regex = /--(\w+)\s+([\w-]+)/g;
 		let match;
