@@ -3,14 +3,6 @@ import webPMux from "node-webpmux";
 import { convert } from "./converter/convert.js";
 import * as formats from "./converter/formats.js";
 
-class StickerError extends Error {
-	constructor(message, details = {}) {
-		super(message);
-		this.name = "StickerError";
-		this.details = details;
-	}
-}
-
 /**
  * @typedef {Object} StickerOptions
  * @property {string} [packname='ItsRose']
@@ -63,40 +55,36 @@ const generateExifMetadata = (author, packName, emojis) => {
  * @throws {StickerError} If the file type is invalid.
  */
 export async function createSticker(input, options = {}) {
-	try {
-		if (!Buffer.isBuffer(input)) {
-			throw new StickerError("Invalid input: Buffer required");
-		}
-
-		const {
-			packname = "ItsRose",
-			author = "ItsRose",
-			emojis = ["❤️"],
-		} = options;
-		const fileType = await fileTypeFromBuffer(input);
-
-		if (!fileType?.mime) {
-			throw new StickerError("Unsupported file type");
-		}
-
-		const [formatType] = fileType.mime.split("/");
-		const conversionArgs = formats.sticker[formatType];
-
-		if (!conversionArgs) {
-			throw new StickerError(`Unsupported format type: ${formatType}`);
-		}
-
-		const webpBuffer = fileType.mime.includes("webp")
-			? input
-			: await convert(input, "webp", conversionArgs);
-
-		const webpImage = new webPMux.Image();
-		await webpImage.load(webpBuffer);
-		webpImage.exif = generateExifMetadata(author, packname, emojis);
-
-		// @ts-ignore
-		return await webpImage.save(null);
-	} catch (error) {
-		throw new StickerError("Sticker creation failed", { cause: error });
+	if (!Buffer.isBuffer(input)) {
+		throw new Error("Invalid input: Buffer required");
 	}
+
+	const {
+		packname = "ItsRose",
+		author = "ItsRose",
+		emojis = ["❤️"],
+	} = options;
+	const fileType = await fileTypeFromBuffer(input);
+
+	if (!fileType?.mime) {
+		throw new Error("Unsupported file type");
+	}
+
+	const [formatType] = fileType.mime.split("/");
+	const conversionArgs = formats.sticker[formatType];
+
+	if (!conversionArgs) {
+		throw new Error(`Unsupported format type: ${formatType}`);
+	}
+
+	const webpBuffer = fileType.mime.includes("webp")
+		? input
+		: await convert(input, "webp", conversionArgs);
+
+	const webpImage = new webPMux.Image();
+	await webpImage.load(webpBuffer);
+	webpImage.exif = generateExifMetadata(author, packname, emojis);
+
+	// @ts-ignore
+	return await webpImage.save(null);
 }
