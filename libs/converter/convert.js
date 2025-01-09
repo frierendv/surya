@@ -5,14 +5,6 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { Readable } from "stream";
 
-class ConversionError extends Error {
-	constructor(message, details = {}) {
-		super(message);
-		this.name = "ConversionError";
-		this.details = details;
-	}
-}
-
 /**
  * @param {Buffer} buffer
  * @returns {Readable}
@@ -29,19 +21,15 @@ const createBufferStream = (buffer) => {
 /**
  * @param {string} path
  * @returns {Buffer}
- * @throws {ConversionError}
+ * @throws {Error}
  */
 const safeReadAndDelete = (path) => {
-	try {
-		if (!existsSync(path)) {
-			throw new ConversionError("Temporary file not found");
-		}
-		const buffer = readFileSync(path);
-		unlinkSync(path);
-		return buffer;
-	} catch (error) {
-		throw new ConversionError("File operation failed", { cause: error });
+	if (!existsSync(path)) {
+		throw new Error("Temporary file not found");
 	}
+	const buffer = readFileSync(path);
+	unlinkSync(path);
+	return buffer;
 };
 
 /**
@@ -49,11 +37,11 @@ const safeReadAndDelete = (path) => {
  * @param {string} format
  * @param {string[]} args
  * @returns {Promise<Buffer>}
- * @throws {ConversionError}
+ * @throws {Error}
  */
 export const convert = async (input, format, args) => {
 	if (!input || !Buffer.isBuffer(input)) {
-		throw new ConversionError("Invalid input buffer");
+		throw new Error("Invalid input buffer");
 	}
 
 	const tempPath = join(tmpdir(), crypto.randomBytes(16).toString("hex"));
@@ -71,9 +59,7 @@ export const convert = async (input, format, args) => {
 				}
 			})
 			.on("error", (error) =>
-				reject(
-					new ConversionError("Conversion failed", { cause: error })
-				)
+				reject(new Error("Conversion failed", { cause: error }))
 			)
 			.save(tempPath);
 	});
