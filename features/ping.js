@@ -30,13 +30,16 @@ export default {
 		const old = performance.now();
 		const ram = (os.totalmem() / Math.pow(1024, 3)).toFixed(2) + " GB";
 		const free_ram = (os.freemem() / Math.pow(1024, 3)).toFixed(2) + " GB";
+		const used_ram =
+			((os.totalmem() - os.freemem()) / Math.pow(1024, 3)).toFixed(2) +
+			" GB";
 
 		ctx.reply(`\`\`\`Server Information
 
 - ${os.cpus().length} CPU: ${os.cpus()[0].model}
 
 - Uptime: ${Math.floor(os.uptime() / 86400)} days
-- Ram: ${free_ram}/${ram}
+- RAM: ${ram} (${used_ram} used, ${free_ram} free)
 - Speed: ${(performance.now() - old).toFixed(5)} ms\`\`\``);
 	},
 
