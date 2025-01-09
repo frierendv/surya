@@ -17,9 +17,7 @@ export default {
 	execute: async function (ctx, { api, prefix }) {
 		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/image/i.test(media.mimetype)) {
-			return ctx.reply(
-				`Reply/send image with *${prefix + this.command}*`
-			);
+			return ctx.reply(`Reply/send image with *${prefix + ctx.command}*`);
 		}
 		const buffer = await media.download();
 		const init_image = await uploader.providers.tmpfiles.upload(buffer);
@@ -46,7 +44,7 @@ export default {
 				document: {
 					url: result.images[0],
 				},
-				fileName: `rembg-${ctx.sender}_${Date.now() / 1000}.png`,
+				fileName: `rembg_${Date.now() / 1000}.png`,
 				mimetype: "image/png",
 			},
 			{ quoted: ctx.message }
