@@ -17,7 +17,7 @@ export default {
 	execute: async function (ctx, { prefix }) {
 		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/sticker|webp|image|video|webm/i.test(media.mimetype)) {
-			return ctx.reply(`Reply/send with *${prefix + this.command}*`);
+			return ctx.reply(`Reply/send with *${prefix + ctx.command}*`);
 		}
 		const buffer = await media.download();
 
