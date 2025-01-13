@@ -9,7 +9,7 @@ export default [
 			"node_modules",
 			"__tests__/**/*.test.js",
 			// ignore __mocks__ directory
-			"/__mocks__/",
+			"*/__mocks__/",
 		],
 	},
 	{ languageOptions: { globals: globals.node } },
