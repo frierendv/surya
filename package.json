@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"start": "node --loader ts-node/esm --experimental-specifier-resolution=node --experimental-json-modules --experimental-repl-await --experimental-top-level-await --no-warnings --unhandled-rejections=strict index.js",
-		"test": "jest -i --forceExit",
+		"test": "jest -i --forceExit --detectOpenHandles",
 		"lint": "eslint"
 	},
 	"repository": {
