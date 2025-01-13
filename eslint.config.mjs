@@ -5,7 +5,12 @@ import globals from "globals";
 /** @type {import('eslint').Linter.Config[]} */
 export default [
 	{
-		ignores: ["node_modules", "__tests__/**/*.test.js"],
+		ignores: [
+			"node_modules",
+			"__tests__/**/*.test.js",
+			// ignore __mocks__ directory
+			"/__mocks__/",
+		],
 	},
 	{ languageOptions: { globals: globals.node } },
 	pluginJs.configs.recommended,
