@@ -1,7 +1,7 @@
-import { Api } from "@frierendv/frieren";
+import { Api, Baileys } from "@frierendv/frieren";
 import { join } from "desm";
 import { config as dotEnvConfig } from "dotenv";
-import client from "./libs/client.js";
+import config from "./config.js";
 import db from "./libs/database.js";
 import featureHandler from "./libs/feature-handler.js";
 import FeatureLoader from "./libs/feature-loader.js";
@@ -10,6 +10,10 @@ import { logger } from "./shared/logger.js";
 
 dotEnvConfig();
 
+const client = new Baileys.WASocket({
+	prefix: config.prefix,
+});
+
 const featureLoader = new FeatureLoader({
 	dir: join(import.meta.url, "features"),
 });
@@ -17,7 +21,7 @@ db.initialize();
 featureLoader.initialize();
 
 const api = new Api.Client({
-	baseUrl: "https://api.itsrose.rest",
+	baseUrl: process.env.ITSROSE_API_URL,
 });
 
 client.use(middleware);
@@ -28,8 +32,10 @@ client.on("message", (ctx) =>
 		ctx,
 		api,
 		{
-			features: featureLoader.features,
-			_features: featureLoader._features,
+			// This is the Trie
+			featuresTrie: featureLoader.featuresTrie,
+			// This is the Map
+			featuresMap: featureLoader.featuresMap,
 		}
 	)
 );

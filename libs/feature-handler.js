@@ -8,12 +8,12 @@ import { executor } from "./feature-handler/executor.js";
  * @typedef {import("./feature-loader.js").default} FC
  * @param {import("surya").IHandlerExtras} ctx
  * @param {import("@frierendv/frieren").Api.Client} api
- * @param {{features: FC["features"], _features: FC["_features"]}} features
+ * @param {Pick<FC, "featuresTrie" | "featuresMap">} param3
  */
 export default async function featureHandler(
 	ctx,
 	api,
-	{ features, _features }
+	{ featuresTrie, featuresMap }
 ) {
 	let _execute_time = Date.now();
 	const {
@@ -46,10 +46,10 @@ export default async function featureHandler(
 		sock,
 		store,
 		db,
-		features: _features,
+		features: featuresMap,
 	};
 
-	const feature = features.findOne(command || args[0]);
+	const feature = featuresTrie.findOne((command || args[0]).toLowerCase());
 	if (!feature) {
 		return;
 	}

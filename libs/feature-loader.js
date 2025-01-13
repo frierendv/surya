@@ -9,11 +9,11 @@ export default class FeatureLoader {
 	/**
 	 * @type {Trie}
 	 */
-	features;
+	featuresTrie;
 	/**
 	 * @type {Map<string, import("surya").Feature>}
 	 */
-	_features = new Map();
+	featuresMap = new Map();
 	/**
 	 * @type {string}
 	 */
@@ -26,7 +26,7 @@ export default class FeatureLoader {
 	constructor(opts) {
 		const { dir: folderDir } = opts;
 		this._path = folderDir;
-		this.features = new Trie();
+		this.featuresTrie = new Trie();
 	}
 
 	async initialize() {
@@ -69,10 +69,11 @@ export default class FeatureLoader {
 		);
 		logger.info(`Importing ${file}`);
 
-		if (this.features.findOne(file)) {
+		if (this.featuresTrie.findOne(file)) {
 			logger.info(`Re-importing ${file}`);
-			this.features.removeOne(file);
-			this._features.delete(file);
+			this.featuresTrie.removeOne(file);
+
+			this.featuresMap.delete(file);
 		}
 
 		try {
@@ -87,12 +88,11 @@ export default class FeatureLoader {
 			const _feature = Object.fromEntries(
 				Object.entries(feature).filter(([key]) => key !== "execute")
 			);
-			this._features.set(
-				file,
-				// @ts-expect-error
-				_feature
-			);
-			this.features.insertMany(feature.command, feature);
+
+			// @ts-ignore
+			this.featuresMap.set(file, _feature);
+
+			this.featuresTrie.insertMany(feature.command, feature);
 		} catch (error) {
 			logger.error(`Failed to import ${file}: ${error}`);
 		}
