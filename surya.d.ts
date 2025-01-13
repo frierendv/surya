@@ -27,7 +27,7 @@ export interface IHandlerExtrasBase extends Required<IContextMessage> {
 	sock: Socket;
 	store: Baileys.WASocket["store"];
 	db: import("./libs/database").Database;
-	features: import("./libs/feature-loader").default["_features"];
+	features: import("./libs/feature-loader").default["featuresMap"];
 	feature: Feature;
 }
 export type IHandlerExtras<T = IHandlerExtrasBase> = T extends "isGroup"
