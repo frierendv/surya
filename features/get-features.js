@@ -19,9 +19,11 @@ export default {
 			return ctx.reply(`*Usage*: ${prefix + command} <feature name>`);
 		}
 
-		const feature = features
-			.values()
-			.find((f) => f.command.includes(text.toLowerCase()));
+		// fix node 18
+		const feature = Array.from(features.values()).find((f) =>
+			f.command.includes(text.toLowerCase())
+		);
+		console.debug(feature);
 
 		if (!feature) {
 			return ctx.reply("Feature not found.");
