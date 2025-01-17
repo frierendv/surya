@@ -15,7 +15,7 @@ export default class Support {
 
 	/**
 	 * @param {string | number} key
-	 * @returns {Record<string, any>}
+	 * @returns {Record<string, any> | null}
 	 */
 	get(key) {
 		return this[this.name][key] ?? null;
