@@ -27,7 +27,7 @@ export default {
 		await sock.sendMessage(
 			ctx.from,
 			{
-				text: `Banned @${jid.replace(/[^0-9]/g, "")}`,
+				text: `Unbanned @${jid.replace(/[^0-9]/g, "")}`,
 				mentions: [jid],
 			},
 			{ quoted: ctx.message }
