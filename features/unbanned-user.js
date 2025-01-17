@@ -13,21 +13,22 @@ export default {
 	private: false,
 
 	execute: async function (ctx, { sock, db, text }) {
-		const _user =
-			ctx?.quoted?.sender || ctx.mentionedJid[0] || text
-				? text.replace(/[^0-9]/g, "") + "@s.whatsapp.net"
-				: null;
-		if (!_user) {
+		const jid =
+			ctx?.quoted?.sender ||
+			ctx.mentionedJid[0] ||
+			text.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+		const user = db.users.get(jid);
+
+		if (!user) {
 			return ctx.reply("Reply or tag a user");
 		}
-		const user = db.users.set(_user);
-		user.banned = false;
+		user.banned = true;
 
 		await sock.sendMessage(
 			ctx.from,
 			{
-				text: `Unbanned @${_user.replace(/[^0-9]/g, "")}`,
-				mentions: [_user],
+				text: `Banned @${jid.replace(/[^0-9]/g, "")}`,
+				mentions: [jid],
 			},
 			{ quoted: ctx.message }
 		);
