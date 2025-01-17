@@ -14,11 +14,15 @@ export async function middleware(ctx, next) {
 	const { groupMetadata, isOwner, isAdmin, isBotAdmin } =
 		await extractPermission(ctx, sock, config);
 
-	handleUser(ctx, sender);
-	handleSettings(ctx, sock, isGroup);
+	const user = handleUser(ctx, sender);
+	// eslint-disable-next-line no-unused-vars
+	const settings = handleSettings(ctx, sock, isGroup);
 
 	if (isGroup && groupMetadata) {
 		handleGroup(ctx, groupMetadata, isOwner);
+	}
+	if (user.banned && !isOwner) {
+		return;
 	}
 
 	wrap(() => sock.readMessages([ctx.message.key]), logger.error);
@@ -29,6 +33,7 @@ export async function middleware(ctx, next) {
 /**
  * @param {import("@frierendv/frieren/dist/baileys/types.js").IContextMessage} ctx
  * @param {string} sender
+ * @returns {Record<string, any>}
  */
 function handleUser(ctx, sender) {
 	const user = db.users.set(sender);
@@ -38,19 +43,22 @@ function handleUser(ctx, sender) {
 		user.premium = false;
 		user.premium_expired = 0;
 	}
+	return user;
 }
 
 /**
  * @param {import("@frierendv/frieren/dist/baileys/types.js").IContextMessage} ctx
  * @param {import("@frierendv/frieren/dist/baileys/types.js").WASocketType} sock
  * @param {boolean} isGroup
+ * @returns {Record<string, any>}
  */
 function handleSettings(ctx, sock, isGroup) {
 	const settings = db.settings.set(sock.user?.id ?? "");
 	if (shouldSkipMessage(settings, isGroup)) {
 		logger.info("Skipping message");
-		return;
+		return {};
 	}
+	return settings;
 }
 
 /**
