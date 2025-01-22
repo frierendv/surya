@@ -21,7 +21,9 @@ export default {
 			return;
 		}
 
-		const [updateMsg, deleteMsg] = await ctx.reply("Processing image...");
+		const [updateMsg, deleteMsg] = await ctx.reply(
+			"Processing image... (1/2)."
+		);
 
 		const init_image = await this.prepareImage(media);
 
