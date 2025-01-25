@@ -7,6 +7,9 @@ jest.mock("file-type", () => ({
 }));
 fileTypeFromBuffer.mockResolvedValue({ mime: "image/png", ext: "png" });
 
+// increase timeout because uploading to some providers may take a while
+jest.setTimeout(30000);
+
 describe("Uploader", () => {
 	let imageBuffer;
 
@@ -33,5 +36,9 @@ describe("Uploader", () => {
 	test("should upload to pasteboard", async () => {
 		const url = await Uploader.upload(imageBuffer, "pasteboard");
 		expect(url).toBeDefined();
+	});
+	test("should upload to itsrose", async () => {
+		const url = await Uploader.upload(imageBuffer, "itsrose");
+		expect(url).toContain("lovita.io");
 	});
 });
