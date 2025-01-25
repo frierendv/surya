@@ -2,7 +2,7 @@
  * @type {import("surya").Feature}
  */
 export default {
-	command: ["enable"],
+	command: ["enable", "disable"],
 	description: "Enable some feature",
 	category: "Main",
 	owner: false,
@@ -14,10 +14,10 @@ export default {
 
 	features: ["translate"],
 
-	execute: async function (ctx, { db, text }) {
+	execute: async function (ctx, { db, text, command }) {
 		if (!text) {
 			return ctx.reply(
-				`Please specify the feature you want to enable\n\nAvailable features:\n${this.features
+				`Please specify the feature you want to ${command}\n\nAvailable features:\n${this.features
 					.map((f) => `• ${f}`)
 					.join("\n")}`
 			);
@@ -32,9 +32,13 @@ export default {
 		if (!user) {
 			return ctx.reply("Failed to get user data");
 		}
-		user[feature] = true;
+		user[feature] = command === "enable";
 
-		await ctx.reply(`Enabled *${feature}* feature`);
+		await ctx.reply(
+			`${
+				command === "enable" ? "Enabled" : "Disabled"
+			} *${feature}* feature`
+		);
 	},
 
 	failed: "Failed to execute the %cmd command\n%error",
