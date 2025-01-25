@@ -32,6 +32,7 @@ export async function middleware(ctx, next) {
 		isOwner,
 		isAdmin,
 		isBotAdmin,
+		// TODO: Add more
 		...(user.translate ? interceptor.translator(ctx) : {}),
 	});
 	await next();
