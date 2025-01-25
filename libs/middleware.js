@@ -3,6 +3,7 @@ import { logger } from "../shared/logger.js";
 import wrap from "../shared/wrap.js";
 import db from "./database.js";
 import { extractPermission } from "./feature-handler/parse.js";
+import * as interceptor from "./interceptor.js";
 
 /**
  *
@@ -26,7 +27,13 @@ export async function middleware(ctx, next) {
 	}
 
 	wrap(() => sock.readMessages([ctx.message.key]), logger.error);
-	Object.assign(ctx, { groupMetadata, isOwner, isAdmin, isBotAdmin });
+	Object.assign(ctx, {
+		groupMetadata,
+		isOwner,
+		isAdmin,
+		isBotAdmin,
+		...(user.translate ? interceptor.translator(ctx) : {}),
+	});
 	await next();
 }
 
