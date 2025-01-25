@@ -49,14 +49,16 @@ export default {
 		}
 
 		const [updateMsg] = await ctx.reply("...");
+
+		const userName = ctx.name.replace(/[^a-zA-Z]/g, "");
 		const body = {
 			model: "gpt-4o-mini",
 			messages: [
 				{
 					role: "user",
 					content: text,
-					// replace non abc characters
-					name: ctx.name.replace(/[^a-zA-Z]/g, ""),
+					// motherfucker
+					...(userName ? { user: userName } : {}),
 				},
 			],
 		};
