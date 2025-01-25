@@ -63,7 +63,10 @@ class Translator {
 				textType: "plaintext",
 				advancedMode: false,
 			},
-			lang: { lang_user_selected: "auto" },
+			lang: {
+				target_lang: targetLang,
+				lang_user_selected: "auto",
+			},
 			id: -1,
 			jsonrpc: "2.0",
 			method: "LMT_split_text",
