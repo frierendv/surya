@@ -55,12 +55,12 @@ async function translate(text, target_lang) {
 			return result;
 		};
 		// race between two this sh(t)
-		const v1 = translateV1(text, target_lang, controller.signal).then(
-			cleanUp
-		);
-		const v2 = translateV2(text, target_lang, controller.signal).then(
-			cleanUp
-		);
+		const v1 = translateV1(text, target_lang, controller.signal)
+			.catch(() => null)
+			.then(cleanUp);
+		const v2 = translateV2(text, target_lang, controller.signal)
+			.catch(() => null)
+			.then(cleanUp);
 		const result = await Promise.race([v1, v2]);
 		return result ?? text;
 	} catch (error) {
