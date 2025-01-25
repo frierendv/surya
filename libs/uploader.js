@@ -4,7 +4,7 @@ import { request } from "undici";
 
 class Provider {
 	constructor() {
-		if (this.constructor === Provider) {
+		if (new.target === Provider) {
 			throw new Error("Abstract class cannot be instantiated");
 		}
 	}
@@ -57,9 +57,9 @@ class FreeImageProvider extends Provider {
 			auth_token: token,
 			nsfw: "0",
 		};
-		for (const [key, value] of Object.entries(options)) {
-			form.append(key, value);
-		}
+		Object.entries(options).forEach(([key, value]) =>
+			form.append(key, value)
+		);
 		const { body } = await request("https://freeimage.host/json", {
 			method: "POST",
 			body: form,
@@ -80,7 +80,7 @@ class TmpFilesProvider extends Provider {
 		});
 		const data = await body.json();
 		const url = data.data.url.match(/https:\/\/tmpfiles.org\/(.*)/)[1];
-		return "https://tmpfiles.org/dl/" + url;
+		return `https://tmpfiles.org/dl/${url}`;
 	}
 }
 
@@ -98,7 +98,21 @@ class PasteboardProvider extends Provider {
 		if (!data.url) {
 			throw new Error(data);
 		}
-		return "https://gcdnb.pbrd.co/images/" + data.fileName;
+		return `https://gcdnb.pbrd.co/images/${data.fileName}`;
+	}
+}
+
+class ItsRoseProvider extends Provider {
+	async upload(buffer) {
+		const { mime, ext } = await this.fileType(buffer);
+		const blob = new Blob([buffer], { type: mime });
+		const form = this.form("file", blob, `file.${ext}`);
+		const { body } = await request("https://cdn.lovita.io/upload", {
+			method: "POST",
+			body: form,
+		});
+		const data = await body.json();
+		return data.url;
 	}
 }
 
@@ -109,6 +123,7 @@ class Uploader {
 			freeimage: new FreeImageProvider(),
 			tmpfiles: new TmpFilesProvider(),
 			pasteboard: new PasteboardProvider(),
+			itsrose: new ItsRoseProvider(),
 		};
 	}
 
@@ -116,16 +131,16 @@ class Uploader {
 		return Buffer.isBuffer(buffer);
 	}
 
-	async upload(buffer, provider = "quax") {
-		if (!this.providers[provider]) {
+	async upload(buffer, provider = "itsrose") {
+		const selectedProvider = this.providers[provider];
+		if (!selectedProvider) {
 			throw new Error("Uploader not found");
 		}
-		if (!Buffer.isBuffer(buffer)) {
+		if (!this.isBuffer(buffer)) {
 			throw new Error("Buffer is not a buffer");
 		}
 		try {
-			const url = await this.providers[provider].upload(buffer);
-			return url;
+			return await selectedProvider.upload(buffer);
 		} catch (error) {
 			throw new Error(error);
 		}
@@ -135,5 +150,4 @@ class Uploader {
 const uploader = new Uploader();
 
 export default uploader;
-
 export const { quax, freeimage, tmpfiles, pasteboard } = uploader.providers;
