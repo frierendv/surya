@@ -106,5 +106,3 @@ async function translateV2(text, target_lang, signal) {
 		.map((sentence) => sentence.trans)
 		.join("");
 }
-
-translate("Hello world", "ID").then(console.log);
