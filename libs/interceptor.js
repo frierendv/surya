@@ -43,13 +43,11 @@ async function translate(text, target_lang) {
 	// 	setTimeout(() => reject(new Error("Translation timeout")), 3000)
 	// );
 	const translation = TranslateApi(text, {
-		to: target_lang,
+		to: target_lang.toLowerCase(),
 		fetchOptions: {
 			timeout: 10000,
 		},
-	}).catch(() => ({
-		text,
-	}));
+	}).catch(() => ({ text }));
 	const { text: translatedText } = await Promise.race([
 		translation,
 		// timeout,
