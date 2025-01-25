@@ -33,12 +33,16 @@ describe("Database", () => {
 		unlinkSync(filePath);
 	});
 
-	test("should initialize with default values", () => {
+	test("should initialize with default values", async () => {
 		expect(db.path).toBe("./test-database.json");
 		expect(db.debug).toBe(true);
 		expect(db.mongo_url).toBe("mongodb://localhost:27017/test");
 		expect(db.schemas).toEqual(options.schemas);
-		expect(db.data).toEqual({ users: {}, groups: {}, settings: {} });
+		expect(db.data).toEqual({});
+
+		// mock the db initialization
+		db.users = new Support("users", {}, options.schemas.user);
+		expect(db.users).toBeInstanceOf(Support);
 	});
 
 	test("should write data to file", async () => {

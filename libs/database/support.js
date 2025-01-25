@@ -1,21 +1,28 @@
 import Cronjob from "./cronjob.js";
 
+/**
+ * @template T - Data type
+ */
 export default class Support {
 	/**
 	 * @param {string} name
-	 * @param {Record<string, any>} data
+	 * @param {T | Record<string, any>} data
 	 * @param {Record<string, any>} schema
 	 */
 	constructor(name, data, schema) {
 		this.name = name;
 		this[name] = data ?? {};
 		this.schema = schema;
-		this.cron = new Cronjob(name, this[name], this.schema);
+		this.cron = new Cronjob(
+			name,
+			typeof this[name] === "object" ? this[name] : {},
+			this.schema
+		);
 	}
 
 	/**
 	 * @param {string | number} key
-	 * @returns {Record<string, any> | null}
+	 * @returns {T | null}
 	 */
 	get(key) {
 		return this[this.name][key] ?? null;
@@ -23,7 +30,7 @@ export default class Support {
 
 	/**
 	 * @param {string} key
-	 * @returns {Record<string, any>}
+	 * @returns {T}
 	 */
 	set(key) {
 		if (!this[this.name][key]) {

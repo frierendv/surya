@@ -14,21 +14,22 @@ export class Database {
 	_model = null;
 
 	path = "./database.json";
-	data = { users: {}, groups: {}, settings: {} };
 
 	// read-only properties
 	/**
-	 * @type {Support}
+	 * @type {Support<import("surya").InferSchema<typeof Schema.UserSchema>>}
 	 */
 	users;
 	/**
-	 * @type {Support}
+	 * @type {Support<import("surya").InferSchema<typeof Schema.GroupSchema>>}
 	 */
 	groups;
 	/**
-	 * @type {Support}
+	 * @type {Support<import("surya").InferSchema<typeof Schema.SettingsSchema>>}
 	 */
 	settings;
+
+	data = {};
 
 	/**
 	 * @param {{ mongo_url: any; schemas: any; path?: any; debug?: any; }} options
@@ -131,10 +132,6 @@ export class Database {
 
 	get hasInitialized() {
 		return this.#initialized;
-	}
-
-	get __test__() {
-		return { write: this._write };
 	}
 }
 

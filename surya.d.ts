@@ -89,3 +89,19 @@ export interface IConfig {
 		mongo_url: string;
 	};
 }
+
+export type InferSchema<T> = {
+	[K in keyof T]: T[K] extends StringConstructor
+		? string
+		: T[K] extends NumberConstructor
+			? number
+			: T[K] extends BooleanConstructor
+				? boolean
+				: T[K] extends DateConstructor
+					? Date
+					: T[K] extends ArrayConstructor
+						? any[]
+						: T[K] extends new (...args: any[]) => infer U
+							? U
+							: never;
+};
