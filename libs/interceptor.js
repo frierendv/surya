@@ -7,26 +7,31 @@ import { translate as TranslateApi } from "@vitalets/google-translate-api";
  * @returns {import("@frierendv/frieren").Baileys.IContextMessage}
  */
 export function translator(ctx) {
-	const { country } = ctx;
-	const replyTranslate = async (text, opts) => ctx.reply(text, opts);
+	const { country, reply, sock } = ctx;
+	const replyTranslate = async (text, opts) => {
+		const translatedText = await translate(text, country);
+		return reply(translatedText, opts);
+	};
 	const sendMessageTranslate = async (jid, content, opts) => {
 		if (content?.text) {
 			content.text = await translate(content.text, country);
 		} else if (content?.caption) {
 			content.caption = await translate(content.caption, country);
 		}
-		return ctx.sock.sendMessage(jid, content, opts);
+		return sock.sendMessage(jid, content, opts);
 	};
 	const sendFileTranslate = async (jid, file, filename, opts) => {
 		if (opts?.caption) {
 			opts.caption = await translate(opts.caption, country);
 		}
-		return ctx.sock.sendFile(jid, file, filename, opts);
+		return sock.sendFile(jid, file, filename, opts);
 	};
 	return {
 		reply: replyTranslate,
-		sendMessage: sendMessageTranslate,
-		sendFile: sendFileTranslate,
+		sock: {
+			sendMessage: sendMessageTranslate,
+			sendFile: sendFileTranslate,
+		},
 	};
 }
 
@@ -40,7 +45,7 @@ async function translate(text, target_lang) {
 	const translation = TranslateApi(text, {
 		to: target_lang,
 		fetchOptions: {
-			timeout: 3000,
+			timeout: 10000,
 		},
 	}).catch(() => ({
 		text,
