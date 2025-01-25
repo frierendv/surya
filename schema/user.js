@@ -19,4 +19,9 @@ export const UserSchema = {
 	 * `true` if this user is banned
 	 */
 	banned: Boolean,
+	/**
+	 * Translate the send message
+	 * based on the user country code
+	 */
+	translate: Boolean,
 };
