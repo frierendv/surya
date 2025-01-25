@@ -8,9 +8,8 @@ import { translate as TranslateApi } from "@vitalets/google-translate-api";
  */
 export function translator(ctx) {
 	const { country } = ctx;
-
-	ctx.reply = async (text, opts) => ctx.reply(text, opts);
-	ctx.sock.sendMessage = async (jid, content, opts) => {
+	const replyTranslate = async (text, opts) => ctx.reply(text, opts);
+	const sendMessageTranslate = async (jid, content, opts) => {
 		if (content?.text) {
 			content.text = await translate(content.text, country);
 		} else if (content?.caption) {
@@ -18,13 +17,17 @@ export function translator(ctx) {
 		}
 		return ctx.sock.sendMessage(jid, content, opts);
 	};
-	ctx.sock.sendFile = async (jid, file, filename, opts) => {
+	const sendFileTranslate = async (jid, file, filename, opts) => {
 		if (opts?.caption) {
 			opts.caption = await translate(opts.caption, country);
 		}
 		return ctx.sock.sendFile(jid, file, filename, opts);
 	};
-	return ctx;
+	return {
+		reply: replyTranslate,
+		sendMessage: sendMessageTranslate,
+		sendFile: sendFileTranslate,
+	};
 }
 
 async function translate(text, target_lang) {
