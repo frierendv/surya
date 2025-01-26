@@ -13,18 +13,14 @@ export async function translate(text, target_lang) {
 			throw new Error("Translation timeout");
 		}, 5000);
 
-		const cleanUp = (result) => {
-			clearTimeout(timer);
-			controller.abort();
-			return result;
-		};
 		// race between all translation functions
 		const result = await wrapTranslate(
 			text,
 			target_lang,
 			controller.signal
 		);
-		return cleanUp(result || text);
+		clearTimeout(timer);
+		return result ?? text;
 	} catch (error) {
 		if (error.name !== "AbortError") {
 			console.error("Translation error:", error);
@@ -39,6 +35,8 @@ async function wrapTranslate(text, target_lang, signal) {
 		// Make sure to catch any error
 		fn(text, target_lang, signal).catch(() => null)
 	);
-	const result = await Promise.race(translatePromises);
+	const result = await Promise.all(translatePromises).then((results) =>
+		results.find((r) => r !== null)
+	);
 	return result;
 }
