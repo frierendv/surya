@@ -20,19 +20,16 @@ export default {
 		}
 		const [ytUrl] = args;
 
-		const { title, audio } = await youtube.get(ytUrl);
-		if (!audio || !audio.mp3) {
-			return ctx.reply("Failed to get video");
-		}
+		const { title, audio } = await youtube.getInfo(ytUrl);
 
 		const [, deleteMsg] = await ctx.reply(
 			`Downloading audio *${title}*...`
 		);
-		const url = await audio.mp3.get();
+		const stream = audio.download();
 		await ctx.sock.sendMessage(
 			ctx.from,
 			{
-				audio: { url },
+				audio: { stream },
 				fileName: `${title}.mp3`,
 			},
 			{ quoted: ctx.message }
