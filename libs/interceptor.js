@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { translate } from "./translate/index.js";
 
+// TODO: Implement the true interceptor
 /**
  *
  * @param {import("@frierendv/frieren").Baileys.IContextMessage} ctx
@@ -29,6 +30,7 @@ export function translator(ctx) {
 	return {
 		reply: replyTranslate,
 		sock: {
+			...sock,
 			sendMessage: sendMessageTranslate,
 			sendFile: sendFileTranslate,
 		},
