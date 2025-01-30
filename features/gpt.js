@@ -28,14 +28,6 @@ export default {
 		});
 	},
 
-	sendStreamText: (chunks, updateMsg) => {
-		let streamText = "";
-		chunks.forEach((part) => {
-			streamText += " " + part;
-			updateMsg(streamText.trim());
-		});
-	},
-
 	execute: async function (ctx, { api, text, prefix, command }) {
 		if (!text) {
 			ctx.reply(`Please provide a text with *${prefix + command}*`);
@@ -48,7 +40,13 @@ export default {
 			image = await media.download();
 		}
 
-		const [updateMsg] = await ctx.reply("...");
+		const updateMsg =
+			// wtf is this
+			ctx.isGroup
+				? (await ctx.reply("..."))[0]
+				: await ctx.sock
+						.sendPresenceUpdate("composing", ctx.from)
+						.then(() => ctx.reply);
 
 		const userName = ctx.name.replace(/[^a-zA-Z]/g, "");
 		const body = {
@@ -81,15 +79,11 @@ export default {
 
 		const { content, images } = result.message;
 
-		const chunks = (
-			content
-				? content
-				: "No response, please try again with cleared instruction."
-		).split(" ");
+		const aiResponse = content
+			? content
+			: "No response, please try again with cleared instruction.";
 
-		ctx.isGroup
-			? updateMsg(chunks.join(" "))
-			: this.sendStreamText(chunks, updateMsg);
+		updateMsg(aiResponse);
 
 		if (images) {
 			for (const image of images) {
