@@ -31,14 +31,16 @@ export default {
 			return ctx.reply("User not found");
 		}
 
-		await sock
-			.groupParticipantsUpdate(ctx.from, [addedUser], "add")
-			.catch(() => {});
+		const [{ status }] = await sock.groupParticipantsUpdate(
+			ctx.from,
+			[addedUser],
+			"add"
+		);
 
 		sock.sendMessage(
 			ctx.from,
 			{
-				text: `Added ${`@${addedUser.replace(/[^0-9]/g, "")}`} to ${groupMetadata?.subject ?? "this group"}`,
+				text: `[${status}] Added ${`@${addedUser.replace(/[^0-9]/g, "")}`} to ${groupMetadata?.subject ?? "this group"}`,
 				mentions: [addedUser],
 			},
 			{ quoted: ctx.message }
