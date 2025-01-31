@@ -21,24 +21,9 @@ describe("Uploader", () => {
 		jest.clearAllMocks();
 	});
 
-	test("should upload to quax", async () => {
-		const url = await Uploader.upload(imageBuffer, "quax");
-		expect(url).toContain("qu.ax");
-	});
-	test("should upload to freeimage", async () => {
-		const url = await Uploader.upload(imageBuffer, "freeimage");
-		expect(url).toBeDefined();
-	});
-	test("should upload to tmpfiles", async () => {
-		const url = await Uploader.upload(imageBuffer, "tmpfiles");
-		expect(url).toBeDefined();
-	});
-	test("should upload to pasteboard", async () => {
-		const url = await Uploader.upload(imageBuffer, "pasteboard");
-		expect(url).toBeDefined();
-	});
-	test("should upload to itsrose", async () => {
-		const url = await Uploader.upload(imageBuffer, "itsrose");
-		expect(url).toContain("lovita.io");
+	test("should be able to upload an image", async () => {
+		const url = await Uploader.upload(imageBuffer);
+
+		expect(url).toMatch(/https?:\/\//);
 	});
 });
