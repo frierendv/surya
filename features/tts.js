@@ -31,6 +31,7 @@ export default {
 
 		const { data, error } = await api.post("/tts/inference_text", {
 			body: {
+				server_id: "lov",
 				text,
 				...options,
 			},
