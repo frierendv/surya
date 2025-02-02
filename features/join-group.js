@@ -14,7 +14,11 @@ export default {
 
 	execute: async function (ctx, { args }) {
 		const [groupInviteCode] =
-			args[0].match(/(https:\/\/chat.whatsapp.com\/[a-zA-Z0-9]+)/) || [];
+			args[0].match(
+				new RegExp(
+					"(?<=https://chat.whatsapp.com/|https://invite.whatsapp.com/)[a-zA-Z0-9]+"
+				)
+			) || [];
 		if (!groupInviteCode) {
 			return ctx.reply(
 				"The provided group link is invalid. Please ensure you paste the entire link."
