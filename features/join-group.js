@@ -54,7 +54,7 @@ export default {
 		}
 
 		const groupSize = size || participants.length;
-		if (groupSize <= 20) {
+		if (groupSize < 20) {
 			return ctx.reply(
 				"The group must have more than 20 members to join."
 			);
