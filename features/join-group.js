@@ -21,16 +21,27 @@ export default {
 			) || [];
 		if (!groupInviteCode) {
 			return ctx.reply(
-				"The provided group link is invalid. Please ensure you paste the entire link."
+				"The provided group link is invalid. Please ensure the entire link is pasted correctly."
 			);
 		}
+
+		const alreadyInGroup = await ctx.sock
+			.groupFetchAllParticipating()
+			.then((groups) =>
+				Object.keys(groups).some(
+					(group) => groups[group].inviteCode === groupInviteCode
+				)
+			);
+		if (alreadyInGroup) {
+			return ctx.reply("Already a member of this group.");
+		}
+
 		const groupInfo = await ctx.sock
 			.groupGetInviteInfo(groupInviteCode)
 			.catch(() => null);
-
 		if (!groupInfo) {
 			return ctx.reply(
-				"Unable to retrieve group information. Please verify that the link is correct."
+				"Unable to retrieve group information. Please verify the link is correct."
 			);
 		}
 
@@ -53,7 +64,9 @@ export default {
 
 		return ctx.reply(
 			`Successfully joined the group: ${subject}. ${
-				(joinApprovalMode && "*Admin approval is required*") || ""
+				(joinApprovalMode &&
+					"*Please note that admin approval is required.+") ||
+				""
 			}`
 		);
 	},
