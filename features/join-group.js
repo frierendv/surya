@@ -25,17 +25,6 @@ export default {
 			);
 		}
 
-		const alreadyInGroup = await ctx.sock
-			.groupFetchAllParticipating()
-			.then((groups) =>
-				Object.keys(groups).some(
-					(group) => groups[group].inviteCode === groupInviteCode
-				)
-			);
-		if (alreadyInGroup) {
-			return ctx.reply("Already a member of this group.");
-		}
-
 		const groupInfo = await ctx.sock
 			.groupGetInviteInfo(groupInviteCode)
 			.catch(() => null);
@@ -43,6 +32,17 @@ export default {
 			return ctx.reply(
 				"Unable to retrieve group information. Please verify the link is correct."
 			);
+		}
+
+		const alreadyInGroup = await ctx.sock
+			.groupFetchAllParticipating()
+			.then((groups) =>
+				Object.keys(groups).some(
+					(group) => groups[group].id === groupInfo.id
+				)
+			);
+		if (alreadyInGroup) {
+			return ctx.reply("Already a member of this group.");
 		}
 
 		const { size, participants, subject, isCommunity, joinApprovalMode } =
