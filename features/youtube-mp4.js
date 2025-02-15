@@ -20,7 +20,15 @@ export default {
 		}
 		const [ytUrl] = args;
 
-		const { title, video } = await youtube.getInfo(ytUrl);
+		const agent = process.env.PROXY
+			? youtube.createProxyAgent({
+					uri: process.env.PROXY,
+				})
+			: undefined;
+
+		const { title, video } = await youtube.getInfo(ytUrl, {
+			agent,
+		});
 
 		const [, deleteMsg] = await ctx.reply(
 			`Downloading video *${title}*...`

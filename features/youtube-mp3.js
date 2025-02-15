@@ -19,8 +19,14 @@ export default {
 			return ctx.reply("Please provide a youtube link");
 		}
 		const [ytUrl] = args;
-
-		const { title, audio } = await youtube.getInfo(ytUrl);
+		const agent = process.env.PROXY
+			? youtube.createProxyAgent({
+					uri: process.env.PROXY,
+				})
+			: undefined;
+		const { title, audio } = await youtube.getInfo(ytUrl, {
+			agent,
+		});
 
 		const [, deleteMsg] = await ctx.reply(
 			`Downloading audio *${title}*...`
