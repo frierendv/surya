@@ -26,24 +26,28 @@ export default {
 				})
 			: undefined;
 
-		const { title, video } = await youtube.getInfo(ytUrl, {
+		const { title, author, video } = await youtube.getInfo(ytUrl, {
 			agent,
 		});
 
-		const [, deleteMsg] = await ctx.reply(
-			`Downloading video *${title}*...`
-		);
+		const [updateMsg] = await ctx.reply(`Downloading video *${title}*...`);
 		const stream = video.download();
-		await ctx.sock.sendMessage(
-			ctx.from,
-			{
-				video: { stream },
-				caption: title,
-				fileName: `${title}.mp4`,
-			},
-			{ quoted: ctx.message }
-		);
-		deleteMsg();
+		stream.on("end", () => {
+			updateMsg(`Sending video *${title}*...`);
+		});
+		await ctx.sock
+			.sendMessage(
+				ctx.from,
+				{
+					video: { stream },
+					caption: title,
+					fileName: `${title}.mp4`,
+				},
+				{ quoted: ctx.message }
+			)
+			.then(() => {
+				updateMsg(`Author: *${author}*\nTitle: *${title}*`);
+			});
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,

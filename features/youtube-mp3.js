@@ -1,3 +1,4 @@
+import { convert } from "../libs/converter/convert.js";
 import youtube from "../libs/youtube.js";
 
 /**
@@ -24,23 +25,35 @@ export default {
 					uri: process.env.PROXY,
 				})
 			: undefined;
-		const { title, audio } = await youtube.getInfo(ytUrl, {
+		const { title, author, audio } = await youtube.getInfo(ytUrl, {
 			agent,
 		});
 
-		const [, deleteMsg] = await ctx.reply(
-			`Downloading audio *${title}*...`
-		);
+		const [updateMsg] = await ctx.reply(`Downloading audio *${title}*...`);
 		const stream = audio.download();
-		await ctx.sock.sendMessage(
-			ctx.from,
-			{
-				audio: { stream },
-				fileName: `${title}.mp3`,
-			},
-			{ quoted: ctx.message }
-		);
-		deleteMsg();
+		stream.on("end", () => {
+			updateMsg(`Sending audio *${title}*...`);
+		});
+		const buffer = await convert(stream, "mp3", [
+			"-vn",
+			"-b:a",
+			"128k",
+			"-f",
+			"mp3",
+		]);
+		await ctx.sock
+			.sendMessage(
+				ctx.from,
+				{
+					audio: buffer,
+					fileName: `${title}.mp3`,
+					mimetype: "audio/mp4",
+				},
+				{ quoted: ctx.message }
+			)
+			.then(() => {
+				updateMsg(`Author: *${author}*\nTitle: *${title}*`);
+			});
 	},
 	failed: "Failed to execute the %cmd command\n%error",
 	wait: null,
