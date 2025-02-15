@@ -46,7 +46,7 @@ export default {
 				{ quoted: ctx.message }
 			)
 			.then(() => {
-				updateMsg(`Author: *${author}*\nTitle: *${title}*`);
+				updateMsg(`Author: *${author.name}*\nTitle: *${title}*`);
 			});
 	},
 	failed: "Failed to execute the %cmd command\n%error",
