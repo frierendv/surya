@@ -18,7 +18,6 @@
 	"jest.runMode": {
 		"type": "on-demand"
 	},
-	"deepscan.enable": true,
 	"[properties]": {
 		"editor.defaultFormatter": "foxundermoon.shell-format"
 	}
