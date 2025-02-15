@@ -57,13 +57,33 @@ const downloadFromInfoCallback = (stream, format, options) => {
 	let shouldEnd = true;
 
 	YtdlUtils.applyDefaultHeaders(options);
+	if (options.agent) {
+		// Set agent on both the miniget and m3u8stream requests
+		options.requestOptions.agent = options.agent.agent;
 
+		if (options.agent.jar) {
+			YtdlUtils.setPropInsensitive(
+				options.requestOptions.headers,
+				"cookie",
+				options.agent.jar.getCookieStringSync("https://www.youtube.com")
+			);
+		}
+		if (options.agent.localAddress) {
+			options.requestOptions.localAddress = options.agent.localAddress;
+		}
+	}
 	/** @type {miniget.Options} */
 	const requestOptions = Object.assign({}, options.requestOptions, {
 		maxReconnects: 6,
 		maxRetries: 3,
 		backoff: { inc: 500, max: 10000 },
 	});
+	if (requestOptions?.agent) {
+		// This fix ERR_TLS_CERT_ALTNAME_INVALID https://github.com/distubejs/ytdl-core/issues/58
+		requestOptions.headers = Object.assign({}, requestOptions.headers, {
+			host: new URL(format.url).host,
+		});
+	}
 
 	let shouldBeChunked =
 		dlChunkSize !== 0 && (!format.hasAudio || !format.hasVideo);
