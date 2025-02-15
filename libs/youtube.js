@@ -41,12 +41,14 @@ class YouTube {
 	}
 
 	_getFormat(formats, options) {
+		/** @type {Ytdl.videoFormat} */
 		const videoFormat = this._findFormat(
 			formats,
 			"video",
 			"quality",
 			"medium"
 		);
+		/** @type {Ytdl.videoFormat} */
 		const audioFormat = this._findFormat(
 			formats,
 			"audio",
