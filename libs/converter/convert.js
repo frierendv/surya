@@ -33,22 +33,24 @@ const safeReadAndDelete = (path) => {
 };
 
 /**
- * @param {Buffer} input
+ * @param {Buffer | Readable} input
  * @param {string} format
  * @param {string[]} args
  * @returns {Promise<Buffer>}
  * @throws {Error}
  */
 export const convert = async (input, format, args) => {
-	if (!input || !Buffer.isBuffer(input)) {
-		throw new Error("Invalid input buffer");
+	if (Buffer.isBuffer(input)) {
+		input = createBufferStream(input);
+	} else if (!(input instanceof Readable)) {
+		throw new Error("Invalid input stream");
 	}
 
 	const tempPath = join(tmpdir(), crypto.randomBytes(16).toString("hex"));
 
 	return new Promise((resolve, reject) => {
 		Ffmpeg()
-			.input(createBufferStream(input))
+			.input(input)
 			.addOutputOptions(args)
 			.format(format)
 			.on("end", () => {
