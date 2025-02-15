@@ -8,18 +8,18 @@ process.env.YTDL_NO_UPDATE = "true";
 
 class YouTube {
 	constructor() {
-		this._Agent = Ytdl.createAgent();
+		this.createProxyAgent = Ytdl.createProxyAgent;
+		this.createAgent = Ytdl.createAgent;
 	}
 
 	/**
 	 *
-	 * @param {String} url
-	 * @param {Partial<Ytdl.getInfoOptions>} [options]
+	 * @param {string} url
+	 * @param {Ytdl.getInfoOptions} [options]
 	 * @returns
 	 */
 	async getInfo(url, options) {
 		const { videoDetails, formats } = await Ytdl.getInfo(url, options);
-
 		const {
 			title,
 			description,
@@ -28,6 +28,7 @@ class YouTube {
 			uploadDate,
 			author,
 		} = videoDetails;
+
 		return {
 			title,
 			description,
@@ -39,32 +40,20 @@ class YouTube {
 		};
 	}
 
-	/**
-	 *
-	 * @param {Ytdl.videoFormat[]} formats
-	 * @param {"audio" | "video"} type
-	 * @returns
-	 */
-	_filterFormats(formats, type) {
-		return formats.filter((format) =>
-			type === "video"
-				? format.hasVideo && format.hasAudio
-				: format.hasAudio
-		);
-	}
-
-	/**
-	 *
-	 * @param {Ytdl.videoFormat[]} formats
-	 * @returns
-	 */
 	_getFormat(formats, options) {
-		const videoFormat = this._filterFormats(formats, "video").find(
-			(f) => f.quality === "medium"
+		const videoFormat = this._findFormat(
+			formats,
+			"video",
+			"quality",
+			"medium"
 		);
-		const audioFormat = this._filterFormats(formats, "audio").find(
-			(f) => f.audioBitrate === 128
+		const audioFormat = this._findFormat(
+			formats,
+			"audio",
+			"audioBitrate",
+			128
 		);
+
 		if (!videoFormat || !audioFormat) {
 			throw new Error("No suitable format found");
 		}
@@ -81,11 +70,20 @@ class YouTube {
 		};
 	}
 
-	/**
-	 *
-	 * @param {Ytdl.videoFormat} format
-	 * @returns {import("stream").Readable}
-	 */
+	_findFormat(formats, type, key, value) {
+		return this._filterFormats(formats, type).find(
+			(format) => format[key] === value
+		);
+	}
+
+	_filterFormats(formats, type) {
+		return formats.filter((format) =>
+			type === "video"
+				? format.hasVideo && format.hasAudio
+				: format.hasAudio
+		);
+	}
+
 	_createStream(format, options) {
 		const stream = createStream();
 		downloadFromInfoCallback(stream, format, options);
