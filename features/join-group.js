@@ -16,7 +16,7 @@ export default {
 		const [groupInviteCode] =
 			args[0].match(
 				new RegExp(
-					"(?<=https://chat.whatsapp.com/|https://invite.whatsapp.com/)[a-zA-Z0-9]+"
+					"(?<=https://chat\\.whatsapp\\.com/|https://invite\\.whatsapp\\.com/)[a-zA-Z0-9]+"
 				)
 			) || [];
 		if (!groupInviteCode) {
