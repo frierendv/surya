@@ -22,8 +22,7 @@ export default {
 
 		const { body, statusCode } = await request(
 			"https://api.apigratis.tech/downloader/facebook?" +
-				new URLSearchParams({ url: "x" }),
-			{}
+				new URLSearchParams({ url })
 		);
 		if (statusCode !== 200) {
 			return ctx.reply("Failed to fetch the data");
