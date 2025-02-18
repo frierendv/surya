@@ -1,4 +1,4 @@
-import { convert } from "../libs/converter/convert.js";
+import { Ffmpeg } from "../libs/converter/ffmpeg.js";
 import youtube from "../libs/youtube.js";
 
 /**
@@ -34,20 +34,20 @@ export default {
 		stream.on("end", () => {
 			updateMsg(`Sending audio *${title}*...`);
 		});
-		const buffer = await convert(stream, "mp3", [
-			"-vn",
-			"-b:a",
-			"128k",
-			"-f",
-			"mp3",
-		]);
+		const buffer = await Ffmpeg(stream, {
+			audioChannels: 1,
+			audioCodec: "libopus",
+			toFormat: "ogg",
+			addOutputOptions: ["-avoid_negative_ts", "make_zero"],
+		}).exec();
+
 		await ctx.sock
 			.sendMessage(
 				ctx.from,
 				{
 					audio: buffer,
 					fileName: `${title}.mp3`,
-					mimetype: "audio/mp4",
+					mimetype: "audio/mpeg",
 				},
 				{ quoted: ctx.message }
 			)
