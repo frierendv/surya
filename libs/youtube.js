@@ -94,5 +94,5 @@ class YouTube {
 	}
 }
 
-const youtube = new YouTube();
+const youtube = new YouTube(); // noqa
 export default youtube;
