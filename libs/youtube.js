@@ -52,8 +52,8 @@ class YouTube {
 		const audioFormat = this._findFormat(
 			formats,
 			"audio",
-			"audioBitrate",
-			128
+			"audioQuality",
+			"AUDIO_QUALITY_LOW"
 		);
 
 		if (!videoFormat || !audioFormat) {
