@@ -2,14 +2,12 @@
 	"compilerOptions": {
 		"module": "ESNext",
 		"moduleResolution": "node",
-		"target": "ESNext",
+		"allowJs": true,
 		"checkJs": true,
-		"allowImportingTsExtensions": true,
-		"strictNullChecks": true,
-		"strictFunctionTypes": true,
-		"allowSyntheticDefaultImports": true,
+		"target": "ESNext",
 		"baseUrl": "./",
 		"types": ["node", "jest", "./surya.d.ts", "@types/jest"]
 	},
+	"include": ["**/*.js", "**/*.ts", "**/*.json", "**/*.d.ts"],
 	"exclude": ["node_modules", "**/node_modules/*", "__tests__/**/*"]
 }
