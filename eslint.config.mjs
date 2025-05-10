@@ -1,4 +1,5 @@
 import pluginJs from "@eslint/js";
+import eslintPluginImport from "eslint-plugin-import";
 import eslintPluginPrettier from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 
@@ -40,6 +41,29 @@ export default [
 					varsIgnorePattern: "^_",
 				},
 			],
+		},
+	},
+	{
+		plugins: {
+			// @ts-ignore
+			import: eslintPluginImport,
+		},
+		rules: {
+			"import/extensions": [
+				"error",
+				"ignorePackages",
+				{
+					js: "always",
+					mjs: "always",
+				},
+			],
+		},
+		settings: {
+			"import/resolver": {
+				node: {
+					extensions: [".js", ".mjs"],
+				},
+			},
 		},
 	},
 	{
