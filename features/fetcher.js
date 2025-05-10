@@ -48,11 +48,12 @@ export default {
 				// @ts-ignore
 				buffer = await convertAudio(Buffer.from(buffer));
 			}
-			return await ctx.sock.sendMessage(
+			return ctx.sock.sendMessage(
 				ctx.from,
 				// @ts-ignore
 				{
 					[mediaType]: Buffer.from(buffer),
+					mimetype: contentType,
 				},
 				quoted
 			);
