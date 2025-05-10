@@ -1,4 +1,5 @@
 import { ProxyAgent, fetch } from "undici";
+import { convertAudio } from "../libs/converter/convert.js";
 
 /**
  * @type {import("surya").Feature}
@@ -41,7 +42,12 @@ export default {
 		// if is media
 		const mediaType = contentType?.split("/")[0];
 		if (mediaType && ["image", "video", "audio"].includes(mediaType)) {
-			const buffer = await response.arrayBuffer();
+			let buffer = await response.arrayBuffer();
+
+			if (mediaType === "audio") {
+				// @ts-ignore
+				buffer = await convertAudio(Buffer.from(buffer));
+			}
 			return await ctx.sock.sendMessage(
 				ctx.from,
 				// @ts-ignore
