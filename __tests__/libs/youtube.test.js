@@ -18,7 +18,11 @@ describe("YouTube", () => {
 			},
 			formats: [
 				{ quality: "medium", hasVideo: true, hasAudio: true },
-				{ audioBitrate: 128, hasAudio: true },
+				{
+					audioBitrate: 128,
+					audioQuality: "AUDIO_QUALITY_LOW",
+					hasAudio: true,
+				},
 			],
 		});
 
