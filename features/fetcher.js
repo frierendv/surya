@@ -65,7 +65,7 @@ export default {
 		}
 
 		const _text = await response.text();
-		if (_text.length > 500 * 1024) {
+		if (_text.length > 500) {
 			return await ctx.sock.sendMessage(
 				ctx.from,
 				{
