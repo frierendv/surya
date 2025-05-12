@@ -28,19 +28,7 @@ export default {
 			},
 		});
 		if (error) {
-			const { result, message } = error;
-			let errorText = message;
-			if (result?.params) {
-				errorText += "\n";
-				/**
-				 * @type {{allowedValues:string[]}}
-				 */
-				const { allowedValues } = result.params;
-				for (const [i, style] of allowedValues) {
-					errorText += `${i + 1}. ${style}\n`;
-				}
-			}
-			return { error: errorText };
+			return { error: error.message };
 		}
 		const { status, result, message } = data;
 		if (!status || !result?.task_id) {
