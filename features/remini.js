@@ -71,7 +71,7 @@ export default {
 					color_enhance: "prism-blend",
 					background_enhance: "shiba-strong-tensorrt",
 					face_lifting: "pinko_bigger_dataset-style",
-					face_enhance: "recommender_entire_dataset",
+					face_enhance: "remini",
 				},
 			},
 		});
