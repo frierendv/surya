@@ -14,7 +14,7 @@ export default {
 	private: false,
 
 	async callGpt(api, body) {
-		return api.post("/gpt/chat", {
+		return api.post("/gpt/legacy/chat", {
 			body,
 		});
 	},
@@ -39,7 +39,7 @@ export default {
 
 		const userName = ctx.name.replace(/[^a-zA-Z]/g, "");
 		const body = {
-			model: "gpt-4.1-mini",
+			model: "gpt-4o-mini",
 			messages: [
 				{
 					role: "user",
