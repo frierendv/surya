@@ -40,10 +40,11 @@ export default {
 		}
 
 		const { data, error } = await api.post(
-			"/tts/inference_voice",
+			"/elevenlabs/inference_voice",
 			{
 				body: form,
 			},
+			// @ts-ignore
 			{
 				headers: {
 					"Content-Type": "multipart/form-data",
@@ -57,7 +58,7 @@ export default {
 			);
 		}
 		const { status, result, message } = data;
-		if (!status || !result?.audios) {
+		if (!status || !result?.audio_url) {
 			return ctx.reply(message);
 		}
 
@@ -65,7 +66,7 @@ export default {
 			ctx.from,
 			{
 				audio: {
-					url: result.audios[0],
+					url: result.audio_url,
 				},
 				mimetype: "audio/mp4",
 			},

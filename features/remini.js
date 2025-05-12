@@ -1,6 +1,3 @@
-// Idk bruvh, its getting hard to read the code. I'm sorry for that.
-import uploader from "../libs/uploader.js";
-
 /**
  * @type {import("surya").Feature}
  */
@@ -16,20 +13,20 @@ export default {
 	private: false,
 
 	execute: async function (ctx, { api, prefix, command }) {
-		const media = await this.getValidImage(ctx, prefix, command);
-		if (!media) {
-			return;
+		const media = ctx.quoted?.media ?? ctx.media;
+		if (!media || !/image/i.test(media?.mimetype)) {
+			ctx.reply(`Reply/send image with *${prefix + command}*`);
+			return null;
 		}
+		const buffer = await media.download();
 
 		const [updateMsg, deleteMsg] = await ctx.reply(
 			"Processing image... (1/2)."
 		);
 
-		const init_image = await this.prepareImage(media);
-
 		const processedImages = await this.processImage(
 			api,
-			init_image,
+			Buffer.from(buffer).toString("base64"),
 			updateMsg
 		);
 
@@ -49,20 +46,6 @@ export default {
 		}
 	},
 
-	getValidImage: async function (ctx, prefix, command) {
-		const media = ctx.quoted?.media ?? ctx.media;
-		if (!media || !/image/i.test(media?.mimetype)) {
-			ctx.reply(`Reply/send image with *${prefix + command}*`);
-			return null;
-		}
-		return media;
-	},
-
-	prepareImage: async function (media) {
-		const buffer = await media.download();
-		return await uploader.providers.tmpfiles.upload(buffer);
-	},
-
 	processImage: async function (api, init_image, updateMsg) {
 		updateMsg("Processing image... (2/2)");
 
@@ -80,7 +63,7 @@ export default {
 	},
 
 	unblurImage: async function (api, init_image) {
-		return await api.post("/image/unblur", {
+		return await api.post("/image/remini", {
 			body: {
 				init_image,
 				pipeline: {

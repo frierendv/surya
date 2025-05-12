@@ -18,7 +18,7 @@ export default {
 			return ctx.reply("Please provide a Instagram link");
 		}
 
-		const { error, data } = await api.get("/instagram/download", {
+		const { error, data } = await api.get("/instagram/get_content", {
 			params: {
 				query: {
 					url,

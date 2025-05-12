@@ -1,5 +1,3 @@
-import uploader from "../libs/uploader.js";
-
 /**
  * @type {import("surya").Feature}
  */
@@ -22,7 +20,7 @@ export default {
 	 * @returns
 	 */
 	create: async function (api, { init_image, style_id }) {
-		const { data, error } = await api.post("/differentMe/create", {
+		const { data, error } = await api.post("/image/different_me", {
 			body: {
 				init_image,
 				// @ts-ignore
@@ -48,7 +46,11 @@ export default {
 		if (!status || !result?.task_id) {
 			return { error: message };
 		}
-		return { task_id: result.task_id };
+		const { task_id, status: taskStatus } = result;
+		if (taskStatus !== "completed") {
+			return this.poll(api, task_id);
+		}
+		return [true, result.images];
 	},
 	/**
 	 * @param {import("surya").IHandlerExtras["api"]} api
@@ -64,7 +66,7 @@ export default {
 			if (pollCount >= MAX_POLL) {
 				return [false, "Task timeout"];
 			}
-			const { data, error } = await api.get("/differentMe/status", {
+			const { data, error } = await api.get("/image/get_task", {
 				params: {
 					query: {
 						task_id,
@@ -98,24 +100,16 @@ export default {
 			);
 		}
 		const buffer = await media.download();
-		const init_image = await uploader.providers.tmpfiles.upload(buffer);
 		const options = {
 			style_id: args[0] || "3d_cartoon",
 		};
 
 		const [updateMsg] = await ctx.reply("Processing...");
-		const { task_id, error } = await this.create(api, {
-			init_image,
+
+		const [status, images] = await this.create(api, {
+			init_image: Buffer.from(buffer).toString("base64"),
 			...options,
 		});
-		if (error) {
-			updateMsg(error);
-			return;
-		}
-
-		updateMsg("Getting ready...");
-
-		const [status, images] = await this.poll(api, task_id);
 		if (!status) {
 			updateMsg(images);
 			return;

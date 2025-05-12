@@ -18,7 +18,7 @@ export default {
 			return ctx.reply("Please provide a Tiktok link");
 		}
 		// @ts-ignore
-		const { error, data } = await api.get("/tiktok/get", {
+		const { error, data } = await api.get("/tiktok/get_content", {
 			params: {
 				query: {
 					url,
@@ -37,10 +37,9 @@ export default {
 		if (!download) {
 			return ctx.reply("Failed to fetch the data");
 		}
-		const type = _type === "images" ? "image" : "video";
-		for (const url of type === "image" && download.images
+		for (const url of download.images && download.images
 			? [...download.images]
-			: [download.nowm ?? download.wm]) {
+			: [download.video_url ?? download.watermarked_video_url]) {
 			await sock.sendFile(
 				ctx.from,
 				// @ts-ignore
@@ -48,7 +47,7 @@ export default {
 				{ quoted: ctx }
 			);
 		}
-		if (type === "image" && download.music) {
+		if (download.images && download.music) {
 			await sock.sendMessage(
 				ctx.from,
 				// @ts-ignore

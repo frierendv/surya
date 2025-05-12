@@ -1,5 +1,3 @@
-import uploader from "../libs/uploader.js";
-
 /**
  * @type {import("surya").Feature}
  */
@@ -20,11 +18,10 @@ export default {
 			return ctx.reply(`Reply/send image with *${prefix + ctx.command}*`);
 		}
 		const buffer = await media.download();
-		const init_image = await uploader.providers.tmpfiles.upload(buffer);
 
 		const { data, error } = await api.post("/image/rembg", {
 			body: {
-				init_image,
+				init_image: Buffer.from(buffer).toString("base64"),
 			},
 		});
 
