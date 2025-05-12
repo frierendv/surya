@@ -33,13 +33,9 @@ export default {
 		if (!status || !result) {
 			return ctx.reply(message);
 		}
-		const { type: _type, download } = result;
-		if (!download) {
-			return ctx.reply("Failed to fetch the data");
-		}
-		for (const url of download.images && download.images
-			? [...download.images]
-			: [download.video_url ?? download.watermarked_video_url]) {
+		for (const url of result.images && result.images
+			? [...result.images]
+			: [result.video_url ?? result.watermarked_video_url]) {
 			await sock.sendFile(
 				ctx.from,
 				// @ts-ignore
@@ -47,12 +43,12 @@ export default {
 				{ quoted: ctx }
 			);
 		}
-		if (download.images && download.music) {
+		if (result.images && result.music) {
 			await sock.sendMessage(
 				ctx.from,
 				// @ts-ignore
 				{
-					audio: { url: download.music },
+					audio: { url: result.music.play_url },
 					mimetype: "audio/mp4",
 				},
 				{ quoted: ctx.message }
