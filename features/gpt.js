@@ -39,7 +39,7 @@ export default {
 
 		const userName = ctx.name.replace(/[^a-zA-Z]/g, "");
 		const body = {
-			model: "gpt-4o-mini",
+			model: "gpt-4.1-mini",
 			messages: [
 				{
 					role: "user",
