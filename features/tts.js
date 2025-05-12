@@ -31,7 +31,7 @@ export default {
 
 		const { data, error } = await api.post("/elevenlabs/inference_text", {
 			body: {
-				server_id: "lov",
+				server_id: "rose",
 				text,
 				...options,
 			},
