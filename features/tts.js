@@ -29,9 +29,9 @@ export default {
 
 		const text = ctx.quoted?.text || _text.replace(regex, "").trim();
 
-		const { data, error } = await api.post("/tts/inference_text", {
+		const { data, error } = await api.post("/elevenlabs/inference_text", {
 			body: {
-				server_id: "lov",
+				server_id: "rose",
 				text,
 				...options,
 			},
@@ -41,7 +41,7 @@ export default {
 			return ctx.reply(error.message);
 		}
 		const { status, result, message } = data;
-		if (!status || !result?.audios) {
+		if (!status || !result?.audio_url) {
 			return ctx.reply(message);
 		}
 
@@ -49,7 +49,7 @@ export default {
 			ctx.from,
 			{
 				audio: {
-					url: result.audios[0],
+					url: result.audio_url,
 				},
 				mimetype: "audio/mp4",
 			},

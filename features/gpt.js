@@ -14,17 +14,8 @@ export default {
 	private: false,
 
 	async callGpt(api, body) {
-		return api.post("/gpt/chat", {
+		return api.post("/gpt/legacy/chat", {
 			body,
-		});
-	},
-	async callGptVision(api, body, image) {
-		const form = new FormData();
-		const blob = new Blob([image], { type: "image/jpeg" });
-		form.append("image", blob, "image.jpg");
-		form.append("data", JSON.stringify(body));
-		return api.post("/gpt/vision", {
-			body: form,
 		});
 	},
 
@@ -40,13 +31,11 @@ export default {
 			image = await media.download();
 		}
 
-		const updateMsg =
-			// wtf is this
-			ctx.isGroup
-				? (await ctx.reply("..."))[0]
-				: await ctx.sock
-						.sendPresenceUpdate("composing", ctx.from)
-						.then(() => ctx.reply);
+		const updateMsg = ctx.isGroup
+			? (await ctx.reply("..."))[0]
+			: await ctx.sock
+					.sendPresenceUpdate("composing", ctx.from)
+					.then(() => ctx.reply);
 
 		const userName = ctx.name.replace(/[^a-zA-Z]/g, "");
 		const body = {
@@ -55,15 +44,12 @@ export default {
 				{
 					role: "user",
 					content: text,
-					// motherfucker
 					...(userName ? { user: userName } : {}),
 				},
 			],
 		};
 
-		const { data, error } = await this[
-			!image ? "callGpt" : "callGptVision"
-		](api, body, image);
+		const { data, error } = await this.callGpt(api, body, image);
 
 		if (error) {
 			await updateMsg(error.message || "Failed to execute the command");

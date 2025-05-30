@@ -1,12 +1,9 @@
-import uploader from "../libs/uploader.js";
-
 /**
  * @type {import("surya").Feature}
  */
 export default {
-	command: ["gfps", "gfp_superres "],
-	description:
-		"Enhance image resolution and clarity with advanced super-resolution processing.​",
+	command: ["hd", "upscale"],
+	description: "Next Generation Ultra High Definition Image Restoration",
 	category: "Image",
 	owner: false,
 	admin: false,
@@ -15,15 +12,13 @@ export default {
 	group: false,
 	private: false,
 
-	execute: async function (ctx, { api, prefix, text }) {
+	execute: async function (ctx, { api, prefix, text, command }) {
 		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/image/i.test(media.mimetype)) {
-			return ctx.reply(
-				`Reply/send image with *${prefix + this.command}*`
-			);
+			return ctx.reply(`Reply/send image with *${prefix + command}*`);
 		}
 		const options = {
-			outscale: 2,
+			restoration_mode: "NG_UHD",
 		};
 
 		const regex = /--(\w+)\s+([\w-]+)/g;
@@ -34,11 +29,10 @@ export default {
 		}
 
 		const buffer = await media.download();
-		const init_image = await uploader.providers.tmpfiles.upload(buffer);
 
-		const { data, error } = await api.post("/image/gfp_superres", {
+		const { data, error } = await api.post("/image/restoration", {
 			body: {
-				init_image,
+				init_image: Buffer.from(buffer).toString("base64"),
 				...options,
 			},
 		});
