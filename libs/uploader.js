@@ -20,6 +20,15 @@ class Provider {
 		return { mime, ext };
 	}
 
+	async createBlob(buffer) {
+		const { mime, ext } = await this.fileType(buffer);
+		return {
+			blob: new Blob([buffer], { type: mime }),
+			mime,
+			ext,
+		};
+	}
+
 	async upload(_buffer) {
 		throw new Error("Method 'upload' must be implemented");
 	}
@@ -27,17 +36,19 @@ class Provider {
 
 class QuaxProvider extends Provider {
 	async upload(buffer) {
-		const { mime, ext } = await this.fileType(buffer);
-		const blob = new Blob([buffer], { type: mime });
+		const { blob, ext } = await this.createBlob(buffer);
 		const form = this.form("files[]", blob, `file.${ext}`);
+
 		const { body } = await request("https://qu.ax/upload.php", {
 			method: "POST",
 			body: form,
 		});
+
 		const data = await body.json();
 		if (!data.success) {
 			throw new Error(data.description);
 		}
+
 		return data.files[0].url;
 	}
 }
@@ -47,9 +58,10 @@ class FreeImageProvider extends Provider {
 		const { body: htmlBody } = await request("https://freeimage.host/");
 		const html = await htmlBody.text();
 		const token = html.match(/PF.obj.config.auth_token = "(.+?)";/)[1];
-		const { mime, ext } = await this.fileType(buffer);
-		const blob = new Blob([buffer], { type: mime });
+
+		const { blob, ext } = await this.createBlob(buffer);
 		const form = this.form("source", blob, `file.${ext}`);
+
 		const options = {
 			type: "file",
 			action: "upload",
@@ -57,13 +69,16 @@ class FreeImageProvider extends Provider {
 			auth_token: token,
 			nsfw: "0",
 		};
+
 		Object.entries(options).forEach(([key, value]) =>
 			form.append(key, value)
 		);
+
 		const { body } = await request("https://freeimage.host/json", {
 			method: "POST",
 			body: form,
 		});
+
 		const data = await body.json();
 		return data.image.url;
 	}
@@ -71,13 +86,14 @@ class FreeImageProvider extends Provider {
 
 class TmpFilesProvider extends Provider {
 	async upload(buffer) {
-		const { mime, ext } = await this.fileType(buffer);
-		const blob = new Blob([buffer], { type: mime });
+		const { blob, ext } = await this.createBlob(buffer);
 		const form = this.form("file", blob, `file.${ext}`);
+
 		const { body } = await request("https://tmpfiles.org/api/v1/upload", {
 			method: "POST",
 			body: form,
 		});
+
 		const data = await body.json();
 		const url = data.data.url.match(/https:\/\/tmpfiles.org\/(.*)/)[1];
 		return `https://tmpfiles.org/dl/${url}`;
@@ -86,33 +102,21 @@ class TmpFilesProvider extends Provider {
 
 class PasteboardProvider extends Provider {
 	async upload(buffer) {
-		const { mime, ext } = await this.fileType(buffer);
-		const blob = new Blob([buffer], { type: mime });
+		const { blob, ext } = await this.createBlob(buffer);
 		const form = this.form("file", blob, `image.${ext}`);
 		form.set("cb", "294");
+
 		const { body } = await request("https://pasteboard.co/upload", {
 			method: "POST",
 			body: form,
 		});
+
 		const data = await body.json();
 		if (!data.url) {
-			throw new Error(data);
+			throw new Error(JSON.stringify(data));
 		}
-		return `https://gcdnb.pbrd.co/images/${data.fileName}`;
-	}
-}
 
-class ItsRoseProvider extends Provider {
-	async upload(buffer) {
-		const { mime, ext } = await this.fileType(buffer);
-		const blob = new Blob([buffer], { type: mime });
-		const form = this.form("file", blob, `file.${ext}`);
-		const { body } = await request("https://cdn.lovita.io/upload", {
-			method: "POST",
-			body: form,
-		});
-		const data = await body.json();
-		return data.url;
+		return `https://gcdnb.pbrd.co/images/${data.fileName}`;
 	}
 }
 
@@ -123,7 +127,6 @@ class Uploader {
 			freeimage: new FreeImageProvider(),
 			tmpfiles: new TmpFilesProvider(),
 			pasteboard: new PasteboardProvider(),
-			itsrose: new ItsRoseProvider(),
 		};
 	}
 
@@ -131,18 +134,20 @@ class Uploader {
 		return Buffer.isBuffer(buffer);
 	}
 
-	async upload(buffer, provider = "itsrose") {
-		const selectedProvider = this.providers[provider];
-		if (!selectedProvider) {
-			throw new Error("Uploader not found");
-		}
+	async upload(buffer, provider = "quax") {
 		if (!this.isBuffer(buffer)) {
 			throw new Error("Buffer is not a buffer");
 		}
+
+		const selectedProvider = this.providers[provider];
+		if (!selectedProvider) {
+			throw new Error(`Provider '${provider}' not found`);
+		}
+
 		try {
 			return await selectedProvider.upload(buffer);
 		} catch (error) {
-			throw new Error(error);
+			throw new Error(error.message || error);
 		}
 	}
 }
