@@ -5,9 +5,9 @@ import { useMongoDBAuthState } from "../src/use-mongodb-auth-state";
 // Use mongodb-memory-server when available; otherwise skip the suite.
 let MongoMemoryServer: any = null;
 try {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
 	MongoMemoryServer = require("mongodb-memory-server").MongoMemoryServer;
-} catch (e) {
+} catch {
 	// module not installed; we'll skip
 }
 
