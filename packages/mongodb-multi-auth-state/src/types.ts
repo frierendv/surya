@@ -52,7 +52,7 @@ export type UseAuthStateResult = {
 	saveCreds: () => Promise<void>;
 };
 
-export type KVModel = Model<AuthKV, {}, {}>;
+export type KVModel = Model<AuthKV, object, object>;
 
 export type CredsAndModel = {
 	creds: AuthenticationCreds;
