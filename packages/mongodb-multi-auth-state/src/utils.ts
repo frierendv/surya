@@ -44,7 +44,7 @@ export const getDefaultCreds = async (): Promise<AuthenticationCreds> => {
 	try {
 		const mod = await import("baileys");
 		return mod.initAuthCreds();
-	} catch (e) {
+	} catch {
 		return {} as unknown as AuthenticationCreds;
 	}
 };
