@@ -10,7 +10,7 @@
 		"lint:fix": "turbo run lint:fix",
 		"format": "prettier --write \"**/*.{ts,tsx,md}\"",
 		"typecheck": "turbo run typecheck",
-		"test": "jest --verbose --config ./jest.config.ts",
+		"test": "jest --verbose --runInBand",
 		"clean": "turbo run clean --parallel",
 		"postclean": "rimraf .turbo"
 	},
@@ -38,7 +38,7 @@
 		"ts-jest": "^29.4.2",
 		"ts-node": "^10.9.2",
 		"tsup": "^8.5.0",
-		"turbo": "^2.5.6",
+		"turbo": "latest",
 		"typescript": "5.8.3"
 	},
 	"engines": {
