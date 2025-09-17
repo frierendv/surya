@@ -1,0 +1,9 @@
+{
+	"extends": "@surya/typescript-config/esm.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist"
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules"]
+}
