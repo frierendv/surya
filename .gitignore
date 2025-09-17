@@ -134,3 +134,5 @@ dist
 baileys_*
 *logs*.txt
 database.json
+
+*-lock.json
