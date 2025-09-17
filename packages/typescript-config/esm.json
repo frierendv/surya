@@ -5,7 +5,7 @@
 		"target": "esnext",
 		"module": "esnext",
 		"types": ["jest", "node"],
-		"lib": ["dom", "esnext"],
+		"lib": ["ES2020", "dom", "esnext"],
 		"declaration": true,
 		"sourceMap": true,
 		"moduleResolution": "node",
