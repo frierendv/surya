@@ -136,3 +136,6 @@ baileys_*
 database.json
 
 *-lock.json
+
+# Turbo
+.turbo
