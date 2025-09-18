@@ -11,11 +11,10 @@ export const keyDocKey = (sessionId: string, category: string, id: string) =>
 // Dynamic BufferJSON import with fallback for Jest/node environments that
 // cannot parse ESM from node_modules. The fallback acts as identity
 // (no special Buffer serialization) so tests still run.
-let bufferJsonPromise: Promise<typeof import("baileys/lib/Utils")> | null =
-	null;
+let bufferJsonPromise: Promise<typeof import("baileys")> | null = null;
 const getBufferJSON = async () => {
 	try {
-		if (!bufferJsonPromise) bufferJsonPromise = import("baileys/lib/Utils");
+		if (!bufferJsonPromise) bufferJsonPromise = import("baileys");
 		const mod = await bufferJsonPromise;
 		return mod.BufferJSON;
 	} catch {
