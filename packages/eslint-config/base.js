@@ -35,6 +35,7 @@ export const config = [
 			],
 		},
 	},
+	prettierLint,
 	{
 		plugins: {
 			turbo: turboPlugin,
@@ -86,7 +87,6 @@ export const config = [
 			onlyWarn,
 		},
 	},
-	prettierLint,
 	{
 		ignores: ["dist/**"],
 	},
