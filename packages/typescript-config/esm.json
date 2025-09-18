@@ -16,10 +16,5 @@
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"allowSyntheticDefaultImports": true
-	},
-	"ts-node": {
-		"compilerOptions": {
-			"module": "commonjs"
-		}
 	}
 }
