@@ -1,4 +1,4 @@
-# @surya/mongodb-multi-auth-state
+# @surya/mongodb-auth-state
 
 MongoDB-backed Baileys multi-file auth state replacement. Persists creds and signal keys in a single MongoDB collection using Mongoose.
 
@@ -13,7 +13,7 @@ This package expects Mongoose available as a dependency in the workspace. If you
 
 ```ts
 import makeWASocket from "baileys";
-import { useMongoDBAuthState } from "@surya/mongodb-multi-auth-state";
+import { useMongoDBAuthState } from "@surya/mongodb-auth-state";
 
 async function main() {
   const { state, saveCreds } = await useMongoDBAuthState({
@@ -54,7 +54,7 @@ This package includes a Jest smoke test that uses `mongodb-memory-server` to run
 
 ```bash
 npm i -D mongodb-memory-server
-npm test -w @surya/mongodb-multi-auth-state
+npm test -w @surya/mongodb-auth-state
 ```
 
 The test will spin up an in-memory MongoDB instance, connect via Mongoose, initialize the auth state, save creds, and tear down cleanly.

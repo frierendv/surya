@@ -7,7 +7,9 @@ export const getKVModel = (
 	modelName: string
 ): Model<AuthKV> => {
 	const existing = conn.models?.[modelName] as Model<AuthKV> | undefined;
-	if (existing) return existing;
+	if (existing) {
+		return existing;
+	}
 
 	const schema = new Schema<AuthKV>(
 		{

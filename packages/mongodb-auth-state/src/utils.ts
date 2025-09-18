@@ -14,7 +14,9 @@ export const keyDocKey = (sessionId: string, category: string, id: string) =>
 let bufferJsonPromise: Promise<typeof import("baileys")> | null = null;
 const getBufferJSON = async () => {
 	try {
-		if (!bufferJsonPromise) bufferJsonPromise = import("baileys");
+		if (!bufferJsonPromise) {
+			bufferJsonPromise = import("baileys");
+		}
 		const mod = await bufferJsonPromise;
 		return mod.BufferJSON;
 	} catch {

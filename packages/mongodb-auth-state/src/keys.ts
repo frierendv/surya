@@ -6,7 +6,9 @@ import { fromJSONSafe, keyDocKey, toJSONSafe } from "./utils";
 // imports with dynamic ones that Jest won’t parse at module load time.
 let waProtoPromise: Promise<typeof import("baileys/WAProto")> | null = null;
 const getProto = async () => {
-	if (!waProtoPromise) waProtoPromise = import("baileys/WAProto");
+	if (!waProtoPromise) {
+		waProtoPromise = import("baileys/WAProto");
+	}
 	const mod = await waProtoPromise;
 	return mod.proto;
 };
@@ -18,7 +20,9 @@ export const readKeysBatch = async (
 	ids: string[]
 ): Promise<{ [id: string]: any }> => {
 	const data: { [id: string]: any } = {};
-	if (!ids.length) return data;
+	if (!ids.length) {
+		return data;
+	}
 
 	const docKeys = ids.map((id) => keyDocKey(sessionId, type, id));
 	const docs = await KV.find({ docKey: { $in: docKeys } })
@@ -29,7 +33,9 @@ export const readKeysBatch = async (
 	for (const id of ids) {
 		const doc = byKey.get(keyDocKey(sessionId, type, id));
 		let value = (doc?.data ?? null) as any;
-		if (value) value = await fromJSONSafe(value);
+		if (value) {
+			value = await fromJSONSafe(value);
+		}
 		if (type === "app-state-sync-key" && value) {
 			const proto = await getProto();
 			value = proto.Message.AppStateSyncKeyData.create(value);
@@ -50,7 +56,9 @@ export const writeKeys = async (
 		const valueById = data[category as KeyCategory] as
 			| Record<string, any>
 			| undefined;
-		if (!valueById) continue;
+		if (!valueById) {
+			continue;
+		}
 
 		for (const id in valueById) {
 			const value = valueById[id];
@@ -78,5 +86,7 @@ export const writeKeys = async (
 		}
 	}
 
-	if (ops.length) await KV.bulkWrite(ops, { ordered: false });
+	if (ops.length) {
+		await KV.bulkWrite(ops, { ordered: false });
+	}
 };

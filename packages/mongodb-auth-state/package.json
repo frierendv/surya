@@ -1,5 +1,5 @@
 {
-	"name": "@surya/mongodb-multi-auth-state",
+	"name": "@surya/mongodb-auth-state",
 	"version": "1.0.0",
 	"type": "module",
 	"main": "dist/index.cjs",
