@@ -1,0 +1,39 @@
+{
+	"$schema": "./node_modules/syncpack/schema.json",
+	"indent": "\t",
+	"maxConcurrentRequests": 3,
+	"formatBugs": true,
+	"formatRepository": true,
+	"source": [
+		"./package.json",
+		"./apps/*/package.json",
+		"./packages/*/package.json"
+	],
+	"sortFirst": [
+		"name",
+		"version",
+		"author",
+		"private",
+		"type",
+		"license",
+		"description",
+		"sideEffects",
+		"main",
+		"module",
+		"types",
+		"typings",
+		"files",
+		"exports",
+		"engines",
+		"scripts",
+		"repository",
+		"bugs",
+		"homepage",
+		"peerDependencies",
+		"peerDependenciesMeta",
+		"dependencies",
+		"devDependencies",
+		"optionalDependencies",
+		"resolutions"
+	]
+}
