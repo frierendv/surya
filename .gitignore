@@ -130,12 +130,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-
-# Custom Additions
-baileys_*
-*logs*.txt
-database.json
-
 package-lock.json
 
 # Turbo
