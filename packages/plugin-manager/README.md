@@ -3,7 +3,7 @@
 A lightweight, file-based plugin loader and watcher. It loads plugins from a directory, indexes their commands, and hot-reloads on file changes (using chokidar when available, with fs.watch fallback). Built for SuryaRB, but generic enough for other bots or CLIs.
 
 - Loads ESM/CJS modules via dynamic import
-- Validates a minimal contract: { name, command, execute }
+- Validates a minimal contract: { name, command, category, description, execute }
 - Emits events: loaded, updated, removed, error
 - Finds plugins by command (case-insensitive)
 - Optional chokidar watcher with debounced updates
