@@ -1,4 +1,4 @@
-import type { SignalDataTypeMap } from "baileys/lib/Types";
+import type { SignalDataTypeMap } from "baileys";
 import type { KeyCategory, KVModel } from "./types";
 import { fromJSONSafe, keyDocKey, toJSONSafe } from "./utils";
 
