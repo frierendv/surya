@@ -74,6 +74,7 @@ web_modules/
 
 # dotenv environment variable files
 .env
+.env.development
 .env.development.local
 .env.test.local
 .env.production.local
@@ -135,7 +136,7 @@ baileys_*
 *logs*.txt
 database.json
 
-*-lock.json
+package-lock.json
 
 # Turbo
 .turbo
