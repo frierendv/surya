@@ -58,3 +58,7 @@ npm test -w @surya/mongodb-auth-state
 ```
 
 The test will spin up an in-memory MongoDB instance, connect via Mongoose, initialize the auth state, save creds, and tear down cleanly.
+
+## License
+
+This project is licensed under the terms of the [MIT license](https://github.com/frierendv/surya/blob/main/LICENSE).
