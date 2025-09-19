@@ -1,0 +1,15 @@
+{
+	"files": [],
+	"include": [],
+	"references": [
+		{
+			"path": "./packages/typescript-config/base.json"
+		},
+		{
+			"path": "./packages/typescript-config/esm.json"
+		},
+		{
+			"path": "./packages/typescript-config/nextjs.json"
+		}
+	]
+}

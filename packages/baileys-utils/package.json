@@ -1,0 +1,43 @@
+{
+	"name": "@surya/baileys-utils",
+	"version": "1.0.0",
+	"author": "FrierenDv",
+	"license": "MIT",
+	"description": "",
+	"sideEffects": false,
+	"main": "dist/index.js",
+	"module": "dist/index.mjs",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"build": "tsup src --dts",
+		"build:fast": "tsup src",
+		"clean": "rimraf dist .turbo",
+		"typecheck": "tsc --noEmit"
+	},
+	"repository": "frierendv/surya.git",
+	"bugs": "https://github.com/frierendv/surya/issues",
+	"homepage": "https://github.com/frierendv/surya#readme",
+	"peerDependencies": {
+		"@hapi/boom": "^10.0.1",
+		"baileys": "^7.0.0-rc.3",
+		"libphonenumber-js": "^1.12.17"
+	},
+	"tsup": {
+		"clean": true,
+		"target": "es2020",
+		"format": [
+			"cjs",
+			"esm"
+		]
+	}
+}

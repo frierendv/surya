@@ -1,0 +1,20 @@
+{
+	"$schema": "https://turborepo.com/schema.json",
+	"globalDependencies": [".env"],
+	"globalEnv": ["NODE_ENV", "MONGODB_URI", "LOG_LEVEL"],
+	"ui": "tui",
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"inputs": ["$TURBO_DEFAULT$", ".env.development", ".env"],
+			"outputs": [".next/**", "!.next/cache/**", "dist/**"]
+		},
+		"typecheck": {
+			"dependsOn": ["^typecheck"]
+		},
+		"clean": {
+			"outputs": [],
+			"cache": false
+		}
+	}
+}
