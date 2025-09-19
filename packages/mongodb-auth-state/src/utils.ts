@@ -1,4 +1,4 @@
-import type { AuthenticationCreds } from "baileys/lib/Types";
+import type { AuthenticationCreds } from "baileys";
 
 // Defaults and key builders
 export const defaultCollection = "baileys_auth_state";
