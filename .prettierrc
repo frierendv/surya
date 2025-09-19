@@ -11,6 +11,5 @@
 	"bracketSpacing": true,
 	"arrowParens": "always",
 	"endOfLine": "lf",
-	"importOrder": ["^\\.\\./", "^\\./"],
-	"importOrderSortSpecifiers": true
+	"importOrder": ["^\\.\\./", "^\\./"]
 }
