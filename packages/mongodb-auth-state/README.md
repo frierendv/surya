@@ -12,19 +12,19 @@ This package expects Mongoose available as a dependency in the workspace. If you
 ## Usage
 
 ```ts
-import makeWASocket from "baileys";
 import { useMongoDBAuthState } from "@surya/mongodb-auth-state";
+import { makeWASocket } from "baileys";
 
 async function main() {
-  const { state, saveCreds } = await useMongoDBAuthState({
-    uri: process.env.MONGO_URI!,
-    dbName: process.env.MONGO_DB || "surya",
-    collectionName: "whatsapp_auth_state",
-    sessionId: "session-1",
-  });
+ const { state, saveCreds } = await useMongoDBAuthState({
+  uri: process.env.MONGO_URI!,
+  dbName: process.env.MONGO_DB || "surya",
+  collectionName: "whatsapp_auth_state",
+  sessionId: "session-1",
+ });
 
-  const sock = makeWASocket({ auth: state });
-  sock.ev.on("creds.update", saveCreds);
+ const sock = makeWASocket({ auth: state });
+ sock.ev.on("creds.update", saveCreds);
 }
 
 main();
