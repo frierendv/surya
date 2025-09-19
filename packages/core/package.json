@@ -1,0 +1,38 @@
+{
+	"name": "@surya/core",
+	"version": "1.0.0",
+	"author": "FrierenDv",
+	"license": "MIT",
+	"description": "",
+	"sideEffects": false,
+	"files": [
+		"dist"
+	],
+	"exports": {
+		"./logger": {
+			"import": "./dist/logger.mjs",
+			"require": "./dist/logger.js"
+		},
+		"./readdir": {
+			"import": "./dist/readdir.mjs",
+			"require": "./dist/readdir.js"
+		},
+		"./string": {
+			"import": "./dist/string.mjs",
+			"require": "./dist/string.js"
+		},
+		"./debounce": {
+			"import": "./dist/debounce.mjs",
+			"require": "./dist/debounce.js"
+		}
+	},
+	"scripts": {
+		"build": "tsup src --dts",
+		"build:fast": "tsup src",
+		"clean": "rimraf dist .turbo",
+		"typecheck": "tsc --noEmit"
+	},
+	"repository": "frierendv/surya.git",
+	"bugs": "https://github.com/frierendv/surya/issues",
+	"homepage": "https://github.com/frierendv/surya#readme"
+}
