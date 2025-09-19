@@ -5,14 +5,9 @@
 			"label": "Build packages",
 			"type": "shell",
 			"command": "npm",
-			"args": [
-				"run",
-				"build"
-			],
+			"args": ["run", "build"],
 			"isBackground": false,
-			"problemMatcher": [
-				"$tsc"
-			],
+			"problemMatcher": ["$tsc"],
 			"group": "build"
 		},
 		{
@@ -35,26 +30,10 @@
 			"label": "Test all",
 			"type": "shell",
 			"command": "npm",
-			"args": [
-				"test",
-				"--",
-				"--verbose",
-				"--runInBand"
-			],
+			"args": ["test", "--", "--verbose", "--runInBand"],
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "test"
-		},
-		{
-			"label": "Build packages",
-			"type": "shell",
-			"command": "npm",
-			"args": [
-				"run",
-				"build"
-			],
-			"isBackground": false,
-			"group": "build"
 		}
 	]
 }
