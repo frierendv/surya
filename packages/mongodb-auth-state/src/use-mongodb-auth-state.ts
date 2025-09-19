@@ -1,12 +1,8 @@
-import type { AuthenticationCreds } from "baileys/lib/Types";
-import {
-	connect as mongooseConnect,
-	connection as mongooseConnection,
-	type Connection,
-} from "mongoose";
+import type { AuthenticationCreds, AuthenticationState } from "baileys";
+import mongoose, { type Connection } from "mongoose";
 import { readKeysBatch, writeKeys } from "./keys";
 import { getKVModel } from "./model";
-import type { MongoAuthStateOptions, UseAuthStateResult } from "./types";
+import type { MongoAuthStateOptions } from "./types";
 import {
 	credsDocKey,
 	defaultCollection,
@@ -23,7 +19,10 @@ import {
  */
 export const useMongoDBAuthState = async (
 	options: MongoAuthStateOptions
-): Promise<UseAuthStateResult> => {
+): Promise<{
+	state: AuthenticationState;
+	saveCreds: () => Promise<void>;
+}> => {
 	const {
 		uri,
 		dbName,
@@ -39,16 +38,16 @@ export const useMongoDBAuthState = async (
 		conn = connection;
 	} else {
 		if (!uri) {
-			if (mongooseConnection?.readyState === 1) {
-				conn = mongooseConnection as unknown as Connection;
+			if (mongoose.connection?.readyState === 1) {
+				conn = mongoose.connection as unknown as Connection;
 			} else {
 				throw new Error(
 					"No mongoose connection provided and no URI specified to connect."
 				);
 			}
 		} else {
-			await mongooseConnect(uri, dbName ? { dbName } : undefined);
-			conn = mongooseConnection as unknown as Connection;
+			await mongoose.connect(uri, dbName ? { dbName } : undefined);
+			conn = mongoose.connection as unknown as Connection;
 		}
 	}
 
