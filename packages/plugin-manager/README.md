@@ -26,23 +26,32 @@ A plugin must export an object (default export is supported) that matches `IPlug
 
 ```ts
 export interface IPluginManifest {
-  name: string;
-  command: string | string[];
-  version?: string;
-  category: string | string[];
-  description: string;
-  ownerOnly?: boolean;
-  adminOnly?: boolean;
-  privateChatOnly?: boolean;
-  groupChatOnly?: boolean;
-  hidden?: boolean;
-  rateLimit?: { limit: number; windowMs: number };
+ name: string;
+ command: string | string[];
+ version?: string;
+ category: string | string[];
+ description: string;
+ ownerOnly?: boolean;
+ adminOnly?: boolean;
+ privateChatOnly?: boolean;
+ groupChatOnly?: boolean;
+ hidden?: boolean;
+ rateLimit?: { limit: number; windowMs: number };
 }
 
 export interface IPlugin extends IPluginManifest {
-  before?: (ctx: IMessageContext, extra: IExtraMessageContext) => Promise<boolean> | boolean;
-  execute: (ctx: IMessageContext, extra: IExtraMessageContext) => Promise<void>;
-  after?: (ctx: IMessageContext, extra: IExtraMessageContext) => Promise<void> | void;
+ before?: (
+  ctx: IMessageContext,
+  extra: IExtraMessageContext
+ ) => Promise<boolean> | boolean;
+ execute: (
+  ctx: IMessageContext,
+  extra: IExtraMessageContext
+ ) => Promise<void>;
+ after?: (
+  ctx: IMessageContext,
+  extra: IExtraMessageContext
+ ) => Promise<void> | void;
 }
 ```
 
@@ -51,26 +60,26 @@ If you use `@surya/baileys-utils`, you'll get the `IMessageContext` and `IExtraM
 ## Usage
 
 ```ts
-import { PluginManager } from '@surya/plugin-manager'
+import { PluginManager } from "@surya/plugin-manager";
 
 const pm = new PluginManager({
-  rootDir: './plugins',
-  extensions: ['.js', '.mjs', '.cjs'],
-  recursive: true,
-  useChokidar: true, // falls back to fs.watch if not installed
-  debounceMs: 100,
-})
+ rootDir: "./plugins",
+ extensions: [".js", ".mjs", ".cjs"],
+ recursive: true,
+ useChokidar: true, // falls back to fs.watch if not installed
+ debounceMs: 100,
+});
 
-pm.on('loaded', (file, plugin) => console.log('loaded', plugin.name))
-pm.on('updated', (file, plugin) => console.log('updated', plugin.name))
-pm.on('removed', (file) => console.log('removed', file))
-pm.on('error', (err, file) => console.error('plugin error', file, err))
+pm.on("loaded", (file, plugin) => console.log("loaded", plugin.name));
+pm.on("updated", (file, plugin) => console.log("updated", plugin.name));
+pm.on("removed", (file) => console.log("removed", file));
+pm.on("error", (err, file) => console.error("plugin error", file, err));
 
-await pm.loadAll()
-await pm.watch()
+await pm.loadAll();
+await pm.watch();
 
 // later, find by command
-const [ping] = pm.findByCommand('ping')
+const [ping] = pm.findByCommand("ping");
 ```
 
 ## Example plugin
@@ -78,15 +87,15 @@ const [ping] = pm.findByCommand('ping')
 ```ts
 // plugins/ping.mjs
 export default {
-  name: 'ping',
-  command: ['ping', 'p'],
-  version: '1.0.0',
-  description: 'Respond with pong',
-  category: 'utility',
-  async execute(ctx, extra) {
-    await ctx.reply('pong')
-  }
-}
+ name: "ping",
+ command: ["ping", "p"],
+ version: "1.0.0",
+ description: "Respond with pong",
+ category: "utility",
+ async execute(ctx, extra) {
+  await ctx.reply("pong");
+ },
+};
 ```
 
 ## API highlights
@@ -113,7 +122,7 @@ export default {
 Types are included. Import from the package:
 
 ```ts
-import type { IPlugin, IPluginManifest } from '@surya/plugin-manager'
+import type { IPlugin, IPluginManifest } from "@surya/plugin-manager";
 ```
 
 ## Testing

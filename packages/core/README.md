@@ -18,20 +18,23 @@ yarn add @surya/core
 
 ```ts
 // ESM
-import { createLogger } from '@surya/core/logger'
-import { readDirFiles, walkDirFiles } from '@surya/core/readdir'
-import { debounce } from '@surya/core/debounce'
-import { capitalize } from '@surya/core/string'
+import { debounce } from "@surya/core/debounce";
+import { createLogger } from "@surya/core/logger";
+import { readDirFiles, walkDirFiles } from "@surya/core/readdir";
+import { capitalize } from "@surya/core/string";
 
-const log = createLogger({ name: 'example' })
-log.info('hello world')
+const log = createLogger({ name: "example" });
+log.info("hello world");
 
-const say = debounce((name: string) => log.info(`hi ${name}`), 200)
-say('Surya')
+const say = debounce((name: string) => log.info(`hi ${name}`), 200);
+say("Surya");
 
-console.log(capitalize('surya')) // Surya
+console.log(capitalize("surya")); // Surya
 
-await walkDirFiles('.', { recursive: true, onPath: (p) => log.debug('file', { p }) })
+await walkDirFiles(".", {
+ recursive: true,
+ onPath: (p) => log.debug("file", { p }),
+});
 ```
 
 ## API

@@ -25,73 +25,75 @@ npm i baileys @hapi/boom libphonenumber-js long
 
 ```ts
 import {
-  BaileysSocket,
-  createMessageContext,
-  createExtraMessageContext,
-} from '@surya/baileys-utils'
+	BaileysSocket,
+	createExtraMessageContext,
+	createMessageContext,
+} from "@surya/baileys-utils";
 import makeWASocket, {
-  useMultiFileAuthState,
-  Browsers,
-  type BaileysEventMap
-} from 'baileys'
+	Browsers,
+	useMultiFileAuthState,
+	type BaileysEventMap,
+} from "baileys";
 
 // 1) prepare auth state provider
-const { state, saveCreds } = await useMultiFileAuthState('./auth')
+const { state, saveCreds } = await useMultiFileAuthState("./auth");
 
 // 2) create socket manager
 const manager = new BaileysSocket({
-  authProvider: { state, saveCreds },
-  socketConfig: { browser: Browsers.macOS("SuryaRB") },
-  maxReconnectAttempts: 0, // unlimited
-})
+	authProvider: { state, saveCreds },
+	socketConfig: { browser: Browsers.macOS("SuryaRB") },
+	maxReconnectAttempts: 0, // unlimited
+});
 
 // 3) add middleware to inspect/handle events (optional)
 manager.use("*", async (event) => {
-  // console.log('event', event)
-})
+	// console.log('event', event)
+});
 
 // 4) listen to Baileys events you care about
-manager.on('messages.upsert', async ({ messages }) => {
-  const sock = manager.socket!
-  for (const msg of messages) {
-    const ctx = createMessageContext(msg, sock)
-    const extra = await createExtraMessageContext(ctx, sock)
+manager.on("messages.upsert", async ({ messages }) => {
+	const sock = manager.socket!;
+	for (const msg of messages) {
+		const ctx = createMessageContext(msg, sock);
+		const extra = await createExtraMessageContext(ctx, sock);
 
-    // simple command example
-    if (extra.command === 'ping') {
-      await ctx.reply('pong')
-    }
-  }
-})
+		// simple command example
+		if (extra.command === "ping") {
+			await ctx.reply("pong");
+		}
+	}
+});
 
-await manager.launch()
+await manager.launch();
 ```
 
 ## API overview
 
 - BaileysSocket
-  - new BaileysSocket(options)
-    - authProvider: { state, saveCreds } or Promise thereof
-    - socketConfig?: `Partial<UserFacingSocketConfig>`
-    - browser?: WABrowserDescription
-    - maxReconnectAttempts?: number (0 = unlimited)
-    - initialReconnectDelayMs?: number (default 2000, with backoff)
-  - launch(): start the socket (sets up handlers)
-  - stop(): stop and cleanup
-  - restart(): stop then launch
-  - use(event | '*', middleware): add middleware for Baileys events
-  - socket: the current WASocket instance
-  - events emitted by manager: 'stopped', 'logged_out', 'reconnecting', 'reconnect_exhausted'
+
+    - new BaileysSocket(options)
+        - authProvider: { state, saveCreds } or Promise thereof
+        - socketConfig?: `Partial<UserFacingSocketConfig>`
+        - browser?: WABrowserDescription
+        - maxReconnectAttempts?: number (0 = unlimited)
+        - initialReconnectDelayMs?: number (default 2000, with backoff)
+    - launch(): start the socket (sets up handlers)
+    - stop(): stop and cleanup
+    - restart(): stop then launch
+    - use(event | '\*', middleware): add middleware for Baileys events
+    - socket: the current WASocket instance
+    - events emitted by manager: 'stopped', 'logged_out', 'reconnecting', 'reconnect_exhausted'
 
 - Message helpers
-  - `getMessageText(message)`: extract best-effort text
-  - `createMediaInfo(message)`: inspect media and provide a download() helper
-  - `createQuotedMessage(message)`: info + actions for quoted message
-  - `createMessageContext(webMessageInfo, socket)`: full context + actions
-  - `createExtraMessageContext(ctx, socket)`: enrich context with prefix/command, group/admin info
+
+    - `getMessageText(message)`: extract best-effort text
+    - `createMediaInfo(message)`: inspect media and provide a download() helper
+    - `createQuotedMessage(message)`: info + actions for quoted message
+    - `createMessageContext(webMessageInfo, socket)`: full context + actions
+    - `createExtraMessageContext(ctx, socket)`: enrich context with prefix/command, group/admin info
 
 - Phone utilities
-  - `getPhoneDetail(jidOrNumber)`: parse e164, country, national number, calling code
+    - `getPhoneDetail(jidOrNumber)`: parse e164, country, national number, calling code
 
 ## Notes
 
@@ -103,7 +105,11 @@ await manager.launch()
 Types are bundled. Import what you need:
 
 ```ts
-import type { CreateBaileysOptions, IMessageContext, IExtraMessageContext } from "@surya/baileys-utils"
+import type {
+	CreateBaileysOptions,
+	IExtraMessageContext,
+	IMessageContext,
+} from "@surya/baileys-utils";
 ```
 
 ## License
