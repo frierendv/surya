@@ -1,38 +1,40 @@
 {
 	"name": "@surya/mongodb-auth-state",
 	"version": "1.0.0",
-	"type": "module",
-	"main": "dist/index.cjs",
-	"module": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"scripts": {
-		"build": "tsup",
-		"build:fast": "tsup src",
-		"typecheck": "tsc --noEmit",
-		"lint": "eslint . --max-warnings 0",
-		"lint:fix": "eslint . --max-warnings 0 --fix",
-		"clean": "rimraf dist .turbo"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/frierendv/surya.git"
-	},
 	"author": "FrierenDv",
 	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/frierendv/surya/issues"
-	},
-	"homepage": "https://github.com/frierendv/surya#readme",
 	"description": "",
-	"devDependencies": {
-		"baileys": "^7.0.0-rc.3",
-		"mongodb-memory-server": "^10.2.1"
+	"sideEffects": false,
+	"main": "dist/index.js",
+	"module": "dist/index.mjs",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
 	},
-	"dependencies": {
-		"async-mutex": "^0.5.0",
+	"scripts": {
+		"build": "tsup --dts",
+		"build:fast": "tsup src",
+		"clean": "rimraf dist .turbo",
+		"typecheck": "tsc --noEmit"
+	},
+	"repository": "frierendv/surya.git",
+	"bugs": "https://github.com/frierendv/surya/issues",
+	"homepage": "https://github.com/frierendv/surya#readme",
+	"peerDependencies": {
+		"baileys": "^7.0.0-rc.3",
 		"mongoose": "^8.18.1"
 	},
-	"peerDependencies": {
-		"baileys": "^7.0.0-rc.3"
+	"dependencies": {
+		"async-mutex": "^0.5.0"
+	},
+	"devDependencies": {
+		"mongodb-memory-server": "^10.2.1"
 	}
 }
