@@ -1,8 +1,4 @@
-import type {
-	AuthenticationCreds,
-	AuthenticationState,
-	SignalDataTypeMap,
-} from "baileys/lib/Types";
+import type { AuthenticationCreds, SignalDataTypeMap } from "baileys";
 import type { Connection, Model } from "mongoose";
 
 export type KeyCategory = keyof SignalDataTypeMap;
@@ -45,11 +41,6 @@ export type MongoAuthStateOptions = {
 	 * Name of the Mongoose model to use. Default is "BaileysAuthState".
 	 */
 	modelName?: string;
-};
-
-export type UseAuthStateResult = {
-	state: AuthenticationState;
-	saveCreds: () => Promise<void>;
 };
 
 export type KVModel = Model<AuthKV, object, object>;
