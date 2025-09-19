@@ -5,7 +5,6 @@ import js from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier";
 import prettierLint from "eslint-config-prettier/flat";
 import turboConfig from "eslint-config-turbo/flat";
-import onlyWarn from "eslint-plugin-only-warn";
 import turboPlugin from "eslint-plugin-turbo";
 import tseslint from "typescript-eslint";
 
@@ -20,6 +19,14 @@ const compat = new FlatCompat({ baseDirectory: __dirname });
  * @type {import("eslint").Linter.Config[]}
  * */
 export const config = [
+	{
+		ignores: [
+			"**/dist/**",
+			"**/node_modules/**",
+			"**/build/**",
+			"**/.turbo/**",
+		],
+	},
 	js.configs.recommended,
 	eslintConfigPrettier,
 	...tseslint.configs.recommended,
@@ -81,13 +88,5 @@ export const config = [
 			// disable any rule that is already covered by typescript
 			"@typescript-eslint/no-explicit-any": "off",
 		},
-	},
-	{
-		plugins: {
-			onlyWarn,
-		},
-	},
-	{
-		ignores: ["dist/**"],
 	},
 ];
