@@ -65,4 +65,4 @@ npm test -- --selectProjects core --runInBand
 
 ## License
 
-[![GitHub license](https://img.shields.io/github/license/frierendv/surya)](https://github.com/frierendv/surya/blob/main/LICENSE)
+This project is licensed under the terms of the [MIT license](https://github.com/frierendv/surya/blob/main/LICENSE).
