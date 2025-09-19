@@ -1,0 +1,39 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build packages",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "build"],
+			"isBackground": false,
+			"problemMatcher": ["$tsc"],
+			"group": "build"
+		},
+		{
+			"label": "Test core",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test",
+				"--",
+				"--selectProjects",
+				"core",
+				"--verbose",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Test all",
+			"type": "shell",
+			"command": "npm",
+			"args": ["test", "--", "--verbose", "--runInBand"],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}
