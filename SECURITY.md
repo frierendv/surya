@@ -6,7 +6,7 @@ Currently these versions of SURYA Exclusive are supported with security updates:
 
 | Version | Supported |
 | ------- | --------- |
-| 1.0.x   | ✅       |
+| 1.0.x   | ✅        |
 
 ## Reporting a Vulnerability
 
@@ -15,10 +15,10 @@ If you discover any security issues or vulnerabilities, please follow these step
 1. **DO NOT** open public issues for security vulnerabilities
 2. Send a private email to the maintainers or use GitHub's [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing/privately-reporting-a-security-vulnerability) feature
 3. Include as much information as possible:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggestions for fixes if any
+    - Description of the vulnerability
+    - Steps to reproduce
+    - Potential impact
+    - Suggestions for fixes if any
 
 ## Response Timeline
 
