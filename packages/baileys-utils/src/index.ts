@@ -1,5 +1,6 @@
 export type {
 	CreateBaileysOptions,
+	WASocket,
 	BaileysSocketHandle,
 } from "./baileys-socket";
 export type { Middleware } from "./baileys-socket";
