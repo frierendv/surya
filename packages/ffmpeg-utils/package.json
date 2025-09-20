@@ -1,0 +1,33 @@
+{
+	"name": "@surya/ffmpeg-utils",
+	"version": "1.0.0",
+	"author": "FrierenDv",
+	"license": "MIT",
+	"description": "",
+	"sideEffects": false,
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"build": "tsup src --dts",
+		"build:fast": "tsup src",
+		"clean": "rimraf dist .turbo",
+		"typecheck": "tsc --noEmit"
+	},
+	"repository": "frierendv/surya.git",
+	"bugs": "https://github.com/frierendv/surya/issues",
+	"homepage": "https://github.com/frierendv/surya#readme",
+	"dependencies": {
+		"fluent-ffmpeg": "^2.1.3"
+	},
+	"devDependencies": {
+		"@types/fluent-ffmpeg": "^2.1.27"
+	}
+}
