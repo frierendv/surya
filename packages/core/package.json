@@ -24,6 +24,10 @@
 		"./debounce": {
 			"import": "./dist/debounce.mjs",
 			"require": "./dist/debounce.js"
+		},
+		"./semaphore": {
+			"import": "./dist/semaphore.mjs",
+			"require": "./dist/semaphore.js"
 		}
 	},
 	"scripts": {
