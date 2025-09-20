@@ -1,9 +1,6 @@
 import { downloadMediaMessage, jidNormalizedUser, proto } from "baileys";
-import type {
-	MiscMessageGenerationOptions,
-	WAMessage,
-	WASocket,
-} from "baileys";
+import type { MiscMessageGenerationOptions, WAMessage } from "baileys";
+import { WASocket } from "./internals/types";
 import { getPhoneDetail, type IPhoneDetail } from "./phone-number";
 import { calculateFileSize, safeString } from "./util";
 
@@ -28,11 +25,11 @@ export type ReplyHandler = (
 		newText: string,
 		/** Additional options for the edit message. */
 		editOpts?: MiscMessageGenerationOptions
-	) => Promise<proto.IWebMessageInfo | undefined>;
+	) => Promise<proto.WebMessageInfo | undefined>;
 	/**
 	 * Delete the previously sent reply.
 	 */
-	deleteReply: () => Promise<proto.IWebMessageInfo | undefined>;
+	deleteReply: () => Promise<proto.WebMessageInfo | undefined>;
 }>;
 
 /**
@@ -78,7 +75,7 @@ export interface IMessageActions {
 	/**
 	 * React to the message (empty string removes reaction).
 	 */
-	react: (text: string) => Promise<proto.IWebMessageInfo | undefined>;
+	react: (text: string) => Promise<proto.WebMessageInfo | undefined>;
 	/**
 	 * Forward the message to another chat JID.
 	 */
@@ -87,11 +84,11 @@ export interface IMessageActions {
 		jid: string,
 		/** Additional options for the forward message. */
 		opts?: MiscMessageGenerationOptions
-	) => Promise<proto.IWebMessageInfo | undefined>;
+	) => Promise<proto.WebMessageInfo | undefined>;
 	/**
 	 * Delete the message, if permitted.
 	 */
-	delete: () => Promise<proto.IWebMessageInfo | undefined>;
+	delete: () => Promise<proto.WebMessageInfo | undefined>;
 }
 
 /**
@@ -99,11 +96,11 @@ export interface IMessageActions {
  */
 export interface IMessageMeta extends IMessageActions {
 	/**
-	 * Chat JID from which the message originated.
+	 * Chat **JID/LID** from which the message originated.
 	 */
 	from: string;
 	/**
-	 * The actual sender JID (participant in groups or chat JID in DMs).
+	 * The actual sender **JID/LID** (participant in groups or chat JID in DMs).
 	 */
 	sender: string;
 	/**
@@ -241,12 +238,11 @@ export const createQuotedMessage = (
  * convenient normalized metadata + helper actions.
  */
 export const createMessageContext = (
-	msg: proto.IWebMessageInfo,
+	msg: WAMessage,
 	sock: WASocket
 ): IMessageContext => {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-	const remoteJid = msg?.key.remoteJid!;
-	const isGroup = remoteJid?.endsWith?.("@g.us") ?? false;
+	const remoteJid = (msg.key.remoteJid || msg.key.remoteJidAlt)!;
+	const isGroup = remoteJid.endsWith("@g.us") ?? false;
 	const media = createMediaInfo(msg.message);
 	const myUserId = sock.user?.id;
 
@@ -372,9 +368,12 @@ export const createMessageContext = (
 	}
 
 	const sender = jidNormalizedUser(
-		(isGroup ? msg.key.participant : remoteJid) ?? undefined
+		(isGroup ? msg.key.participant || msg.key.participantAlt : remoteJid) ??
+			undefined
 	);
-	const phone = getPhoneDetail(sender);
+	const phone = (
+		sender.endsWith("@lid") ? {} : getPhoneDetail(sender)
+	) as IPhoneDetail;
 	const text = getMessageText(msg.message);
 	const args = text.split(/\s+/).filter((a) => a.length);
 
