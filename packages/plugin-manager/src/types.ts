@@ -16,11 +16,11 @@ export interface IPluginManifest {
 	version?: string;
 	/**
 	 * The category or categories the plugin belongs to.
+	 * All category names will be **capitalized**.
 	 */
 	category: string | string[];
 	/** A brief description of the plugin. */
 	description: string;
-
 	/**
 	 * Make the plugin can be execute by owner only.
 	 * @default false
@@ -40,39 +40,48 @@ export interface IPluginManifest {
 	 * Make the plugin can be triggered in group chat.
 	 */
 	groupChatOnly?: boolean;
-
 	/**
 	 * Mark this plugin hidden, it won't be listed in the help command.
 	 */
 	hidden?: boolean;
-
 	/**
 	 * If set, the plugin will be rate limited according to the specified options.
 	 */
 	rateLimit?: LimitOptions;
+	/**
+	 * Should ignore prefix when matching command.
+	 * This is useful for plugins that want to respond to messages without a specific prefix.
+	 * @default false
+	 */
+	ignorePrefix?: boolean;
+	/** Whether the plugin is disabled. */
+	disabled?: boolean;
 }
 
 export interface IPlugin extends IPluginManifest {
 	/**
 	 * The function that will be called before executing the main function.
 	 * It can be used for pre-processing or validation.
+	 *
+	 * **If fails (throws an error), the main function will not be executed.**
 	 * @param ctx - The context of the incoming message.
 	 * @param extra - Additional context for the message.
-	 * @returns A boolean indicating whether to proceed with the main function.
 	 */
 	before?: (
 		ctx: IMessageContext,
 		extra: IExtraMessageContext
-	) => Promise<boolean> | boolean;
+	) => Promise<unknown> | unknown;
 	/**
-	 * The main function that gets executed when the plugin is triggered.
+	 * The **main** function that gets executed when the plugin is triggered.
+	 *
+	 * **If fails (throws an error), the after function will not be executed.**
 	 * @param ctx - The context of the incoming message.
 	 * @param extra - Additional context for the message.
 	 */
 	execute: (
 		ctx: IMessageContext,
 		extra: IExtraMessageContext
-	) => Promise<void>;
+	) => Promise<unknown> | unknown;
 	/**
 	 * The function that will be called after executing the main function.
 	 * It can be used for post-processing or cleanup.
@@ -82,5 +91,5 @@ export interface IPlugin extends IPluginManifest {
 	after?: (
 		ctx: IMessageContext,
 		extra: IExtraMessageContext
-	) => Promise<void> | void;
+	) => Promise<unknown> | unknown;
 }

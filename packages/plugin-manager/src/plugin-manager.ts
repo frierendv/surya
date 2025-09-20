@@ -4,8 +4,9 @@ import { cpus } from "node:os";
 import path, { resolve } from "node:path";
 import { debounce } from "@surya/core/debounce";
 import { walkDirFiles } from "@surya/core/readdir";
+import { Semaphore } from "@surya/core/semaphore";
 import type { IPlugin } from "./types";
-import { isPlugin, toFileUrl } from "./util";
+import { isPlugin, normalizePluginManifest, toFileUrl } from "./util";
 
 export type PluginManagerEvents = {
 	loaded: (filePath: string, plugin: IPlugin) => void;
@@ -40,20 +41,26 @@ export type PluginManagerOptions = {
 	validate?: (obj: unknown) => obj is IPlugin;
 };
 
-export class PluginManager {
-	private options: Required<PluginManagerOptions>;
-	private byName = new Map<string, IPlugin>();
-	private byFile = new Map<string, IPlugin>();
-	private commands = new Map<string, Set<string>>(); // command -> plugin names
-	private emitter = new EventEmitter();
+export class PluginManager extends EventEmitter {
+	private readonly options: Required<PluginManagerOptions>;
+	private readonly byName = new Map<string, IPlugin>();
+	private readonly byFile = new Map<string, IPlugin>();
+	private readonly nameToFile = new Map<string, string>();
+	private readonly commands = new Map<string, Set<string>>();
 	private watcherStop?: () => Promise<void> | void;
-	private extSet: Set<string>;
-	private inFlight = new Map<string, Promise<void>>();
-	private maxConcurrency: number;
-	private active = 0;
-	private queue: Array<() => void> = [];
+	private readonly extSet: Set<string>;
+	private readonly inFlight = new Map<string, Promise<void>>();
+	private readonly semaphore: Semaphore;
 
 	constructor(opts: PluginManagerOptions) {
+		super();
+		if (!opts.rootDir) {
+			throw new Error("PluginManager: rootDir is required");
+		}
+
+		const cpuCount = cpus().length || 2;
+		const defaultConcurrency = Math.max(2, Math.floor(cpuCount / 2));
+
 		this.options = {
 			extensions: [".js"],
 			recursive: true,
@@ -62,29 +69,13 @@ export class PluginManager {
 			debounceMs: 100,
 			ignore: () => false,
 			validate: isPlugin,
-			concurrency: Math.max(2, cpus()?.length ?? 2),
+			concurrency: defaultConcurrency,
 			...opts,
 			rootDir: resolve(opts.rootDir),
 		};
 
 		this.extSet = new Set(this.options.extensions);
-		this.maxConcurrency = this.options.concurrency;
-	}
-
-	// ---- Event API ----
-	on<K extends keyof PluginManagerEvents>(
-		event: K,
-		listener: PluginManagerEvents[K]
-	): this {
-		this.emitter.on(event, listener as any);
-		return this;
-	}
-	off<K extends keyof PluginManagerEvents>(
-		event: K,
-		listener: PluginManagerEvents[K]
-	): this {
-		this.emitter.off(event, listener as any);
-		return this;
+		this.semaphore = new Semaphore(this.options.concurrency);
 	}
 
 	// ---- Public getters ----
@@ -110,15 +101,17 @@ export class PluginManager {
 		return out;
 	}
 
-	// ---- Loading ----
+	/**
+	 * Load all plugins from the rootDir
+	 */
 	async loadAll(): Promise<void> {
 		await walkDirFiles(this.options.rootDir, {
 			recursive: this.options.recursive,
 			filter: (name: string) => this.extSet.has(path.extname(name)),
 			ignore: this.options.ignore,
 			onPath: (fp: string) =>
-				this.runLimited(() => this.loadFromFile(fp)).catch(
-					(e: unknown) => this.emitError(e, fp)
+				this.runLimited(() => this.loadFromFile(fp)).catch((e) =>
+					this.emitError(e, fp)
 				),
 			onError: (err: unknown, ctx?: string) => this.emitError(err, ctx),
 		});
@@ -130,59 +123,83 @@ export class PluginManager {
 
 	async loadFromFile(filePath: string, isReload = false): Promise<void> {
 		const abs = resolve(filePath);
+
 		// de-duplicate concurrent loads for the same file
 		const existing = this.inFlight.get(abs);
 		if (existing) {
 			await existing;
 			return;
 		}
+
 		let resolveInflight: (() => void) | undefined;
 		const inflight = new Promise<void>((res) => {
 			resolveInflight = res;
 		});
 		this.inFlight.set(abs, inflight);
-		const fileUrl = toFileUrl(abs, this.options.cacheBust);
-		let mod: any;
+
 		try {
-			mod = await import(fileUrl);
-		} catch (e) {
-			this.emitError(e, abs);
-			this.inFlight.delete(abs);
-			resolveInflight?.();
-			return;
-		}
-		const exp = mod?.default ?? mod;
-		const validate = this.options.validate ?? isPlugin;
-		if (!validate(exp)) {
-			this.emitError(
-				new Error(`File does not export a valid plugin: ${abs}`),
-				abs
-			);
-			this.inFlight.delete(abs);
-			resolveInflight?.();
-			return;
-		}
-		const plugin: IPlugin = exp;
+			const fileUrl = toFileUrl(abs, this.options.cacheBust);
 
-		// If we had a previous plugin for this file, unindex it first
-		const prev = this.byFile.get(abs);
-		if (prev) {
-			this.unindexCommands(prev);
-			// Only delete byName if it still points to the same previous plugin
-			const currentByName = this.byName.get(prev.name);
-			if (currentByName === prev) {
-				this.byName.delete(prev.name);
+			let mod: unknown;
+			try {
+				mod = await import(fileUrl);
+			} catch (e) {
+				this.emitError(e, abs);
+				return;
 			}
+
+			const exp = (mod as any)?.default ?? mod;
+			const validate = this.options.validate ?? isPlugin;
+			if (!validate(exp)) {
+				this.emitError(
+					new Error(`File does not export a valid plugin: ${abs}`),
+					abs
+				);
+				return;
+			}
+			const plugin: IPlugin = exp;
+
+			// Check duplicate plugin name across different files
+			const registeredFile = this.nameToFile.get(plugin.name);
+			if (registeredFile && registeredFile !== abs) {
+				this.emitError(
+					new Error(
+						`Duplicate plugin name '${plugin.name}' from ${abs}; already loaded from ${registeredFile}`
+					),
+					abs
+				);
+				return;
+			}
+
+			// Normalize plugin manifest values
+			normalizePluginManifest(plugin);
+
+			// If we had a previous plugin for this file, unindex it first
+			const prev = this.byFile.get(abs);
+			if (prev) {
+				this.unindexCommands(prev);
+				// Only delete byName if it still points to the same previous plugin
+				const currentByName = this.byName.get(prev.name);
+				if (currentByName === prev) {
+					this.byName.delete(prev.name);
+				}
+				// Clean name->file mapping if it pointed to this file
+				if (this.nameToFile.get(prev.name) === abs) {
+					this.nameToFile.delete(prev.name);
+				}
+			}
+
+			// Store new plugin and (re)index
+			this.byFile.set(abs, plugin);
+			this.byName.set(plugin.name, plugin);
+			this.nameToFile.set(plugin.name, abs);
+			this.indexCommands(plugin);
+
+			this.emit(isReload ? "updated" : "loaded", abs, plugin);
+		} finally {
+			this.inFlight.delete(abs);
+			resolveInflight?.();
 		}
-
-		// Store new plugin and (re)index
-		this.byFile.set(abs, plugin);
-		this.byName.set(plugin.name, plugin);
-		this.indexCommands(plugin);
-
-		this.emitter.emit(isReload ? "updated" : "loaded", abs, plugin);
-		this.inFlight.delete(abs);
-		resolveInflight?.();
 	}
 
 	removeByFile(filePath: string): void {
@@ -193,31 +210,41 @@ export class PluginManager {
 		}
 		this.byFile.delete(abs);
 		this.byName.delete(plugin.name);
+		if (this.nameToFile.get(plugin.name) === abs) {
+			this.nameToFile.delete(plugin.name);
+		}
 		this.unindexCommands(plugin);
-		this.emitter.emit("removed", abs, plugin);
+		this.emit("removed", abs, plugin);
 	}
 
-	// ---- Watch ----
+	/**
+	 * Start watching for file changes
+	 */
 	async watch(): Promise<void> {
 		if (this.watcherStop) {
-			return; // already watching
-		}
+			return;
+		} // already watching
 
 		const { useChokidar } = this.options;
 		if (useChokidar) {
 			try {
-				const chokidar = await import("chokidar").then(
-					(m) => m.default || m
-				);
+				const chokidarMod = await import("chokidar");
+				const chokidar = (chokidarMod as any).default ?? chokidarMod;
 				await this.startChokidar(chokidar);
 				return;
-			} catch {
+			} catch (_err) {
+				console.warn(
+					"chokidar not available, file watching may be less efficient"
+				);
 				// fallback to fs.watch
 			}
 		}
 		await this.startFsWatch();
 	}
 
+	/**
+	 * Stop watching for file changes
+	 */
 	async stop(): Promise<void> {
 		if (this.watcherStop) {
 			await this.watcherStop();
@@ -227,11 +254,7 @@ export class PluginManager {
 
 	// ---- Internals ----
 	private indexCommands(plugin: IPlugin): void {
-		const cmds = Array.isArray(plugin.command)
-			? plugin.command
-			: [plugin.command];
-		for (const c of cmds) {
-			const key = String(c).toLowerCase();
+		for (const key of this.getPluginCommands(plugin)) {
 			if (!this.commands.has(key)) {
 				this.commands.set(key, new Set());
 			}
@@ -239,11 +262,7 @@ export class PluginManager {
 		}
 	}
 	private unindexCommands(plugin: IPlugin): void {
-		const cmds = Array.isArray(plugin.command)
-			? plugin.command
-			: [plugin.command];
-		for (const c of cmds) {
-			const key = String(c).toLowerCase();
+		for (const key of this.getPluginCommands(plugin)) {
 			const set = this.commands.get(key);
 			if (!set) {
 				continue;
@@ -255,19 +274,23 @@ export class PluginManager {
 		}
 	}
 
+	private getPluginCommands(plugin: IPlugin): string[] {
+		const cmds = Array.isArray(plugin.command)
+			? plugin.command
+			: [plugin.command];
+		return cmds.map((c) => String(c).toLowerCase());
+	}
+
 	private emitError(error: unknown, filePath?: string) {
-		this.emitter.emit("error", error, filePath);
+		this.emit("error", error, filePath);
 	}
 
 	private async startChokidar(chokidar: any): Promise<void> {
-		const patterns = this.options.extensions.map((ext) =>
-			path.join(
-				this.options.rootDir,
-				this.options.recursive ? `**/*${ext}` : `*${ext}`
-			)
-		);
-		const watcher = chokidar.watch(patterns, {
+		const watcher = chokidar.watch(this.options.rootDir, {
 			ignoreInitial: true,
+			ignored: (fp: string, stat: unknown) =>
+				this.shouldIgnorePath(fp, !!(stat as any)?.isFile?.()),
+			persistent: true,
 			cwd: undefined,
 			awaitWriteFinish: {
 				stabilityThreshold: this.options.debounceMs,
@@ -277,9 +300,11 @@ export class PluginManager {
 
 		const debounced = debounce(
 			async (type: "add" | "change" | "unlink", fp: string) => {
-				const abs = path.isAbsolute(fp)
-					? fp
-					: resolve(this.options.rootDir, fp);
+				const abs = this.toAbs(fp);
+				// Respect ignore predicate here too (in case "ignored" didn't catch it)
+				if (this.shouldIgnorePath(abs, true)) {
+					return;
+				}
 				try {
 					if (type === "unlink") {
 						this.removeByFile(abs);
@@ -317,7 +342,10 @@ export class PluginManager {
 			if (!filename) {
 				return;
 			}
-			const full = resolve(this.options.rootDir, filename);
+			const full = this.toAbs(filename);
+			if (this.shouldIgnorePath(full, true)) {
+				return;
+			}
 			if (!exts.has(path.extname(full))) {
 				return;
 			}
@@ -341,31 +369,55 @@ export class PluginManager {
 			watcher.close();
 		};
 	}
-	// Simple concurrency limiter to avoid import() spikes
-	private runLimited<T>(task: () => Promise<T>): Promise<T> {
-		if (this.active < this.maxConcurrency) {
-			this.active++;
-			return task().finally(() => {
-				this.active--;
-				const next = this.queue.shift();
-				if (next) {
-					next();
-				}
-			});
+
+	// Concurrency limiter to avoid import() spikes
+	private async runLimited<T>(task: () => Promise<T>): Promise<T> {
+		await this.semaphore.acquire();
+		try {
+			return await task();
+		} finally {
+			this.semaphore.release();
 		}
-		return new Promise<T>((resolve, reject) => {
-			this.queue.push(() => {
-				this.active++;
-				task()
-					.then(resolve, reject)
-					.finally(() => {
-						this.active--;
-						const next = this.queue.shift();
-						if (next) {
-							next();
-						}
-					});
-			});
-		});
+	}
+
+	private toAbs(fp: string): string {
+		return path.isAbsolute(fp) ? fp : resolve(this.options.rootDir, fp);
+	}
+	private shouldIgnorePath(fp: string, isFileGuess: boolean): boolean {
+		const abs = this.toAbs(fp);
+		const name = path.basename(abs);
+		if (this.options.ignore(abs, name)) {
+			return true;
+		}
+		// Only filter by extension for files
+		if (isFileGuess && !this.extSet.has(path.extname(abs))) {
+			return true;
+		}
+		return false;
+	}
+
+	override on<Ev extends keyof PluginManagerEvents>(
+		event: Ev,
+		listener: PluginManagerEvents[Ev]
+	): this {
+		return super.on(event, listener);
+	}
+	override once<Ev extends keyof PluginManagerEvents>(
+		event: Ev,
+		listener: PluginManagerEvents[Ev]
+	): this {
+		return super.once(event, listener);
+	}
+	override off<Ev extends keyof PluginManagerEvents>(
+		event: Ev,
+		listener: PluginManagerEvents[Ev]
+	): this {
+		return super.off(event, listener);
+	}
+	override emit<Ev extends keyof PluginManagerEvents>(
+		event: Ev,
+		...args: Parameters<PluginManagerEvents[Ev]>
+	): boolean {
+		return super.emit(event, ...args);
 	}
 }
