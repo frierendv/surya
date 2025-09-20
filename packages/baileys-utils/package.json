@@ -34,7 +34,9 @@
 	"peerDependencies": {
 		"@hapi/boom": "^10.0.1",
 		"baileys": "^7.0.0-rc.3",
-		"libphonenumber-js": "^1.12.17"
+		"file-type": "^21.0.0",
+		"libphonenumber-js": "^1.12.17",
+		"undici": "^7.16.0"
 	},
 	"tsup": {
 		"clean": true,
