@@ -16,6 +16,10 @@
 			"import": "./dist/index.mjs",
 			"require": "./dist/index.js"
 		},
+		"./internals": {
+			"import": "./dist/internals/index.mjs",
+			"require": "./dist/internals/index.js"
+		},
 		"./package.json": "./package.json"
 	},
 	"scripts": {

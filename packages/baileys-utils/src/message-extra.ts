@@ -1,4 +1,5 @@
-import type { GroupMetadata, WASocket } from "baileys";
+import type { GroupMetadata } from "baileys";
+import { WASocket } from "./internals/types";
 import type { IMessageContext } from "./message";
 
 export interface IExtraMessageContext {
@@ -21,41 +22,103 @@ export interface IExtraMessageContext {
 	/**
 	 * The prefix used in the message, if any.
 	 */
-	prefix: string;
+	usedPrefix: string;
 	/**
 	 * The command used in the message, if any.
 	 */
 	command: string;
+	/**
+	 * Socket instance.
+	 */
+	sock: WASocket;
 }
 
-const globalPrefix = /^([!/#$%.?&;,:`´¨^*+~=<>|])/;
+const globalPrefix = /^([!./])/;
+
+/**
+ * Escape special regex characters in a string.
+ */
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Cache compiled prefix regexes to avoid rebuilding them on every message.
+ * Key is a normalized string representation of the prefix(s).
+ */
+const prefixRegexCache = new Map<string, RegExp>();
+
+/**
+ * Build (and cache) a RegExp that matches provided prefix string or array of strings at the start.
+ * Example: buildPrefixRegex(["!", "/"]) => /^(!|\/)/
+ */
+const buildPrefixRegex = (prefix: string | string[]): RegExp => {
+	const key = Array.isArray(prefix)
+		? `arr:${prefix.join("|")}`
+		: `str:${prefix}`;
+	const cached = prefixRegexCache.get(key);
+	if (cached) {
+		return cached;
+	}
+
+	let pattern: string;
+	if (Array.isArray(prefix)) {
+		// filter out empty entries (defensive) and escape each one
+		const parts = prefix.filter(Boolean).map(escapeRegex);
+		pattern = parts.length ? `^(${parts.join("|")})` : ""; // empty pattern indicates fallback to globalPrefix
+	} else {
+		pattern = prefix ? `^(${escapeRegex(prefix)})` : "";
+	}
+
+	const re = pattern ? new RegExp(pattern) : globalPrefix;
+	prefixRegexCache.set(key, re);
+	return re;
+};
 
 export const createExtraMessageContext = async (
+	/**
+	 * The message context created by `createMessageContext`.
+	 */
 	ctx: IMessageContext,
-	sock: WASocket
+	/** The Baileys socket. */
+	sock: WASocket,
+	/** The prefix or prefixes to use for command detection. */
+	prefix: string | string[] = ""
 ): Promise<IExtraMessageContext> => {
-	let prefix = "";
-	let command = "";
-	if (ctx.text) {
-		const text = ctx.text;
-		const match = globalPrefix.exec(text);
-		if (match) {
-			prefix = match[0];
-			command = text.slice(prefix.length).trim().split(" ")[0] || "";
-			ctx.text = text.slice(prefix.length + command.length).trim();
-			ctx.args = ctx.text.split(" ").filter((v) => v);
-		}
+	const fbObj: IExtraMessageContext = {
+		groupMetadata: null,
+		isOwner: false,
+		isAdmin: false,
+		isBotAdmin: false,
+		usedPrefix: "",
+		command: "",
+		sock,
+	};
+	if (!ctx.args?.[0]) {
+		return fbObj;
+	}
+	const [text] = ctx.args;
+
+	// decide whether to use a custom prefix or the global default
+	const hasCustomPrefix = Array.isArray(prefix)
+		? prefix.length > 0
+		: Boolean(prefix);
+	const regex = hasCustomPrefix ? buildPrefixRegex(prefix) : globalPrefix;
+
+	const match = regex.exec(text);
+	fbObj.command = text.toLowerCase();
+
+	if (match) {
+		fbObj.usedPrefix = match[0];
+		// use ctx.text so that we strip the actual message text (not the tokenized arg)
+		fbObj.command = (
+			ctx.text.slice(fbObj.usedPrefix.length).trim().split(/\s+/)[0] || ""
+		).toLowerCase();
+	} else {
+		fbObj.usedPrefix = "";
 	}
 
 	// non-group contexts
 	if (!ctx.isGroup) {
-		return {
-			groupMetadata: null,
-			isAdmin: false,
-			isBotAdmin: false,
-			prefix,
-			command,
-		};
+		return fbObj;
 	}
 
 	const groupMetadata = await sock.groupMetadata(ctx.from);
@@ -63,27 +126,26 @@ export const createExtraMessageContext = async (
 	const senderId = ctx.sender;
 	const botId = sock.user?.id ?? "";
 
-	// avoids creating intermediate arrays.
-	let isAdmin = false;
-	let isBotAdmin = false;
+	// Avoid creating intermediate arrays by scanning participants once.
+	fbObj.groupMetadata = groupMetadata;
+	fbObj.isAdmin = false;
+	fbObj.isBotAdmin = false;
 
 	for (const p of participants) {
-		if (!isAdmin && p.id === senderId && p.admin) {
-			isAdmin = true;
+		if (p.id === senderId) {
+			if (p.admin === "admin" || p.admin === "superadmin") {
+				fbObj.isAdmin = true;
+			}
 		}
-		if (!isBotAdmin && botId && p.id === botId && p.admin) {
-			isBotAdmin = true;
+		if (p.id === botId) {
+			if (p.admin === "admin" || p.admin === "superadmin") {
+				fbObj.isBotAdmin = true;
+			}
 		}
-		if (isAdmin && isBotAdmin) {
+		if (fbObj.isAdmin && fbObj.isBotAdmin) {
 			break;
 		}
 	}
 
-	return {
-		groupMetadata,
-		isAdmin,
-		isBotAdmin,
-		prefix,
-		command,
-	};
+	return fbObj;
 };

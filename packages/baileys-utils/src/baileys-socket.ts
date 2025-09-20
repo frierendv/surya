@@ -9,9 +9,13 @@ import {
 import type {
 	AuthenticationState,
 	BaileysEventMap,
+	WASocket as BaileysWASocket,
 	UserFacingSocketConfig,
 	WABrowserDescription,
 } from "baileys";
+import type { WASocket as InternalWASocket } from "./internals/types";
+
+export type WASocket = InternalWASocket | (InternalWASocket & BaileysWASocket);
 
 export type AuthProps = {
 	state: AuthenticationState;
@@ -33,7 +37,7 @@ export type CreateBaileysOptions = {
 };
 
 export type BaileysSocketHandle = {
-	socket: ReturnType<typeof makeWASocket>;
+	socket: WASocket;
 	stop: () => Promise<void>;
 };
 
@@ -50,7 +54,7 @@ export type Middleware<
 > = (
 	payload: BaileysEventMap[E],
 	next: () => Promise<void>,
-	meta: { event: E; socket: ReturnType<typeof makeWASocket> }
+	meta: { event: E; socket: WASocket }
 ) => any | Promise<any>;
 
 /**
@@ -69,7 +73,7 @@ export class BaileysSocket extends EventEmitter {
 			"initialReconnectDelayMs" | "maxReconnectAttempts"
 		>;
 	private auth!: AuthProps;
-	private _socket: ReturnType<typeof makeWASocket> | null = null;
+	private _socket: WASocket | null = null;
 	private stopped = true;
 	private reconnectAttempts = 0;
 	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -96,7 +100,7 @@ export class BaileysSocket extends EventEmitter {
 	/**
 	 * Get the current Baileys socket instance, or null if not running
 	 */
-	get socket(): ReturnType<typeof makeWASocket> | null {
+	get socket(): WASocket | null {
 		return this._socket;
 	}
 
@@ -115,7 +119,7 @@ export class BaileysSocket extends EventEmitter {
 		return this;
 	}
 
-	async launch(): Promise<ReturnType<typeof makeWASocket>> {
+	async launch(): Promise<WASocket> {
 		if (!this.options.authProvider) {
 			throw new Error("authProvider is required");
 		}
@@ -182,7 +186,7 @@ export class BaileysSocket extends EventEmitter {
 		this.emit("stopped");
 	}
 
-	async restart(): Promise<ReturnType<typeof makeWASocket>> {
+	async restart(): Promise<WASocket> {
 		await this.stop();
 		return this.launch();
 	}
@@ -207,28 +211,12 @@ export class BaileysSocket extends EventEmitter {
 				creds: this.auth.state.creds,
 				keys: makeCacheableSignalKeyStore(this.auth.state.keys),
 			},
-		});
-
-		// debounce credential saves to reduce I/O churn
-		// let saveCredsPending: NodeJS.Timeout | null = null;
-		// const scheduleSaveCreds = () => {
-		// 	if (saveCredsPending) {
-		// 		clearTimeout(saveCredsPending);
-		// 	}
-		// 	saveCredsPending = setTimeout(async () => {
-		// 		try {
-		// 			await this.auth.saveCreds();
-		// 		} catch (err) {
-		// 			console.error("Failed to save Baileys credentials:", err);
-		// 		}
-		// 	}, 250);
-		// };
+		}) as WASocket;
 
 		// batch processing improves throughput
 		sock.ev.process(async (events) => {
 			// run creds update
 			if (events["creds.update"]) {
-				// scheduleSaveCreds();
 				await this.auth.saveCreds();
 				await this.handle("creds.update", events["creds.update"], sock);
 			}
@@ -305,13 +293,13 @@ export class BaileysSocket extends EventEmitter {
 			}
 		});
 
-		return sock;
+		return sock as WASocket;
 	}
 
 	private async handle<E extends keyof BaileysEventMap>(
 		event: E,
 		payload: BaileysEventMap[E],
-		sock: ReturnType<typeof makeWASocket>
+		sock: WASocket
 	) {
 		// run middleware chain: [global,*] then [specific,event]
 		const chain: Middleware[] = [
