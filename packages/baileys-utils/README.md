@@ -25,14 +25,14 @@ npm i baileys @hapi/boom libphonenumber-js long
 
 ```ts
 import {
-	BaileysSocket,
-	createExtraMessageContext,
-	createMessageContext,
+ BaileysSocket,
+ createExtraMessageContext,
+ createMessageContext,
 } from "@surya/baileys-utils";
 import makeWASocket, {
-	Browsers,
-	useMultiFileAuthState,
-	type BaileysEventMap,
+ Browsers,
+ useMultiFileAuthState,
+ type BaileysEventMap,
 } from "baileys";
 
 // 1) prepare auth state provider
@@ -40,28 +40,28 @@ const { state, saveCreds } = await useMultiFileAuthState("./auth");
 
 // 2) create socket manager
 const manager = new BaileysSocket({
-	authProvider: { state, saveCreds },
-	socketConfig: { browser: Browsers.macOS("SuryaRB") },
-	maxReconnectAttempts: 0, // unlimited
+ authProvider: { state, saveCreds },
+ socketConfig: { browser: Browsers.macOS("SuryaRB") },
+ maxReconnectAttempts: 0, // unlimited
 });
 
 // 3) add middleware to inspect/handle events (optional)
 manager.use("*", async (event) => {
-	// console.log('event', event)
+ // console.log('event', event)
 });
 
 // 4) listen to Baileys events you care about
 manager.on("messages.upsert", async ({ messages }) => {
-	const sock = manager.socket!;
-	for (const msg of messages) {
-		const ctx = createMessageContext(msg, sock);
-		const extra = await createExtraMessageContext(ctx, sock);
+ const sock = manager.socket!;
+ for (const msg of messages) {
+  const ctx = createMessageContext(msg, sock);
+  const extra = await createExtraMessageContext(ctx, sock, ["!"] /* prefix */);
 
-		// simple command example
-		if (extra.command === "ping") {
-			await ctx.reply("pong");
-		}
-	}
+  // simple command example
+  if (extra.command === "ping") {
+   await ctx.reply("pong");
+  }
+ }
 });
 
 await manager.launch();
@@ -71,29 +71,29 @@ await manager.launch();
 
 - BaileysSocket
 
-    - new BaileysSocket(options)
-        - authProvider: { state, saveCreds } or Promise thereof
-        - socketConfig?: `Partial<UserFacingSocketConfig>`
-        - browser?: WABrowserDescription
-        - maxReconnectAttempts?: number (0 = unlimited)
-        - initialReconnectDelayMs?: number (default 2000, with backoff)
-    - launch(): start the socket (sets up handlers)
-    - stop(): stop and cleanup
-    - restart(): stop then launch
-    - use(event | '\*', middleware): add middleware for Baileys events
-    - socket: the current WASocket instance
-    - events emitted by manager: 'stopped', 'logged_out', 'reconnecting', 'reconnect_exhausted'
+  - new BaileysSocket(options)
+    - authProvider: { state, saveCreds } or Promise thereof
+    - socketConfig?: `Partial<UserFacingSocketConfig>`
+    - browser?: WABrowserDescription
+    - maxReconnectAttempts?: number (0 = unlimited)
+    - initialReconnectDelayMs?: number (default 2000, with backoff)
+  - launch(): start the socket (sets up handlers)
+  - stop(): stop and cleanup
+  - restart(): stop then launch
+  - use(event | '\*', middleware): add middleware for Baileys events
+  - socket: the current WASocket instance
+  - events emitted by manager: 'stopped', 'logged_out', 'reconnecting', 'reconnect_exhausted'
 
 - Message helpers
 
-    - `getMessageText(message)`: extract best-effort text
-    - `createMediaInfo(message)`: inspect media and provide a download() helper
-    - `createQuotedMessage(message)`: info + actions for quoted message
-    - `createMessageContext(webMessageInfo, socket)`: full context + actions
-    - `createExtraMessageContext(ctx, socket)`: enrich context with prefix/command, group/admin info
+  - `getMessageText(message)`: extract best-effort text
+  - `createMediaInfo(message)`: inspect media and provide a download() helper
+  - `createQuotedMessage(message)`: info + actions for quoted message
+  - `createMessageContext(webMessageInfo, socket, prefixes)`: full context + actions
+  - `createExtraMessageContext(ctx, socket)`: enrich context with prefix/command, group/admin info
 
 - Phone utilities
-    - `getPhoneDetail(jidOrNumber)`: parse e164, country, national number, calling code
+  - `getPhoneDetail(jidOrNumber)`: parse e164, country, national number, calling code
 
 ## Notes
 
@@ -106,9 +106,9 @@ Types are bundled. Import what you need:
 
 ```ts
 import type {
-	CreateBaileysOptions,
-	IExtraMessageContext,
-	IMessageContext,
+ CreateBaileysOptions,
+ IExtraMessageContext,
+ IMessageContext,
 } from "@surya/baileys-utils";
 ```
 
