@@ -1,9 +1,19 @@
 import type {
 	AnyMediaMessageContent,
-	AnyMessageContent,
 	WASocket as BaileysWASocket,
 	MiscMessageGenerationOptions,
+	proto,
 } from "baileys";
+
+export type SendFileOptions = Partial<
+	AnyMediaMessageContent & Pick<MiscMessageGenerationOptions, "quoted">
+> | null;
+
+export type SendFile = (
+	jid: string,
+	content: any,
+	options?: SendFileOptions
+) => Promise<proto.WebMessageInfo | undefined>;
 
 export interface WASocket extends BaileysWASocket {
 	/**
@@ -12,10 +22,5 @@ export interface WASocket extends BaileysWASocket {
 	 * It automatically detects the file type
 	 * and sends it as the appropriate media type (image, video, audio, document).
 	 */
-	sendFile: (
-		jid: string,
-		content: any,
-		options?: Partial<AnyMessageContent> | null,
-		miscOptions?: MiscMessageGenerationOptions
-	) => Promise<AnyMediaMessageContent>;
+	sendFile: SendFile;
 }
