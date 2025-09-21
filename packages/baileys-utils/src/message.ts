@@ -53,7 +53,11 @@ export interface IMediaInfo {
 /**
  * Metadata for a quoted message (context info + extracted helpers).
  */
-export interface QuotedMessageMeta extends proto.IContextInfo {
+export interface QuotedMessageMeta {
+	/**
+	 * The sender of the quoted message.
+	 */
+	participant: string;
 	/**
 	 * Extracted text of the quoted message.
 	 */
@@ -123,6 +127,14 @@ export interface IMessageMeta extends IMessageActions {
 	 * Arguments/words in the text split by spaces.
 	 */
 	args: string[];
+	/**
+	 * List of mentioned JIDs in the message, if any.
+	 */
+	mentionedJid: string[];
+	/**
+	 * List of group mentions in the message, if any.
+	 */
+	groupMentions: proto.IGroupMention[];
 	/**
 	 * Media metadata if the message contains media.
 	 */
@@ -227,9 +239,9 @@ export const createQuotedMessage = (
 	const text = getMessageText(quotedMessage);
 
 	return {
+		participant: contextInfo.participant as string,
 		text,
 		media,
-		...contextInfo,
 	};
 };
 
@@ -278,12 +290,12 @@ export const createMessageContext = (
 	const deleteMessage = () =>
 		sock.sendMessage(remoteJid, { delete: msg.key });
 
+	const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
 	const quoted = createQuotedMessage(msg.message);
 	if (quoted) {
 		// quoted context
-		const quotedCtx = msg.message?.extendedTextMessage?.contextInfo;
-		const qId = quotedCtx?.stanzaId;
-		const qParticipant = quotedCtx?.participant;
+		const qId = contextInfo?.stanzaId;
+		const qParticipant = contextInfo?.participant;
 		const qFromMe = qParticipant === myUserId;
 
 		const replyQuoted: ReplyHandler = async (
@@ -385,6 +397,8 @@ export const createMessageContext = (
 		isGroup,
 		text,
 		args,
+		mentionedJid: contextInfo?.mentionedJid?.map(jidNormalizedUser) || [],
+		groupMentions: contextInfo?.groupMentions || [],
 		media,
 		quoted: quoted as IMessageMeta["quoted"],
 		...msg,
