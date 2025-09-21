@@ -34,13 +34,3 @@ declare module "fluent-ffmpeg" {
 		inputBuffer: (buffer: Buffer, format?: string) => this;
 	}
 }
-
-// ffmpeg()
-// 	.inputFromBuffer(inputStream)
-// 	.noVideo()
-// 	.format("ogg")
-// 	.audioCodec("libopus")
-// 	.audioBitrate("48k")
-// 	.audioChannels(1)
-// 	.addOption("-avoid_negative_ts", "make_zero")
-// 	.pipe(writeStream, { end: true });
