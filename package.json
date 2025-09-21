@@ -1,5 +1,6 @@
 {
 	"name": "surya",
+	"version": "1.0.0",
 	"author": "FrierenDv",
 	"private": true,
 	"license": "MIT",
@@ -7,23 +8,24 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"version": "1.0.0",
 	"scripts": {
-		"build": "dotenvx run -- turbo run build",
-		"build:pkg": "dotenvx run -- turbo run build --filter=./packages/**/*",
+		"build": "turbo run build",
+		"build:pkg": "turbo run build --filter=./packages/**/*",
 		"clean": "turbo run clean --parallel",
+		"deps:check": "syncpack list",
+		"deps:fix": "syncpack fix",
+		"deps:upgrade": "syncpack update --target latest",
+		"deps:upgrade:check": "syncpack update --check --target latest",
 		"dev": "turbo run dev",
 		"format": "prettier --write \"**/*.{ts,tsx}\"",
 		"lint": "eslint . --max-warnings=0",
 		"lint:fix": "eslint . --fix",
 		"preformat": "syncpack format",
 		"prepare": "husky",
-		"test": "jest --verbose --runInBand",
+		"test": "jest",
+		"test:cov": "jest --coverage --verbose",
 		"typecheck": "turbo run typecheck",
-		"deps:check": "syncpack list",
-		"deps:fix": "syncpack fix",
-		"deps:upgrade": "syncpack update --target latest",
-		"deps:upgrade:check": "syncpack update --check --target latest"
+		"postinstall": "patch-package"
 	},
 	"repository": "frierendv/surya.git",
 	"bugs": "https://github.com/frierendv/surya/issues",
@@ -32,6 +34,7 @@
 		"@dotenvx/dotenvx": "^1.50.1",
 		"@eslint/eslintrc": "^3.3.1",
 		"@ianvs/prettier-plugin-sort-imports": "^4.7.0",
+		"@microsoft/api-extractor": "^7.52.13",
 		"@swc/jest": "^0.2.39",
 		"@types/jest": "^30.0.0",
 		"eslint": "^9.36.0",
@@ -54,5 +57,8 @@
 	"workspaces": [
 		"surya-rb",
 		"packages/**/*"
-	]
+	],
+	"dependencies": {
+		"patch-package": "^8.0.0"
+	}
 }
