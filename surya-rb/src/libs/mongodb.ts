@@ -1,12 +1,5 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
-// process.env.MONGODB_URI ?? "mongodb://localhost:27017/surya-rb";
-
-if (!MONGODB_URI) {
-	throw new Error("Please define the MONGODB_URI environment variable");
-}
-
 type MongooseType = typeof mongoose;
 
 declare global {
@@ -32,8 +25,10 @@ if (!globalWithMongoose.__mongoose) {
  * Returns a shared mongoose connection. Safe to call from multiple modules.
  */
 export async function connectToDatabase(): Promise<MongooseType> {
-	if (!MONGODB_URI) {
-		throw new Error("Please define the MONGODB_URI environment variable");
+	if (!process.env.SR_MONGODB_URI) {
+		throw new Error(
+			"Please define the SR_MONGODB_URI environment variable"
+		);
 	}
 
 	if (globalWithMongoose.__mongoose!.conn) {
@@ -43,7 +38,9 @@ export async function connectToDatabase(): Promise<MongooseType> {
 	if (!globalWithMongoose.__mongoose!.promise) {
 		// create and cache the promise
 		globalWithMongoose.__mongoose!.promise = mongoose
-			.connect(MONGODB_URI)
+			.connect(process.env.SR_MONGODB_URI, {
+				dbName: process.env.SR_MONGODB_DB_NAME || "surya-rb",
+			})
 			.then((m) => {
 				globalWithMongoose.__mongoose!.conn = m;
 				return m;
