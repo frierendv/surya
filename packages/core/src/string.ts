@@ -7,7 +7,10 @@ export const capitalize = (
 ): string => {
 	const { locale, lowerRest = false } = options ?? {};
 
-	if (!input) {
+	if (typeof input !== "string") {
+		return input;
+	}
+	if (input.length === 0) {
 		return input;
 	}
 

@@ -6,6 +6,7 @@
 		"aaron-bond.better-comments",
 		"Gruntfuggly.todo-tree",
 		"Orta.vscode-jest",
-		"DavidAnson.vscode-markdownlint"
+		"DavidAnson.vscode-markdownlint",
+		"redhat.vscode-yaml"
 	]
 }

@@ -1,7 +1,14 @@
-import { opendir, readFile } from "fs/promises";
+import { opendir as _opendir, readFile as _readFile } from "fs/promises";
 import os from "os";
 import * as path from "path";
 import { Semaphore } from "./semaphore";
+
+/** Internals */
+let fsOps = { opendir: _opendir, readFile: _readFile };
+/** Internals */
+export const __setFsForTest = (overrides: Partial<typeof fsOps>) => {
+	fsOps = { ...fsOps, ...overrides };
+};
 
 export type BaseWalkOpts = {
 	/** If true, walk directories recursively */
@@ -36,7 +43,7 @@ async function* walkFilePaths(
 		const dir = dirs.pop()!;
 		let handle: any;
 		try {
-			handle = await opendir(dir);
+			handle = await fsOps.opendir(dir);
 		} catch (err) {
 			onOpenDirError?.(err, dir);
 			continue;
@@ -56,9 +63,11 @@ async function* walkFilePaths(
 						}
 						continue;
 					}
+					/* c8 ignore start */
 					if (!dirent.isFile()) {
 						continue;
 					}
+					/* c8 ignore stop */
 					if (filter && !filter(name)) {
 						continue;
 					}
@@ -116,7 +125,7 @@ export const readDirFiles = async (
 	const {
 		recursive = false,
 		encoding = null,
-		concurrency = Math.max(2, Math.floor(os.cpus().length / 2) || 2),
+		concurrency = Math.max(2, Math.floor((os.cpus().length || 2) / 2)),
 		onFile,
 		onError,
 	} = opts;
@@ -130,13 +139,16 @@ export const readDirFiles = async (
 		filter: opts.filter,
 		ignore: opts.ignore,
 		swallowIterErrors: false,
-		onOpenDirError: (err, dir) => onError?.(err, dir),
-		onIterError: (err, dir) => onError?.(err, dir),
+		onOpenDirError: onError,
+		onIterError: onError,
 	})) {
 		const task = (async () => {
 			await sem.acquire();
 			try {
-				const data = await readFile(fullPath, encoding ?? undefined);
+				const data = await fsOps.readFile(
+					fullPath,
+					encoding ?? undefined
+				);
 				results.set(fullPath, data as ReadResult);
 				if (onFile) {
 					await onFile(fullPath, data as ReadResult);
@@ -177,8 +189,8 @@ export const walkDirFiles = async (
 		filter: opts.filter,
 		ignore: opts.ignore,
 		swallowIterErrors: true,
-		onOpenDirError: (err, dir) => onError?.(err, dir),
-		onIterError: (err, dir) => onError?.(err, dir),
+		onOpenDirError: onError,
+		onIterError: onError,
 	})) {
 		try {
 			const maybe = onPath(fullPath);

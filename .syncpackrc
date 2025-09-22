@@ -6,8 +6,21 @@
 	"formatRepository": true,
 	"source": [
 		"./package.json",
+		"./surya-rb/package.json",
 		"./apps/*/package.json",
 		"./packages/*/package.json"
+	],
+	"versionGroups": [
+		{
+			"packages": [
+				"@surya/core"
+			],
+			"dependencies": [
+				"chalk",
+				"mongodb-memory-server"
+			],
+			"isIgnored": true
+		}
 	],
 	"sortFirst": [
 		"name",

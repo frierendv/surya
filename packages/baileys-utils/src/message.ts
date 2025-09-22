@@ -1,7 +1,6 @@
 import { downloadMediaMessage, jidNormalizedUser, proto } from "baileys";
 import type { MiscMessageGenerationOptions, WAMessage } from "baileys";
 import { WASocket } from "./internals/types";
-import { getPhoneDetail, type IPhoneDetail } from "./phone-number";
 import { calculateFileSize, safeString } from "./util";
 
 /**
@@ -111,14 +110,6 @@ export interface IMessageMeta extends IMessageActions {
 	 * Sender display name (push name) or business name.
 	 */
 	pushName?: string | null;
-	/**
-	 * Phone number details for the sender.
-	 */
-	phone: IPhoneDetail;
-	/**
-	 * Whether the message is from a group chat.
-	 */
-	isGroup: boolean;
 	/**
 	 * The normalized extracted text for easier processing.
 	 */
@@ -253,8 +244,7 @@ export const createMessageContext = (
 	msg: WAMessage,
 	sock: WASocket
 ): IMessageContext => {
-	const remoteJid = (msg.key.remoteJid || msg.key.remoteJidAlt)!;
-	const isGroup = remoteJid.endsWith("@g.us") ?? false;
+	const remoteJid = (msg.key.remoteJidAlt || msg.key.remoteJid)!;
 	const media = createMediaInfo(msg.message);
 	const myUserId = sock.user?.id;
 
@@ -380,12 +370,10 @@ export const createMessageContext = (
 	}
 
 	const sender = jidNormalizedUser(
-		(isGroup ? msg.key.participant || msg.key.participantAlt : remoteJid) ??
-			undefined
+		(remoteJid.endsWith("@g.us")
+			? msg.key.participantAlt || msg.key.participant
+			: remoteJid) ?? undefined
 	);
-	const phone = (
-		sender.endsWith("@lid") ? {} : getPhoneDetail(sender)
-	) as IPhoneDetail;
 	const text = getMessageText(msg.message);
 	const args = text.split(/\s+/).filter((a) => a.length);
 
@@ -393,8 +381,6 @@ export const createMessageContext = (
 		from: remoteJid,
 		sender,
 		pushName: safeString(msg.verifiedBizName || msg.pushName),
-		phone,
-		isGroup,
 		text,
 		args,
 		mentionedJid: contextInfo?.mentionedJid?.map(jidNormalizedUser) || [],

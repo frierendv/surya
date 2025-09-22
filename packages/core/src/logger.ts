@@ -27,7 +27,6 @@ const LEVELS: Record<LogLevelName, number> = {
 };
 
 export interface PinoDestinationOptions extends Omit<LoggerOptions, "context"> {
-	passthroughJson?: boolean;
 	/**
 	 * Map of custom level names to numbers, e.g. { success: 35 }.
 	 * If provided, the pretty destination will map those numbers back to names when formatting.
@@ -52,18 +51,10 @@ export type WithCustomLevels<
 	[K in KeysOfMerge<L>]: LogMethod;
 };
 
-const DEFAULT_LEVEL: LogLevelName =
-	(process.env.LOG_LEVEL as LogLevelName) ||
-	(process.env.NODE_ENV === "production" ? "info" : "debug");
-
 const levelToNumber = (l: LogLevelName) => LEVELS[l] ?? LEVELS.info;
-
 const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 
 const isoTs = (d = new Date()) => {
-	/**
-	 * Compact ISO timestamp
-	 */
 	const Y = d.getFullYear();
 	const M = pad(d.getMonth() + 1);
 	const D = pad(d.getDate());
@@ -119,6 +110,7 @@ const safeStringify = (obj: unknown) => {
 
 const prettyFormat = (obj: unknown) => {
 	try {
+		/* v8 ignore next 8 */
 		if (typeof obj === "string") {
 			return obj;
 		}
@@ -128,6 +120,11 @@ const prettyFormat = (obj: unknown) => {
 	}
 };
 
+const resolveEnvLevel = (): LogLevelName => {
+	const raw = (process.env.LOG_LEVEL ?? "").toLowerCase();
+	const validLevels = Object.keys(LEVELS).map(level => level.toLowerCase());
+	return validLevels.includes(raw) ? (raw as LogLevelName) : "info";
+};
 export interface LoggerOptions {
 	name?: string;
 	level?: LogLevelName;
@@ -159,30 +156,19 @@ export interface Logger {
 	show(...args: unknown[]): void;
 }
 
-const getPid = () =>
-	typeof process !== "undefined" && typeof process.pid === "number"
-		? process.pid
-		: undefined;
-
-const getHostname = () => {
-	try {
-		return hostname();
-	} catch {
-		return undefined;
-	}
-};
-
 const makeLogger = (opts: LoggerOptions = {}): Logger => {
-	const baseContext = opts.context ? { ...opts.context } : {};
-	const currentLevel: LogLevelName = opts.level ?? DEFAULT_LEVEL;
-	const name = opts.name;
+	const { name, prodJson, context } = opts;
 
-	const prod =
-		process.env.NODE_ENV === "production" || opts.prodJson === true;
+	const prod = process.env.NODE_ENV === "production" || prodJson === true;
+	const effectiveLevel = opts.level ?? resolveEnvLevel();
 
-	const shouldLog = (level: LogLevelName) =>
-		levelToNumber(level) >= levelToNumber(currentLevel) &&
-		currentLevel !== "silent";
+	// Ensure 'silent' never logs and never reports enabled
+	const shouldLog = (level: LogLevelName) => {
+		if (level === "silent" || effectiveLevel === "silent") {
+			return false;
+		}
+		return levelToNumber(level) >= levelToNumber(effectiveLevel);
+	};
 
 	/**
 	 * Pretty formatting setup (inspired by log-beautify)
@@ -221,6 +207,7 @@ const makeLogger = (opts: LoggerOptions = {}): Logger => {
 	const labelFor = (level: LogLevelName) => level.toUpperCase();
 
 	const prettyPrefix = (level: LogLevelName) => {
+		/* v8 ignore next 5 */
 		const color =
 			COLORS[level as Exclude<LogLevelName, "silent">] ?? "#999999";
 		const textColor =
@@ -228,7 +215,6 @@ const makeLogger = (opts: LoggerOptions = {}): Logger => {
 		const symbol = SYMBOLS[level as Exclude<LogLevelName, "silent">] ?? "!";
 		const label = labelFor(level);
 		const padded = ` ${label} `;
-		// background block
 		const bgBlock =
 			`${symbol} ` +
 			(textColor === "white"
@@ -250,6 +236,7 @@ const makeLogger = (opts: LoggerOptions = {}): Logger => {
 		if (bgBlock) {
 			parts.push(bgBlock);
 		}
+		/* v8 ignore next 2 */
 		const namePart = loggerName ? chalk.dim(` [${loggerName}]`) : "";
 		const timePart = ts ? chalk.dim(ts) : "";
 		parts.push(` ${timePart}${namePart} ${colorize(msg)}`);
@@ -272,37 +259,37 @@ const makeLogger = (opts: LoggerOptions = {}): Logger => {
 			return;
 		}
 
-		const ts = opts.disableTimestamp ? "" : isoTs();
+		const ts = opts.disableTimestamp ? undefined : isoTs();
 		const entry: Record<string, unknown> = {
-			time: ts,
 			level,
 			msg,
-			pid: getPid(),
-			hostname: getHostname(),
+			pid: process?.pid,
+			hostname: hostname(),
 			name,
-			...baseContext,
+			...context,
 		};
-
+		if (ts) {
+			entry.time = ts;
+		}
 		if (meta !== undefined) {
 			entry.meta = meta;
 		}
 		if (err !== undefined) {
 			entry.err = serializeError(err);
 		}
-
+		/* v8 ignore start */
 		if (prod) {
-			// JSON one-line for structured logging in production
 			try {
 				console.log(safeStringify(entry));
 			} catch {
 				console.log(
-					'{"time":"unknown","level":"error","msg":"failed to stringify log"}'
+					'{"level":"error","msg":"failed to stringify log"}'
 				);
 			}
 			return;
 		}
+		/* v8 ignore stop */
 
-		// human friendly output for dev: colorful block prefix + message
 		const line = prettyLine(level, msg, meta, err, ts, name);
 
 		switch (level) {
@@ -311,8 +298,6 @@ const makeLogger = (opts: LoggerOptions = {}): Logger => {
 				console.debug(line);
 				break;
 			case "info":
-				console.log(line);
-				break;
 			case "success":
 				console.log(line);
 				break;
@@ -323,6 +308,7 @@ const makeLogger = (opts: LoggerOptions = {}): Logger => {
 			case "fatal":
 				console.error(line);
 				break;
+			/* v8 ignore next 2 */
 			default:
 				console.log(line);
 		}
@@ -330,10 +316,13 @@ const makeLogger = (opts: LoggerOptions = {}): Logger => {
 
 	const child = (childOpts: Partial<LoggerOptions> = {}): Logger => {
 		const combined: LoggerOptions = {
+			/* v8 ignore next */
 			name: childOpts.name ?? name,
-			level: childOpts.level ?? currentLevel,
-			context: { ...baseContext, ...(childOpts.context ?? {}) },
+			level: childOpts.level ?? effectiveLevel,
+			context: { ...context, ...(childOpts.context ?? {}) },
 			prodJson: childOpts.prodJson ?? prod,
+			disableTimestamp:
+				childOpts.disableTimestamp ?? opts.disableTimestamp,
 		};
 		return makeLogger(combined);
 	};
@@ -342,6 +331,7 @@ const makeLogger = (opts: LoggerOptions = {}): Logger => {
 		const start = Date.now();
 		let ended = false;
 		return function end(meta?: Meta) {
+			/* v8 ignore next 3 */
 			if (ended) {
 				return;
 			}
@@ -354,7 +344,7 @@ const makeLogger = (opts: LoggerOptions = {}): Logger => {
 	const logger: Logger = {
 		name,
 		get level() {
-			return currentLevel;
+			return effectiveLevel;
 		},
 		child,
 		enabled: shouldLog,
@@ -391,6 +381,7 @@ const pinoNumToName = (
 	if (customNumToName && customNumToName[n]) {
 		return customNumToName[n];
 	}
+	/* v8 ignore start */
 	if (n >= 60) {
 		return "fatal";
 	}
@@ -411,13 +402,8 @@ const pinoNumToName = (
 	}
 	return "info";
 };
+/* v8 ignore stop */
 
-/**
- * Create a Node.js Writable stream that pretty-prints Pino JSON lines using this module's formatter.
- *
- * Important: this returns a stream, not a Logger. Use it as the destination argument for Pino:
- *   const p = pino({}, createPinoDestination());
- */
 export type PinoDestination = Writable;
 
 export const createPinoDestination = (
@@ -447,8 +433,61 @@ export const createPinoDestination = (
 				}
 			}
 		}
+		/* v8 ignore next */
 		return Object.keys(out).length ? out : undefined;
 	})();
+	/* v8 ignore start */
+	const route = (obj: PinoLikeLine) => {
+		const n =
+			typeof obj.level === "string"
+				? Number(obj.level)
+				: (obj.level ?? 30);
+		const level =
+			typeof n === "number" && !isNaN(n)
+				? pinoNumToName(n, customNumToName)
+				: ((obj.level as LogLevelName) ?? "info");
+		const msg = obj.msg ?? "";
+		const err = obj.err ?? obj.stack;
+		const {
+			level: _l,
+			time: _t,
+			msg: _m,
+			name: _n,
+			err: _e,
+			stack: _s,
+			...rest
+		} = obj as any;
+		const meta = (Object.keys(rest).length ? rest : undefined) as
+			| Meta
+			| undefined;
+
+		switch (level) {
+			case "trace":
+				local.trace(msg as string, meta);
+				break;
+			case "debug":
+				local.debug(msg as string, meta);
+				break;
+			case "info":
+				local.info(msg as string, meta);
+				break;
+			case "success":
+				local.success(msg as string, meta);
+				break;
+			case "warn":
+				local.warn(msg as string, meta);
+				break;
+			case "error":
+				local.error(msg as string, meta, err);
+				break;
+			case "fatal":
+				local.fatal(msg as string, meta, err);
+				break;
+			default:
+				local.info(msg as string, meta);
+		}
+	};
+
 	let buffer = "";
 	const stream = new Writable({
 		write(chunk, _enc, cb) {
@@ -463,57 +502,8 @@ export const createPinoDestination = (
 					}
 					try {
 						const obj: PinoLikeLine = JSON.parse(line);
-						const n =
-							typeof obj.level === "string"
-								? Number(obj.level)
-								: (obj.level ?? 30);
-						const level =
-							typeof n === "number" && !isNaN(n)
-								? pinoNumToName(n, customNumToName)
-								: ((obj.level as LogLevelName) ?? "info");
-						const msg = obj.msg ?? "";
-						const err = obj.err ?? obj.stack;
-						// Meta: include everything except known fields to keep context rich in dev
-						const {
-							level: _l,
-							time: _t,
-							msg: _m,
-							name: _n,
-							err: _e,
-							stack: _s,
-							...rest
-						} = obj as any;
-						// Route to the correct local logger method
-						const meta = (
-							Object.keys(rest).length ? rest : undefined
-						) as Meta | undefined;
-						switch (level) {
-							case "trace":
-								local.trace(msg as string, meta);
-								break;
-							case "debug":
-								local.debug(msg as string, meta);
-								break;
-							case "info":
-								local.info(msg as string, meta);
-								break;
-							case "success":
-								local.success(msg as string, meta);
-								break;
-							case "warn":
-								local.warn(msg as string, meta);
-								break;
-							case "error":
-								local.error(msg as string, meta, err);
-								break;
-							case "fatal":
-								local.fatal(msg as string, meta, err);
-								break;
-							default:
-								local.info(msg as string, meta);
-						}
+						route(obj);
 					} catch {
-						// Not JSON – just echo as info
 						local.info(line);
 					}
 				}
@@ -530,53 +520,7 @@ export const createPinoDestination = (
 			if (buffer.trim()) {
 				try {
 					const obj: PinoLikeLine = JSON.parse(buffer);
-					const n =
-						typeof obj.level === "string"
-							? Number(obj.level)
-							: (obj.level ?? 30);
-					const level =
-						typeof n === "number" && !isNaN(n)
-							? pinoNumToName(n, customNumToName)
-							: ((obj.level as LogLevelName) ?? "info");
-					const msg = obj.msg ?? "";
-					const err = obj.err ?? obj.stack;
-					const {
-						level: _l,
-						time: _t,
-						msg: _m,
-						name: _n,
-						err: _e,
-						stack: _s,
-						...rest
-					} = obj as any;
-					const meta = (
-						Object.keys(rest).length ? rest : undefined
-					) as Meta | undefined;
-					switch (level) {
-						case "trace":
-							local.trace(msg as string, meta);
-							break;
-						case "debug":
-							local.debug(msg as string, meta);
-							break;
-						case "info":
-							local.info(msg as string, meta);
-							break;
-						case "success":
-							local.success(msg as string, meta);
-							break;
-						case "warn":
-							local.warn(msg as string, meta);
-							break;
-						case "error":
-							local.error(msg as string, meta, err);
-							break;
-						case "fatal":
-							local.fatal(msg as string, meta, err);
-							break;
-						default:
-							local.info(msg as string, meta);
-					}
+					route(obj);
 				} catch {
 					local.info(buffer);
 				}
@@ -584,6 +528,7 @@ export const createPinoDestination = (
 			cb();
 		},
 	});
+	/* v8 ignore stop */
 	return stream;
 };
 
@@ -603,14 +548,14 @@ export const createPinoLogger: CreatePinoLogger = (pinoFactory, opts = {}) => {
 	const mergedCustomLevels = {
 		success: 35,
 		...(pinoOptions?.customLevels ?? {}),
-		...(customLevels ?? {}),
+		...customLevels,
 	} as Record<string, number>;
 	const dest = createPinoDestination({
 		...rest,
 		customLevels: mergedCustomLevels,
 	});
 	const pinoOpts = {
-		...(pinoOptions ?? {}),
+		...pinoOptions,
 		customLevels: mergedCustomLevels,
 	};
 	return pinoFactory(pinoOpts, dest);

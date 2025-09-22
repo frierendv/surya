@@ -2,11 +2,11 @@ import type { GroupMetadata } from "baileys";
 import { WASocket } from "./internals/types";
 import type { IMessageContext } from "./message";
 
-export interface IExtraMessageContext {
+export interface IExtraMessageContext<IsGroup extends boolean = boolean> {
 	/**
-	 * Metadata about the group if the message is from a group.
+	 * Whether the message is from a group chat.
 	 */
-	groupMetadata?: GroupMetadata | null;
+	isGroup: IsGroup;
 	/**
 	 * Whether the sender of the message is set as the owner.
 	 */
@@ -28,6 +28,10 @@ export interface IExtraMessageContext {
 	 */
 	command: string;
 	/**
+	 * Metadata about the group if the message is from a group.
+	 */
+	groupMetadata: IsGroup extends true ? GroupMetadata : null;
+	/**
 	 * Socket instance.
 	 */
 	sock: WASocket;
@@ -47,10 +51,12 @@ const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const prefixRegexCache = new Map<string, RegExp>();
 
 /**
- * Build (and cache) a RegExp that matches provided prefix string or array of strings at the start.
- * Example: buildPrefixRegex(["!", "/"]) => /^(!|\/)/
+ * Build (and cache) a RegExp that matches provided prefix.
  */
-const buildPrefixRegex = (prefix: string | string[]): RegExp => {
+const buildPrefixRegex = (prefix?: string | string[]): RegExp => {
+	if (!prefix || (Array.isArray(prefix) && prefix.length === 0)) {
+		return globalPrefix;
+	}
 	const key = Array.isArray(prefix)
 		? `arr:${prefix.join("|")}`
 		: `str:${prefix}`;
@@ -81,15 +87,17 @@ export const createExtraMessageContext = async (
 	/** The Baileys socket. */
 	sock: WASocket,
 	/** The prefix or prefixes to use for command detection. */
-	prefix: string | string[] = ""
+	prefix?: string | string[]
 ): Promise<IExtraMessageContext> => {
+	const isGroup = ctx.from.endsWith("@g.us");
 	const fbObj: IExtraMessageContext = {
-		groupMetadata: null,
+		isGroup,
 		isOwner: false,
 		isAdmin: false,
 		isBotAdmin: false,
 		usedPrefix: "",
 		command: "",
+		groupMetadata: null,
 		sock,
 	};
 	if (!ctx.args?.[0]) {
@@ -117,7 +125,7 @@ export const createExtraMessageContext = async (
 	}
 
 	// non-group contexts
-	if (!ctx.isGroup) {
+	if (!isGroup) {
 		return fbObj;
 	}
 
