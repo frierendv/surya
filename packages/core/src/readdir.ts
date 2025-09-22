@@ -125,7 +125,7 @@ export const readDirFiles = async (
 	const {
 		recursive = false,
 		encoding = null,
-		concurrency = Math.max(2, Math.floor(os.cpus().length / 2)),
+		concurrency = Math.max(2, Math.floor((os.cpus().length || 2) / 2)),
 		onFile,
 		onError,
 	} = opts;
