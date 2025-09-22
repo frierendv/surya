@@ -33,7 +33,7 @@
 	"homepage": "https://github.com/frierendv/surya#readme",
 	"peerDependencies": {
 		"@hapi/boom": "^10.0.1",
-		"@surya/ffmpeg-utils": "^1.0.0",
+		"@surya/ffmpeg-utils": "1.0.0",
 		"baileys": "^7.0.0-rc.3",
 		"file-type": "^21.0.0",
 		"libphonenumber-js": "^1.12.17",
