@@ -30,7 +30,7 @@ export interface IExtraMessageContext<IsGroup extends boolean = boolean> {
 	/**
 	 * Metadata about the group if the message is from a group.
 	 */
-	groupMetadata: IsGroup extends true ? GroupMetadata : GroupMetadata | null;
+	groupMetadata: IsGroup extends true ? GroupMetadata : null;
 	/**
 	 * Socket instance.
 	 */
