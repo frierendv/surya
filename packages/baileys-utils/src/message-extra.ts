@@ -54,6 +54,9 @@ const prefixRegexCache = new Map<string, RegExp>();
  * Build (and cache) a RegExp that matches provided prefix.
  */
 const buildPrefixRegex = (prefix?: string | string[]): RegExp => {
+	if (!prefix || (Array.isArray(prefix) && prefix.length === 0)) {
+		return globalPrefix;
+	}
 	const key = Array.isArray(prefix)
 		? `arr:${prefix.join("|")}`
 		: `str:${prefix}`;
@@ -106,9 +109,7 @@ export const createExtraMessageContext = async (
 	const hasCustomPrefix = Array.isArray(prefix)
 		? prefix.length > 0
 		: Boolean(prefix);
-	const regex = hasCustomPrefix
-		? buildPrefixRegex(prefix || "")
-		: globalPrefix;
+	const regex = hasCustomPrefix ? buildPrefixRegex(prefix) : globalPrefix;
 
 	const match = regex.exec(text);
 	fbObj.command = text.toLowerCase();
