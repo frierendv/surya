@@ -51,7 +51,7 @@ export type WithCustomLevels<
 	[K in KeysOfMerge<L>]: LogMethod;
 };
 
-const levelToNumber = (l: LogLevelName) => LEVELS[l];
+const levelToNumber = (l: LogLevelName) => LEVELS[l] ?? LEVELS.info;
 const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 
 const isoTs = (d = new Date()) => {
