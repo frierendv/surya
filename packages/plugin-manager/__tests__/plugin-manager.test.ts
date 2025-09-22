@@ -105,7 +105,7 @@ describe("PluginManager", () => {
 
 	test("loadFromFile: validate false path emits error", async () => {
 		const pm = makePM({
-			validate: (_obj: unknown): _obj is any => false as any,
+			validate: (_obj: unknown): _obj is any => false,
 		});
 		const errors: any[] = [];
 		pm.on("error", (e) => errors.push(e));
@@ -304,9 +304,9 @@ describe("PluginManager", () => {
 			extensions: [".ts"],
 			cacheBust: true,
 			useChokidar: false,
-			validate: ((_: unknown): _ is any => {
+			validate: (_: unknown): _ is any => {
 				throw new Error("validate boom");
-			}) as any,
+			},
 		});
 		const errors: any[] = [];
 		pm.on("error", (e, fp) => errors.push({ e, fp }));
@@ -353,7 +353,7 @@ describe("PluginManager", () => {
 		const watchMock = jest.fn((_dir: string, _opts: any) => {
 			const ee = new EventEmitter();
 			(ee as any).close = jest.fn();
-			return ee as any;
+			return ee;
 		});
 		jest.doMock("chokidar", () => ({
 			__esModule: true,
@@ -418,7 +418,7 @@ describe("PluginManager", () => {
 		const fsWatch = jest.fn(() => {
 			const ee = new EventEmitter();
 			(ee as any).close = jest.fn();
-			return ee as any;
+			return ee;
 		});
 		jest.doMock("node:fs", () => ({
 			__esModule: true,
