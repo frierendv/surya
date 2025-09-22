@@ -122,7 +122,7 @@ const prettyFormat = (obj: unknown) => {
 
 const resolveEnvLevel = (): LogLevelName => {
 	const raw = (process.env.LOG_LEVEL ?? "").toLowerCase();
-	const validLevels = Object.keys(LEVELS);
+	const validLevels = Object.keys(LEVELS).map(level => level.toLowerCase());
 	return validLevels.includes(raw) ? (raw as LogLevelName) : "info";
 };
 export interface LoggerOptions {
