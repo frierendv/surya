@@ -8,10 +8,11 @@
 	"scripts": {
 		"build": "tsup src",
 		"clean": "rimraf dist .turbo",
-		"dev": "NODE_ENV=development tsx src/index.ts",
+		"dev": "NODE_ENV=development dotenvx run -- tsx src/index.ts",
+		"gen:types": "openapi-typescript https://api.lovita.io/openapi.json --output src/types/itsrose-schema.ts",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
-		"start": "node dist/index.js",
+		"start": "dotenvx run -- node dist/index.js",
 		"typecheck": "tsc --noEmit"
 	},
 	"repository": "frierendv/surya.git",
@@ -20,14 +21,21 @@
 	"dependencies": {
 		"@hapi/boom": "^10.0.1",
 		"@surya/baileys-utils": "1.0.0",
+		"@surya/core": "1.0.0",
 		"@surya/mongodb-auth-state": "1.0.0",
 		"@surya/plugin-manager": "1.0.0",
+		"audio-decode": "^2.2.3",
 		"baileys": "^7.0.0-rc.3",
+		"file-type": "^21.0.0",
 		"link-preview-js": "^3.1.0",
 		"mongoose": "^8.18.1",
-		"qrcode": "^1.5.4"
+		"node-webpmux": "^3.2.1",
+		"openapi-fetch": "^0.14.0",
+		"qrcode": "^1.5.4",
+		"undici": "^7.16.0"
 	},
 	"devDependencies": {
-		"@types/qrcode": "^1.5.5"
+		"@types/qrcode": "^1.5.5",
+		"openapi-typescript": "^7.9.1"
 	}
 }

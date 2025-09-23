@@ -5,8 +5,10 @@
 		"outDir": "dist",
 		"baseUrl": ".",
 		"paths": {
-			"@libs/*": ["src/libs/*"]
-		}
+			"@libs/*": ["src/libs/*"],
+			"@handler/*": ["src/handler/*"]
+		},
+		"noUncheckedIndexedAccess": true
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]
