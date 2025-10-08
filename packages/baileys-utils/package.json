@@ -11,9 +11,6 @@
 	"files": [
 		"dist"
 	],
-	"exports": {
-		"./package.json": "./package.json"
-	},
 	"scripts": {
 		"build": "tsup src --dts",
 		"build:fast": "tsup src",
