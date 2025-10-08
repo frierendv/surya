@@ -52,7 +52,7 @@ export interface IMediaInfo {
 /**
  * Metadata for a quoted message (context info + extracted helpers).
  */
-export interface QuotedMessageMeta {
+export interface QuotedMessageMeta extends proto.IContextInfo {
 	/**
 	 * The sender of the quoted message.
 	 */
@@ -230,9 +230,10 @@ export const createQuotedMessage = (
 	const text = getMessageText(quotedMessage);
 
 	return {
-		participant: contextInfo.participant as string,
 		text,
 		media,
+		...contextInfo,
+		participant: contextInfo.participant as string,
 	};
 };
 
