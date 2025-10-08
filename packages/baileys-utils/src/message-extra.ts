@@ -140,12 +140,13 @@ export const createExtraMessageContext = async (
 	fbObj.isBotAdmin = false;
 
 	for (const p of participants) {
-		if (p.id === senderId) {
+		const pIds = [p.phoneNumber, p.id, p.lid].filter(Boolean);
+		if (pIds.includes(senderId)) {
 			if (p.admin === "admin" || p.admin === "superadmin") {
 				fbObj.isAdmin = true;
 			}
 		}
-		if (p.id === botId) {
+		if (pIds.includes(botId)) {
 			if (p.admin === "admin" || p.admin === "superadmin") {
 				fbObj.isBotAdmin = true;
 			}
