@@ -21,7 +21,7 @@ export const pluginHandler = async (
 	// hack lid to pn for quoted message
 	if (localCtx.quoted) {
 		const participant = localCtx.quoted.participant;
-		const { getPNForLID } = localExtra.sock.signalRepository.lidMapping;
+		const { getPNForLID } = extra.sock.signalRepository.lidMapping;
 		if (participant && participant.endsWith("@lid")) {
 			const pn = await getPNForLID(participant);
 			if (pn) {
