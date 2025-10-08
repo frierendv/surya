@@ -244,7 +244,7 @@ export const createMessageContext = (
 	msg: WAMessage,
 	sock: WASocket
 ): IMessageContext => {
-	const remoteJid = (msg.key.remoteJidAlt || msg.key.remoteJid)!;
+	const remoteJid = (msg.key.remoteJid || msg.key.remoteJidAlt)!;
 	const media = createMediaInfo(msg.message);
 	const myUserId = sock.user?.id;
 
@@ -371,7 +371,7 @@ export const createMessageContext = (
 
 	const sender = jidNormalizedUser(
 		(remoteJid.endsWith("@g.us")
-			? msg.key.participant || msg.key.participantAlt
+			? msg.key.participantAlt || msg.key.participant
 			: remoteJid) ?? undefined
 	);
 	const text = getMessageText(msg.message);
