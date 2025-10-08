@@ -371,7 +371,7 @@ export const createMessageContext = (
 
 	const sender = jidNormalizedUser(
 		(remoteJid.endsWith("@g.us")
-			? msg.key.participant || msg.key.participantAlt
+			? msg.key.participantAlt || msg.key.participant
 			: remoteJid) ?? undefined
 	);
 	const text = getMessageText(msg.message);
