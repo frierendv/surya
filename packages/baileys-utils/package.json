@@ -11,6 +11,10 @@
 	"files": [
 		"dist"
 	],
+	"exports": {
+		".": "./dist/index.js",
+		"./internals/*": "./dist/internals/*.js"
+	},
 	"scripts": {
 		"build": "tsup src --dts",
 		"build:fast": "tsup src",
