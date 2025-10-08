@@ -364,7 +364,7 @@ export const createMessageContext = (
 					id: qId,
 					fromMe: qFromMe,
 					remoteJid,
-					participant: qParticipant,
+					...(!qFromMe ? { participant: qParticipant } : {}),
 				},
 			});
 		};
