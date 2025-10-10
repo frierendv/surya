@@ -5,12 +5,13 @@ import {
 	createMessageContext,
 } from "@surya/baileys-utils";
 import type { WASocket } from "@surya/baileys-utils/internals/types";
+import { readEnv } from "@surya/core/read-env";
 import type { WAMessage } from "baileys";
 
 const NON_DIGITS_RE = /[^0-9]/g;
 const WS_SPLIT_RE = /\s+/;
 
-const rawPrefixes = process.env.SR_PREFIXES || "";
+const rawPrefixes = readEnv("SR_PREFIX", { defaultValue: "!" });
 const SR_PREFIXES: string[] = rawPrefixes
 	? rawPrefixes.includes(",")
 		? rawPrefixes
@@ -31,7 +32,7 @@ const getOwnerPL = (num: string) => {
 };
 
 // Precompute owner set once
-const owners = getOwnerPL(process.env.SR_OWNER_NUMBER || "");
+const owners = getOwnerPL(readEnv("SR_OWNER_NUMBER", { defaultValue: "" }));
 const SR_OWNER_SET = new Set<string>([
 	...owners.map((num) => `${num}@s.whatsapp.net`),
 	...owners.map((num) => `${num}@lid`),
