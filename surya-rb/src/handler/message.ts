@@ -7,8 +7,11 @@ import {
 import type { WASocket } from "@surya/baileys-utils/internals/types";
 import type { WAMessage } from "baileys";
 
+const NON_DIGITS_RE = /[^0-9]/g;
+const WS_SPLIT_RE = /\s+/;
+
 const rawPrefixes = process.env.SR_PREFIXES || "";
-const SR_PREFIXES = rawPrefixes
+const SR_PREFIXES: string[] = rawPrefixes
 	? rawPrefixes.includes(",")
 		? rawPrefixes
 				.split(",")
@@ -18,72 +21,72 @@ const SR_PREFIXES = rawPrefixes
 	: [];
 
 const getOwnerPL = (num: string) => {
-	const cleaned = num
+	if (!num) {
+		return [];
+	}
+	return num
 		.split(",")
-		.map((o) => o.replace(/[^0-9]/g, ""))
+		.map((o) => o.replace(NON_DIGITS_RE, ""))
 		.filter(Boolean);
-	return cleaned;
 };
-/**
- * Owner numbers set for O(1) lookup. Normalize once at module load.
- */
-const SR_OWNER_SET = new Set([
-	...getOwnerPL(process.env.SR_OWNER_NUMBER || "").map(
-		(num) => `${num}@s.whatsapp.net`
-	),
-	...getOwnerPL(process.env.SR_OWNER_NUMBER || "").map((num) => `${num}@lid`),
+
+// Precompute owner set once
+const owners = getOwnerPL(process.env.SR_OWNER_NUMBER || "");
+const SR_OWNER_SET = new Set<string>([
+	...owners.map((num) => `${num}@s.whatsapp.net`),
+	...owners.map((num) => `${num}@lid`),
 ]);
 
 export const messageHandler = async (msg: WAMessage, socket: WASocket) => {
 	if (!msg.message) {
 		return;
 	}
+
 	const ctx = createMessageContext(msg, socket);
 	const extra = await createExtraMessageContext(ctx, socket, SR_PREFIXES);
 
-	if (!extra?.command) {
+	if (!extra || !extra.command) {
 		logger.debug({ msg: msg.key.id }, "No command found in message");
 		return;
 	}
 
-	// find candidate plugins and run a single filter pass (fewer array iterations)
 	const candidates = pm.findByCommand(extra.command);
-	if (!candidates?.length) {
+	if (!candidates || candidates.length === 0) {
 		logger.debug({ cmd: extra.command }, "No plugin found for command");
 		return;
 	}
-	// owner lookup using precomputed set (faster than remapping every call)
-	extra.isOwner = SR_OWNER_SET.has(ctx.sender);
 
-	const matches = candidates.filter((plugin) => {
-		// if plugin ignores prefix and the plugin command includes the given command -> allow
-		if (plugin.ignorePrefix && plugin.command.includes(extra.command)) {
-			return true;
-		}
-		// plugin requires prefix but no prefix was used -> reject
-		if (!plugin.ignorePrefix && !extra.usedPrefix) {
-			return false;
-		}
-		// owner only
-		if (plugin.ownerOnly && !extra.isOwner) {
-			return false;
-		}
-		// admin only
-		if (plugin.adminOnly && !extra.isAdmin) {
-			return false;
-		}
-		// private chat only
-		if (plugin.privateChatOnly && extra.isGroup) {
-			return false;
-		}
-		// group chat only
-		if (plugin.groupChatOnly && !extra.isGroup) {
-			return false;
-		}
-		return true;
-	});
+	// Fast flags
+	const isOwner = SR_OWNER_SET.has(ctx.sender);
+	const isAdmin = !!extra.isAdmin;
+	const isGroup = !!extra.isGroup;
+	const usedPrefix = !!extra.usedPrefix;
 
-	if (!matches.length) {
+	// Write back once so downstream consumers don't recompute
+	extra.isOwner = isOwner;
+
+	// Single-pass filter (no extra closures, no redundant includes checks)
+	const matches = [];
+	for (const plugin of candidates) {
+		if (!plugin.ignorePrefix && !usedPrefix) {
+			continue;
+		}
+		if (plugin.ownerOnly && !isOwner) {
+			continue;
+		}
+		if (plugin.adminOnly && !isAdmin) {
+			continue;
+		}
+		if (plugin.privateChatOnly && isGroup) {
+			continue;
+		}
+		if (plugin.groupChatOnly && !isGroup) {
+			continue;
+		}
+		matches.push(plugin);
+	}
+
+	if (matches.length === 0) {
 		logger.debug(
 			{ cmd: extra.command },
 			"No matching plugin found for command"
@@ -91,11 +94,13 @@ export const messageHandler = async (msg: WAMessage, socket: WASocket) => {
 		return;
 	}
 
-	// reassign text and args without prefix and command
-	const usedPrefixLength = (extra.usedPrefix || "").length;
+	// Reassign text and args without prefix and command
+	const usedPrefixLength = extra.usedPrefix ? extra.usedPrefix.length : 0;
 	const offset = usedPrefixLength + extra.command.length;
-	ctx.text = (ctx.text || "").slice(offset).trim();
-	ctx.args = ctx.text ? ctx.text.split(/\s+/) : [];
+	const rawText = ctx.text || "";
+	const sliced = rawText.slice(offset).trim();
+	ctx.text = sliced;
+	ctx.args = sliced ? sliced.split(WS_SPLIT_RE) : [];
 
 	return { matches, ctx, extra };
 };
