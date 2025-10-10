@@ -1,4 +1,5 @@
 import { logger } from "@libs/logger";
+import { measureExecution } from "@libs/performance";
 import pm from "@libs/plugin-manager";
 import {
 	createExtraMessageContext,
@@ -44,7 +45,15 @@ export const messageHandler = async (msg: WAMessage, socket: WASocket) => {
 	}
 
 	const ctx = createMessageContext(msg, socket);
-	const extra = await createExtraMessageContext(ctx, socket, SR_PREFIXES);
+
+	const { result: extra, performance: extraPerf } = await measureExecution(
+		() => createExtraMessageContext(ctx, socket, SR_PREFIXES),
+		"createExtraMessageContext"
+	);
+	logger.debug(
+		{ msg: msg.key.id, ...extraPerf },
+		"Created extra message context"
+	);
 
 	if (!extra || !extra.command) {
 		logger.debug({ msg: msg.key.id }, "No command found in message");
