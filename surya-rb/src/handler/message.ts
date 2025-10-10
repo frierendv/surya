@@ -11,7 +11,7 @@ import type { WAMessage } from "baileys";
 const NON_DIGITS_RE = /[^0-9]/g;
 const WS_SPLIT_RE = /\s+/;
 
-const rawPrefixes = readEnv("SR_PREFIX", { defaultValue: "!" });
+const rawPrefixes = readEnv("SR_PREFIXES", { defaultValue: "!" });
 const SR_PREFIXES: string[] = rawPrefixes
 	? rawPrefixes.includes(",")
 		? rawPrefixes
