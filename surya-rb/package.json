@@ -32,11 +32,13 @@
 		"mongoose": "^8.18.1",
 		"node-webpmux": "^3.2.1",
 		"openapi-fetch": "^0.14.0",
+		"pretty-hrtime": "^1.0.3",
 		"qrcode": "^1.5.4",
 		"sharp": "^0.34.4",
 		"undici": "^7.16.0"
 	},
 	"devDependencies": {
+		"@types/pretty-hrtime": "^1.0.3",
 		"@types/qrcode": "^1.5.5",
 		"openapi-typescript": "^7.9.1"
 	}
