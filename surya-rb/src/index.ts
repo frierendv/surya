@@ -1,6 +1,6 @@
 import { messageHandler } from "@handler/message";
 import { pluginHandler } from "@handler/plugin";
-import { logger } from "@libs/logger";
+import { logger, silentLogger } from "@libs/logger";
 import mongoose, { connectToDatabase } from "@libs/mongodb";
 import pm from "@libs/plugin-manager";
 import { BaileysSocket } from "@surya/baileys-utils";
@@ -28,7 +28,7 @@ const baileys = new BaileysSocket({
 		sessionId: "my-session",
 	}),
 	socketConfig: {
-		logger,
+		logger: silentLogger, // disable baileys internal logger
 		shouldIgnoreJid: (jid) => {
 			return (
 				isJidBroadcast(jid) ||
@@ -62,7 +62,7 @@ const requestPairing = async (qr: string) => {
 	}
 	QRCode.toString(qr, { type: "terminal", small: true }, (err, url) => {
 		if (err) {
-			console.error("Failed to generate QR code:", err);
+			logger.error({ err }, "Failed to generate QR code");
 		} else {
 			console.log(url);
 		}

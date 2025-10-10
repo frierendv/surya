@@ -15,3 +15,8 @@ export const logger = createPinoLogger(Pino, {
 	name: "surya-rb",
 	disableTimestamp: true,
 });
+
+export const silentLogger = Pino({
+	level: "silent",
+	base: undefined,
+});
