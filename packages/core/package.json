@@ -28,6 +28,10 @@
 		"./semaphore": {
 			"import": "./dist/semaphore.mjs",
 			"require": "./dist/semaphore.js"
+		},
+		"./read-env": {
+			"import": "./dist/read-env.mjs",
+			"require": "./dist/read-env.js"
 		}
 	},
 	"scripts": {
