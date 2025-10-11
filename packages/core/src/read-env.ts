@@ -8,7 +8,20 @@ export interface ReadEnvOptions {
 	/** Custom error message if the environment variable is required but not set */
 	error?: string;
 }
-export const readEnv = (key: string, options: ReadEnvOptions = {}) => {
+
+export function readEnv(
+	key: string,
+	options: ReadEnvOptions & { required: true }
+): string;
+export function readEnv(
+	key: string,
+	options: ReadEnvOptions & { defaultValue: DefaultValue }
+): string;
+export function readEnv(
+	key: string,
+	options?: ReadEnvOptions
+): string | undefined;
+export function readEnv(key: string, options: ReadEnvOptions = {}) {
 	const v = process.env[key];
 	if (v !== undefined) {
 		return v;
@@ -22,4 +35,4 @@ export const readEnv = (key: string, options: ReadEnvOptions = {}) => {
 
 	const def = options.defaultValue;
 	return typeof def === "function" ? def() : def;
-};
+}
