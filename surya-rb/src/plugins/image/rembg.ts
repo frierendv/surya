@@ -37,7 +37,7 @@ export default {
 					url: result.images[0]!,
 				},
 				fileName: `removebg-${
-					String(ctx.pushName) + Math.floor(Date.now() % 1000)
+					String(ctx.pushName) + "-" + Math.floor(Date.now() % 1000)
 				}.png`,
 				mimetype: "image/png",
 			},
