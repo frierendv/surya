@@ -18,6 +18,7 @@ export default {
 		const { data, error } = await fetchClient.POST("/image/outpainting", {
 			body: {
 				init_image: Buffer.from(buffer).toString("base64"),
+				expand_ratio: 0.125,
 				extra_prompt: extraPrompt,
 			},
 		});
