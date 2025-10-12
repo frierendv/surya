@@ -1,6 +1,7 @@
 name: CI
 permissions:
   contents: read
+  pull-requests: read
 
 on:
   push:
@@ -19,6 +20,50 @@ jobs:
         with:
           fetch-depth: 2
 
+      # PR-only: get list of changed files
+      - name: Get changed files
+        if: github.event_name == 'pull_request'
+        id: changed
+        uses: tj-actions/changed-files@v45
+
+      # PR-only: detect if there are TS changes and which packages are affected
+      - name: Detect changed TypeScript packages
+        if: github.event_name == 'pull_request'
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          has_ts="false"
+          declare -A pkgs=()
+          for file in ${{ steps.changed.outputs.all_changed_files }}; do
+            [[ -z "$file" ]] && continue
+            if [[ "$file" == *.ts || "$file" == *.tsx || "$file" == *.mts || "$file" == *.cts ]]; then
+              has_ts="true"
+              if [[ "$file" == packages/*/* ]]; then
+                pkg="$(echo "$file" | cut -d'/' -f2)"
+                pkgs["$pkg"]=1
+              fi
+            fi
+          done
+
+          packages=""
+          for k in "${!pkgs[@]}"; do
+            if [[ -z "$packages" ]]; then packages="$k"; else packages="$packages,$k"; fi
+          done
+
+          # Only include packages that actually have a Jest project
+          test_projects=""
+          for k in "${!pkgs[@]}"; do
+            if [[ -f "packages/$k/jest.config.ts" || -f "packages/$k/jest.config.js" ]]; then
+              if [[ -z "$test_projects" ]]; then test_projects="$k"; else test_projects="$test_projects,$k"; fi
+            fi
+          done
+
+          echo "has_ts=$has_ts" >> "$GITHUB_OUTPUT"
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+          echo "test_projects=$test_projects" >> "$GITHUB_OUTPUT"
+          echo "Detected TS changes: $has_ts; packages: ${packages:-<none>}"
+
       - name: Cache turbo build setup
         uses: actions/cache@v4
         with:
@@ -36,8 +81,51 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # PR-only: if no TS changes, skip build and test quickly
+      - name: Skip build and test (no TS changes)
+        if: github.event_name == 'pull_request' && steps.detect.outputs.has_ts != 'true'
+        run: echo "No TypeScript changes detected. Skipping build and test."
+
+      # PR-only: build only changed packages when TS files changed
+      - name: Build changed packages
+        if: github.event_name == 'pull_request' && steps.detect.outputs.has_ts == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          pkgs="${{ steps.detect.outputs.packages }}"
+          if [[ -n "$pkgs" ]]; then
+            filters=()
+            for p in ${pkgs//,/ }; do
+              filters+=("--filter=./packages/$p")
+            done
+            echo "Building packages: $pkgs"
+            npx turbo run build ${filters[@]}
+          else
+            echo "TS changes found outside packages/*; running full build."
+            npm run build
+          fi
+
+      # Push builds (and non-PR events): full build
       - name: Build
+        if: github.event_name != 'pull_request'
         run: npm run build
 
+      # PR-only: test only changed projects when TS files changed
+      - name: Test changed packages
+        if: github.event_name == 'pull_request' && steps.detect.outputs.has_ts == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          projects="${{ steps.detect.outputs.test_projects }}"
+          if [[ -n "$projects" ]]; then
+            echo "Running tests for projects: $projects"
+            npm test -- --selectProjects ${projects//,/ } --verbose --runInBand
+          else
+            echo "TS changes found outside packages/*; running full test suite."
+            npm test -- --verbose --runInBand
+          fi
+
+      # Push tests (and non-PR events): full test
       - name: Test
+        if: github.event_name != 'pull_request'
         run: npm run test
