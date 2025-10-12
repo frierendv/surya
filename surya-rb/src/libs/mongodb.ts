@@ -14,13 +14,16 @@ declare global {
 
 const cached = (globalThis.__mongoose ??= { conn: null, promise: null });
 
-const uri = readEnv("SR_MONGODB_URI", { required: true });
+const uri = readEnv("SR_MONGODB_URI", { required: false });
 const dbName = readEnv("SR_MONGODB_DB_NAME", { defaultValue: "surya-rb" });
 
 /**
  * Returns a shared mongoose connection. Safe to call from multiple modules.
  */
-export async function connectToDatabase(): Promise<MongooseType> {
+export async function connectToDatabase(): Promise<MongooseType | null> {
+	if (!uri) {
+		return null;
+	}
 	if (cached.conn) {
 		return cached.conn;
 	}

@@ -1,5 +1,5 @@
 import { logger } from "@libs/logger";
-import { measureExecution } from "@libs/performance";
+import { measureExecution, performance } from "@libs/performance";
 import pm from "@libs/plugin-manager";
 import {
 	createExtraMessageContext,
@@ -7,7 +7,7 @@ import {
 } from "@surya/baileys-utils";
 import type { WASocket } from "@surya/baileys-utils/internals/types";
 import { readEnv } from "@surya/core/read-env";
-import type { WAMessage } from "baileys";
+import { jidNormalizedUser, type WAMessage } from "baileys";
 
 const NON_DIGITS_RE = /[^0-9]/g;
 const WS_SPLIT_RE = /\s+/;
@@ -43,6 +43,7 @@ export const messageHandler = async (msg: WAMessage, socket: WASocket) => {
 	if (!msg.message) {
 		return;
 	}
+	performance.start("messageHandler");
 
 	const ctx = createMessageContext(msg, socket);
 
@@ -64,6 +65,82 @@ export const messageHandler = async (msg: WAMessage, socket: WASocket) => {
 	if (!candidates || candidates.length === 0) {
 		logger.debug({ cmd: extra.command }, "No plugin found for command");
 		return;
+	}
+
+	// Map any LID JIDs to PN in one deduplicated, parallel pass
+	const { getPNForLID } = extra.sock.signalRepository.lidMapping;
+	const lidSuffix = "@lid";
+
+	type Field = {
+		label: "participant" | "sender" | "from";
+		get: () => string | undefined;
+		set: (v: string) => void;
+	};
+
+	const fields: Field[] = [
+		{
+			label: "participant",
+			get: () => ctx.quoted?.participant,
+			set: (v) => {
+				if (ctx.quoted) {
+					ctx.quoted.participant = v;
+				}
+			},
+		},
+		{
+			label: "sender",
+			get: () => ctx.sender,
+			set: (v) => {
+				ctx.sender = v;
+			},
+		},
+		{
+			label: "from",
+			get: () => ctx.from,
+			set: (v) => {
+				ctx.from = v;
+			},
+		},
+	];
+
+	// Collect unique LIDs
+	const lids = new Set<string>();
+	for (const f of fields) {
+		const v = f.get();
+		if (v && v.endsWith(lidSuffix)) {
+			lids.add(v);
+		}
+	}
+
+	if (lids.size) {
+		const unique = [...lids];
+		// Resolve all LIDs in parallel
+		const pns = await Promise.all(unique.map((lid) => getPNForLID(lid)));
+		// Precompute normalized JIDs
+		const normalized = new Map<string, string>();
+		for (const [i, lid] of unique.entries()) {
+			const pn = pns[i];
+			if (pn) {
+				normalized.set(lid, jidNormalizedUser(pn));
+			}
+		}
+
+		// Apply results and log
+		for (const f of fields) {
+			const original = f.get();
+			if (!original || !original.endsWith(lidSuffix)) {
+				continue;
+			}
+			const normalizedJid = normalized.get(original);
+			if (!normalizedJid) {
+				continue;
+			}
+			f.set(normalizedJid);
+			logger.debug(
+				{ [f.label]: original, pn: pns[unique.indexOf(original)] },
+				`Mapped ${f.label} LID to PN`
+			);
+		}
 	}
 
 	// Fast flags
@@ -111,6 +188,17 @@ export const messageHandler = async (msg: WAMessage, socket: WASocket) => {
 	const sliced = rawText.slice(offset).trim();
 	ctx.text = sliced;
 	ctx.args = sliced ? sliced.split(WS_SPLIT_RE) : [];
+
+	const perf = performance.stop("messageHandler");
+	logger.info(
+		{
+			msg: msg.key.id,
+			cmd: extra.command,
+			plugins: matches.length,
+			...perf,
+		},
+		"Matched command to plugins"
+	);
 
 	return { matches, ctx, extra };
 };
