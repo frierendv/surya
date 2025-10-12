@@ -73,9 +73,7 @@ export default {
 		} catch (error) {
 			await ctx.reply(
 				String(
-					error instanceof Error
-						? error.stack || error.message
-						: error
+					error instanceof Error ? error.message : "Execution Failed"
 				).trim()
 			);
 		}
