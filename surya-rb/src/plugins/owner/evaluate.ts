@@ -3,7 +3,7 @@ import { inspect } from "util";
 import db from "@libs/database";
 import type { IPlugin } from "@surya/plugin-manager";
 
-const VM_TIMEOUT_MS = 2000;
+const VM_TIMEOUT_MS = 5000;
 
 export default {
 	name: "evaluate-js",
