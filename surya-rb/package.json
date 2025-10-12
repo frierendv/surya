@@ -9,7 +9,7 @@
 		"build": "tsup src",
 		"clean": "rimraf dist .turbo",
 		"dev": "NODE_ENV=development dotenvx run -- tsx src/index.ts",
-		"gen:types": "openapi-typescript https://api.lovita.io/openapi.json --output src/types/itsrose-schema.ts",
+		"gen:itsrose": "openapi-typescript https://api.itsrose.net/openapi.json --output src/types/itsrose-schema.ts",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"start": "dotenvx run -- node dist/index.js",
