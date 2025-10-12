@@ -35,6 +35,6 @@
 		"async-mutex": "^0.5.0"
 	},
 	"devDependencies": {
-		"mongodb-memory-server": "^10.2.1"
+		"mongodb-memory-server": "^10.2.3"
 	}
 }
