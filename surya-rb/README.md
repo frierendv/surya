@@ -70,6 +70,14 @@ Prerequisites
 
 Note: The repository contains top-level scripts and task definitions.
 
+If using ItsRose plugins, ensure you set the relevant API keys in `.env` before running.
+
+To update API types, run:
+
+```bash
+npm run gen:itsrose --workspace=surya-rb
+```
+
 ---
 
 ## Environment
