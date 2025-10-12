@@ -38,7 +38,7 @@ Prerequisites
 1. Clone the monorepo and change into the package folder (or, from the repo root):
 
   ```bash
-  cd d:/frieren/frierendv/suryaRB/surya-rb
+  cd surya-rb
   ```
 
 2. Install dependencies (from monorepo root is recommended):
