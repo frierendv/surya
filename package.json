@@ -20,16 +20,19 @@
 		"format": "prettier --write \"**/*.{ts,tsx}\"",
 		"lint": "eslint . --max-warnings=0",
 		"lint:fix": "eslint . --fix",
+		"postinstall": "patch-package",
 		"preformat": "syncpack format",
 		"prepare": "husky",
 		"test": "jest",
 		"test:cov": "jest --coverage --verbose",
-		"typecheck": "turbo run typecheck",
-		"postinstall": "patch-package"
+		"typecheck": "turbo run typecheck"
 	},
 	"repository": "frierendv/surya.git",
 	"bugs": "https://github.com/frierendv/surya/issues",
 	"homepage": "https://github.com/frierendv/surya#readme",
+	"dependencies": {
+		"patch-package": "^8.0.0"
+	},
 	"devDependencies": {
 		"@dotenvx/dotenvx": "^1.50.1",
 		"@eslint/eslintrc": "^3.3.1",
@@ -57,8 +60,5 @@
 	"workspaces": [
 		"surya-rb",
 		"packages/**/*"
-	],
-	"dependencies": {
-		"patch-package": "^8.0.0"
-	}
+	]
 }

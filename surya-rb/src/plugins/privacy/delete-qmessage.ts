@@ -1,4 +1,3 @@
-// TODO: in group, delete if quoted message q sender
 import type { IPlugin } from "@surya/plugin-manager";
 
 export default {
@@ -6,24 +5,24 @@ export default {
 	command: ["delete", "del", "d"],
 	category: ["privacy"],
 	description: "Delete your private messages sent by the bot.",
-	execute: async (ctx, { isAdmin, sock }) => {
-		if (!ctx.quoted) {
+	execute: async (ctx, { isAdmin, isGroup, sock }) => {
+		const quoted = ctx.quoted;
+		if (!quoted) {
 			return;
 		}
-		const msg = ctx.quoted;
-		/**
-		 * Not from bot.
-		 * Need to handle phone number properly
-		 */
-		if (msg.participant !== sock.user?.phoneNumber) {
+
+		const botIds = [sock.user?.phoneNumber, sock.user?.lid].filter(Boolean);
+		const isBotMessage = botIds.includes(quoted.participant);
+
+		// Always allow deleting bot's own message
+		if (isBotMessage) {
+			await quoted.delete();
 			return;
 		}
-		/**
-		 * If in group, need to be admin
-		 */
-		if (ctx.isGroup && !isAdmin) {
-			return;
+
+		// Allow deleting any quoted message in a group if user is admin
+		if (isGroup && isAdmin) {
+			await quoted.delete();
 		}
-		await msg.delete();
 	},
 } satisfies IPlugin;

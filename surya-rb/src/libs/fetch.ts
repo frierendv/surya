@@ -1,22 +1,19 @@
+import { readEnv } from "@surya/core/read-env";
 import createClient from "openapi-fetch";
 import type { paths } from "../types/itsrose-schema";
 import { logger } from "./logger";
 
-if (!process.env.SR_ITSROSE_API_URL) {
-	throw new Error(
-		"SR_ITSROSE_API_URL is not defined in environment variables"
-	);
-}
 /**
  * fetch client instance.
  * Used to make HTTP requests to itsrose API
  */
 export const fetchClient = createClient<paths>({
-	baseUrl: process.env.SR_ITSROSE_API_URL,
+	baseUrl: readEnv("SR_ITSROSE_API_URL", { required: true }),
 	headers: {
 		"Content-Type": "application/json",
 		Accept: "application/json",
-		authorization: `Bearer ${process.env.SR_ITSROSE_API_KEY}`,
+		authorization:
+			"Bearer " + readEnv("SR_ITSROSE_API_KEY", { required: true }),
 	},
 });
 

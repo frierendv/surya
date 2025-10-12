@@ -1,53 +1,45 @@
+import { readEnv } from "@surya/core/read-env";
 import mongoose from "mongoose";
 
 type MongooseType = typeof mongoose;
 
 declare global {
-	// allow globalThis to cache mongoose connection across module reloads (useful in dev/serverless)
-	// eslint-disable-next-line @typescript-eslint/no-namespace
-	namespace NodeJS {
-		interface Global {
-			__mongoose?: {
-				conn?: MongooseType | null;
-				promise?: Promise<MongooseType> | null;
-			};
-		}
-	}
+	var __mongoose:
+		| {
+				conn: MongooseType | null;
+				promise: Promise<MongooseType> | null;
+		  }
+		| undefined;
 }
 
-const globalWithMongoose = global as NodeJS.Global;
+const cached = (globalThis.__mongoose ??= { conn: null, promise: null });
 
-if (!globalWithMongoose.__mongoose) {
-	globalWithMongoose.__mongoose = { conn: null, promise: null };
-}
+const uri = readEnv("SR_MONGODB_URI", { required: true });
+const dbName = readEnv("SR_MONGODB_DB_NAME", { defaultValue: "surya-rb" });
 
 /**
  * Returns a shared mongoose connection. Safe to call from multiple modules.
  */
 export async function connectToDatabase(): Promise<MongooseType> {
-	if (!process.env.SR_MONGODB_URI) {
-		throw new Error(
-			"Please define the SR_MONGODB_URI environment variable"
-		);
+	if (cached.conn) {
+		return cached.conn;
 	}
 
-	if (globalWithMongoose.__mongoose!.conn) {
-		return globalWithMongoose.__mongoose!.conn as MongooseType;
-	}
-
-	if (!globalWithMongoose.__mongoose!.promise) {
-		// create and cache the promise
-		globalWithMongoose.__mongoose!.promise = mongoose
-			.connect(process.env.SR_MONGODB_URI, {
-				dbName: process.env.SR_MONGODB_DB_NAME || "surya-rb",
-			})
+	if (!cached.promise) {
+		cached.promise = mongoose
+			.connect(uri, { dbName })
 			.then((m) => {
-				globalWithMongoose.__mongoose!.conn = m;
+				cached.conn = m;
 				return m;
+			})
+			.catch((err) => {
+				// allow retries on next call
+				cached.promise = null;
+				throw err;
 			});
 	}
 
-	return globalWithMongoose.__mongoose!.promise as Promise<MongooseType>;
+	return cached.promise;
 }
 
 /**
@@ -55,9 +47,10 @@ export async function connectToDatabase(): Promise<MongooseType> {
  * In many serverless environments you don't want to call this between requests.
  */
 export async function disconnectFromDatabase(): Promise<void> {
-	if (globalWithMongoose.__mongoose?.conn) {
+	if (cached.conn) {
 		await mongoose.disconnect();
-		globalWithMongoose.__mongoose = { conn: null, promise: null };
+		cached.conn = null;
+		cached.promise = null;
 	}
 }
 

@@ -2,25 +2,18 @@
 	"name": "@surya/baileys-utils",
 	"version": "1.0.0",
 	"author": "FrierenDv",
+	"type": "module",
 	"license": "MIT",
 	"description": "",
 	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "dist/index.mjs",
 	"types": "dist/index.d.ts",
 	"files": [
 		"dist"
 	],
 	"exports": {
-		".": {
-			"import": "./dist/index.mjs",
-			"require": "./dist/index.js"
-		},
-		"./internals/*": {
-			"import": "./dist/internals/*.mjs",
-			"require": "./dist/internals/*.js"
-		},
-		"./package.json": "./package.json"
+		".": "./dist/index.js",
+		"./internals/*": "./dist/internals/*.js"
 	},
 	"scripts": {
 		"build": "tsup src --dts",
@@ -38,13 +31,5 @@
 		"file-type": "^21.0.0",
 		"libphonenumber-js": "^1.12.17",
 		"undici": "^7.16.0"
-	},
-	"tsup": {
-		"clean": true,
-		"target": "es2020",
-		"format": [
-			"cjs",
-			"esm"
-		]
 	}
 }

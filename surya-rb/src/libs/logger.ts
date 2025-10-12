@@ -1,7 +1,8 @@
 import { createPinoLogger, type LogLevelName } from "@surya/core/logger";
+import { readEnv } from "@surya/core/read-env";
 import Pino from "pino";
 
-const level = (process.env.LOG_LEVEL || "warn") as LogLevelName;
+const level = readEnv("LOG_LEVEL", { defaultValue: "info" }) as LogLevelName;
 /**
  * Shared logger instance
  */
@@ -13,4 +14,9 @@ export const logger = createPinoLogger(Pino, {
 	level,
 	name: "surya-rb",
 	disableTimestamp: true,
+});
+
+export const silentLogger = Pino({
+	level: "silent",
+	base: undefined,
 });
