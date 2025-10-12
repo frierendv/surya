@@ -20,7 +20,9 @@ export default {
 		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/image/i.test(media.mimetype)) {
 			return ctx.reply(
-				`Please provide or quote an image to change facial expression.\nUsage: *${usedPrefix}${command}* <type>\n\n*Types:*\n- happy\n- sad\n- angry\n- surprised\n- neutral`
+				`Please provide or quote an image to change facial expression.\nUsage: *${usedPrefix + command}* <expression type>\nAvailable types: ${faceTypes
+					.map((type) => `*${type}*`)
+					.join(", ")}`
 			);
 		}
 		const expression = (ctx.args[0] ?? "smile").toLowerCase() as FaceType;
