@@ -111,9 +111,16 @@ baileys.on("messages.upsert", async (upsert) => {
 		if (result) {
 			const { matches, ctx, extra } = result;
 			// execute all matched plugins
-			await Promise.all(
-				matches.map((plugin) => pluginHandler(plugin, ctx, extra))
-			);
+			for (const plugin of matches) {
+				try {
+					await pluginHandler(plugin, ctx, extra);
+				} catch (err) {
+					logger.error(
+						{ err, plugin: plugin.name },
+						"Error executing plugin"
+					);
+				}
+			}
 		}
 	}
 });
