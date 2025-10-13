@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import path, { resolve } from "node:path";
 import { debounce } from "@surya/core/debounce";
-import { EventEmitter } from "./event";
+import { EventEmitter } from "@surya/core/events";
 
 export type FileWatcherOptions = {
 	rootDir: string;
