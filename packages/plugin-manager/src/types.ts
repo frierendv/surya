@@ -1,26 +1,30 @@
-import { IExtraMessageContext, IMessageContext } from "@surya/baileys-utils";
+import type {
+	IExtraMessageContext,
+	IMessageContext,
+} from "@surya/baileys-utils";
 
-export type LimitOptions = {
+// TODO
+export type PluginLimit = {
 	limit: number;
 	windowMs: number;
 };
 
-export interface IPluginManifest {
+export type BasePluginManifest = {
 	/** The name of the plugin. */
 	name: string;
 	/**
 	 * The command(s) to trigger the plugin.
 	 */
 	command: string | string[];
-	/** The version of the plugin. */
-	version?: string;
 	/**
 	 * The category or categories the plugin belongs to.
 	 * All category names will be **capitalized**.
 	 */
 	category: string | string[];
+};
+export type ExtraPluginManifest = {
 	/** A brief description of the plugin. */
-	description: string;
+	description?: string;
 	/**
 	 * Make the plugin can be execute by owner only.
 	 * @default false
@@ -47,7 +51,7 @@ export interface IPluginManifest {
 	/**
 	 * If set, the plugin will be rate limited according to the specified options.
 	 */
-	rateLimit?: LimitOptions;
+	rateLimit?: PluginLimit;
 	/**
 	 * Should ignore prefix when matching command.
 	 * This is useful for plugins that want to respond to messages without a specific prefix.
@@ -56,40 +60,60 @@ export interface IPluginManifest {
 	ignorePrefix?: boolean;
 	/** Whether the plugin is disabled. */
 	disabled?: boolean;
-}
+};
 
-export interface IPlugin extends IPluginManifest {
+export type PluginManifest = BasePluginManifest & ExtraPluginManifest;
+
+/** The function that gets executed when the plugin is triggered. */
+export type PluginFn<T = unknown> = (
+	/** The message context created by `createMessageContext`. */
+	ctx: IMessageContext,
+	/** Additional context for the message. */
+	extra: IExtraMessageContext
+) => Promise<T> | T;
+
+/**
+ * The complete plugin type, combining manifest, pre-processing, main execution, and post-processing.
+ * This is an interface to support module augmentation by consumers.
+ *
+ * Augmentable via declaration merging.
+ */
+export interface Plugin extends PluginManifest {
 	/**
+	 * Pre-execution hooks for a plugin.
+	 * @deprecated Use `pre` instead
+	 */
+	before?: PluginFn;
+	/**
+	 * Pre-execution hooks for a plugin.
+	 *
 	 * The function that will be called before executing the main function.
 	 * It can be used for pre-processing or validation.
 	 *
-	 * **If fails (throws an error), the main function will not be executed.**
-	 * @param ctx - The context of the incoming message.
-	 * @param extra - Additional context for the message.
+	 * If this throws, the main function will not be executed.
+	 * @returns A boolean indicating whether to proceed with the main execution.
 	 */
-	before?: (
-		ctx: IMessageContext,
-		extra: IExtraMessageContext
-	) => Promise<unknown> | unknown;
+	pre?: PluginFn;
 	/**
-	 * The **main** function that gets executed when the plugin is triggered.
+	 * The main function that gets executed when the plugin is triggered.
+	 * If this throws, the post/after function will not be executed.
+	 */
+	execute?: PluginFn;
+	/**
+	 * Post-execution hooks for a plugin.
+	 * @deprecated Use `post` instead
+	 */
+	after?: PluginFn;
+	/**
+	 * Post-execution hooks for a plugin.
 	 *
-	 * **If fails (throws an error), the after function will not be executed.**
-	 * @param ctx - The context of the incoming message.
-	 * @param extra - Additional context for the message.
-	 */
-	execute: (
-		ctx: IMessageContext,
-		extra: IExtraMessageContext
-	) => Promise<unknown> | unknown;
-	/**
 	 * The function that will be called after executing the main function.
 	 * It can be used for post-processing or cleanup.
-	 * @param ctx - The context of the incoming message.
-	 * @param extra - Additional context for the message.
 	 */
-	after?: (
-		ctx: IMessageContext,
-		extra: IExtraMessageContext
-	) => Promise<unknown> | unknown;
+	post?: PluginFn;
 }
+
+/** Backward compatibility alias for Plugin */
+export type IPlugin = Plugin;
+/** Backward compatibility alias for PluginManifest */
+export type IPluginManifest = PluginManifest;
