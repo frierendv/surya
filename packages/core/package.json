@@ -32,6 +32,10 @@
 		"./read-env": {
 			"import": "./dist/read-env.mjs",
 			"require": "./dist/read-env.js"
+		},
+		"./events": {
+			"import": "./dist/events.mjs",
+			"require": "./dist/events.js"
 		}
 	},
 	"scripts": {
