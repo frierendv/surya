@@ -42,7 +42,7 @@ export default {
 			ctx.from,
 			{
 				image: { url: result.images[0]! },
-				caption: "Here's your enhanced image!",
+				caption: "Here's your enhanced image using Remini AI.",
 			},
 			{ quoted: ctx }
 		);
