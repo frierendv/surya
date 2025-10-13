@@ -1,8 +1,8 @@
 import { cpus } from "node:os";
 import path, { resolve } from "node:path";
+import { EventEmitter } from "@surya/core/events";
 import { walkDirFiles } from "@surya/core/readdir";
 import { Semaphore } from "@surya/core/semaphore";
-import { EventEmitter } from "./event";
 import { loadPluginFromFile } from "./loader";
 import { PluginRegistry } from "./registry";
 import type { Plugin } from "./types";
