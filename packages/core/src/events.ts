@@ -1,6 +1,6 @@
 import { EventEmitter as NodeEventEmitter } from "node:events";
 
-export type EventMap = Record<PropertyKey, (...args: unknown[]) => void>;
+export type EventMap = Record<PropertyKey, (...args: any[]) => void>;
 
 export class EventEmitter<Events extends EventMap> {
 	private readonly emitter = new NodeEventEmitter();
