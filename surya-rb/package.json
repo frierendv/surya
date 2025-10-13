@@ -22,7 +22,7 @@
 		"@hapi/boom": "^10.0.1",
 		"@surya/baileys-utils": "1.0.0",
 		"@surya/core": "1.0.0",
-		"@surya/database": "^1.0.0",
+		"@surya/database": "1.0.0",
 		"@surya/mongodb-auth-state": "1.0.0",
 		"@surya/plugin-manager": "1.0.0",
 		"audio-decode": "^2.2.3",
