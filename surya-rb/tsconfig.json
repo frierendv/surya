@@ -5,6 +5,7 @@
 		"outDir": "dist",
 		"baseUrl": ".",
 		"paths": {
+			"@/*": ["src/*"],
 			"@libs/*": ["src/libs/*"],
 			"@handler/*": ["src/handler/*"]
 		},
