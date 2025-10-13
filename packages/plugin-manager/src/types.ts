@@ -3,12 +3,19 @@ import type {
 	IMessageContext,
 } from "@surya/baileys-utils";
 
-// TODO
+/**
+ * Rate limiting options for a plugin.
+ */
 export type PluginLimit = {
+	/** Maximum number of allowed executions within the time window. */
 	limit: number;
+	/** Time window in milliseconds for the rate limit. */
 	windowMs: number;
 };
 
+/**
+ * The base properties that every plugin must have.
+ */
 export type BasePluginManifest = {
 	/** The name of the plugin. */
 	name: string;
@@ -22,6 +29,10 @@ export type BasePluginManifest = {
 	 */
 	category: string | string[];
 };
+
+/**
+ * Extended properties for plugins, providing additional metadata and configuration options.
+ */
 export type ExtraPluginManifest = {
 	/** A brief description of the plugin. */
 	description?: string;
@@ -62,8 +73,6 @@ export type ExtraPluginManifest = {
 	disabled?: boolean;
 };
 
-export type PluginManifest = BasePluginManifest & ExtraPluginManifest;
-
 /** The function that gets executed when the plugin is triggered. */
 export type PluginFn<T = unknown> = (
 	/** The message context created by `createMessageContext`. */
@@ -73,10 +82,15 @@ export type PluginFn<T = unknown> = (
 ) => Promise<T> | T;
 
 /**
+ * Plugin manifest as defined in the plugin module.
+ * Combines base and extra manifest properties.
+ */
+export interface PluginManifest
+	extends BasePluginManifest,
+		ExtraPluginManifest {}
+
+/**
  * The complete plugin type, combining manifest, pre-processing, main execution, and post-processing.
- * This is an interface to support module augmentation by consumers.
- *
- * Augmentable via declaration merging.
  */
 export interface Plugin extends PluginManifest {
 	/**
@@ -114,6 +128,8 @@ export interface Plugin extends PluginManifest {
 }
 
 /** Backward compatibility alias for Plugin */
-export type IPlugin = Plugin;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface IPlugin extends Plugin {}
 /** Backward compatibility alias for PluginManifest */
-export type IPluginManifest = PluginManifest;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface IPluginManifest extends PluginManifest {}
