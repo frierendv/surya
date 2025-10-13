@@ -47,7 +47,7 @@ const start = async () => {
 	});
 
 	try {
-		await pm.loadAll();
+		await pm.load();
 		await pm.watch();
 	} catch (err) {
 		logger.error({ err }, "Plugin manager failed to initialize");
