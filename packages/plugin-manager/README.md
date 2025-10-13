@@ -1,12 +1,13 @@
 # @surya/plugin-manager
 
-A lightweight, file-based plugin loader and watcher. It loads plugins from a directory, indexes their commands, and hot-reloads on file changes (using chokidar when available, with fs.watch fallback). Built for SuryaRB, but generic enough for other bots or CLIs.
+A lightweight, file-based plugin loader and watcher. It loads plugins from a directory, indexes their commands, and hot-reloads on file changes (uses chokidar when available, with fs.watch fallback). Built for SuryaRB, but generic enough for other bots or CLIs.
 
 - Loads ESM/CJS modules via dynamic import
-- Validates a minimal contract: { name, command, category, description, execute }
+- Validates a minimal contract: { name, command, category } + optional fields and hooks
 - Emits events: loaded, updated, removed, error
 - Finds plugins by command (case-insensitive)
 - Optional chokidar watcher with debounced updates
+- Prevents duplicate plugin names across files
 
 ## Install
 
@@ -22,32 +23,48 @@ npm i chokidar
 
 ## Plugin contract
 
-A plugin must export an object (default export is supported) that matches `IPlugin`:
+A plugin must export an object (default export is supported) that matches `Plugin`:
 
 ```ts
-export interface IPluginManifest {
+export interface PluginManifest {
  name: string;
  command: string | string[];
- version?: string;
  category: string | string[];
- description: string;
+ // optional extras
+ description?: string;
  ownerOnly?: boolean;
  adminOnly?: boolean;
  privateChatOnly?: boolean;
  groupChatOnly?: boolean;
  hidden?: boolean;
  rateLimit?: { limit: number; windowMs: number };
+ /** Match command without requiring a prefix */
+ ignorePrefix?: boolean;
+ /** Disable this plugin entirely */
+ disabled?: boolean;
 }
 
-export interface IPlugin extends IPluginManifest {
+export interface Plugin extends PluginManifest {
+ /** Pre-execution hook (preferred). If this throws/returns false, execute/post are skipped. */
+ pre?: (
+  ctx: IMessageContext,
+  extra: IExtraMessageContext
+ ) => Promise<boolean | void> | boolean | void;
+ /** Main execution. */
+ execute?: (
+  ctx: IMessageContext,
+  extra: IExtraMessageContext
+ ) => Promise<void> | void;
+ /** Post-execution hook (preferred). */
+ post?: (
+  ctx: IMessageContext,
+  extra: IExtraMessageContext
+ ) => Promise<void> | void;
+ /** Back-compat (deprecated): use pre/post instead. */
  before?: (
   ctx: IMessageContext,
   extra: IExtraMessageContext
- ) => Promise<boolean> | boolean;
- execute: (
-  ctx: IMessageContext,
-  extra: IExtraMessageContext
- ) => Promise<void>;
+ ) => Promise<boolean | void> | boolean | void;
  after?: (
   ctx: IMessageContext,
   extra: IExtraMessageContext
@@ -56,6 +73,12 @@ export interface IPlugin extends IPluginManifest {
 ```
 
 If you use `@surya/baileys-utils`, you'll get the `IMessageContext` and `IExtraMessageContext` types.
+
+Notes:
+
+- Categories are normalized to Capitalized form.
+- Commands are normalized to lowercase. Matching is case-insensitive.
+- Default export is supported.
 
 ## Usage
 
@@ -75,7 +98,7 @@ pm.on("updated", (file, plugin) => console.log("updated", plugin.name));
 pm.on("removed", (file) => console.log("removed", file));
 pm.on("error", (err, file) => console.error("plugin error", file, err));
 
-await pm.loadAll();
+await pm.load();
 await pm.watch();
 
 // later, find by command
@@ -108,20 +131,38 @@ export default {
   - cacheBust?: boolean = true (force reload by query param)
   - useChokidar?: boolean = true
   - debounceMs?: number = 100
-  - concurrency?: number = cpuCount (import limiter)
-  - validate?: (obj) => obj is IPlugin
-- loadAll(): load all plugins from disk
+  - concurrency?: number = half CPU count (min 2)
+  - validate?: (obj) => obj is Plugin
+- load(): load all plugins from disk
 - watch(): start file watcher
 - stop(): stop watcher
 - reloadFromFile(filePath): force reload a file
 - get(name), list()
 - findByCommand(cmd): IPlugin[]
+- find(options): Plugin[]
+
+### Events
+
+```ts
+pm.on("loaded", (filePath, plugin) => {});
+pm.on("updated", (filePath, plugin) => {});
+pm.on("removed", (filePath, prev?) => {});
+pm.on("error", (err, filePath?) => {});
+```
+
+Notes:
+
+- Duplicate plugin names across different files are rejected (the latter load emits an error and is ignored).
+- Loads are concurrency-limited to avoid spikes from burst updates.
 
 ## TypeScript
 
 Types are included. Import from the package:
 
 ```ts
+import type { Plugin, PluginManifest } from "@surya/plugin-manager";
+
+// Backward compatibility aliases are also exported
 import type { IPlugin, IPluginManifest } from "@surya/plugin-manager";
 ```
 
