@@ -4,10 +4,10 @@ import type {
 	IExtraMessageContext,
 	IMessageContext,
 } from "@surya/baileys-utils";
-import type { IPlugin } from "@surya/plugin-manager";
+import type { Plugin } from "@surya/plugin-manager";
 
 export const pluginHandler = async (
-	plugin: IPlugin,
+	plugin: Plugin,
 	ctx: IMessageContext,
 	extra: IExtraMessageContext
 ) => {
@@ -19,11 +19,12 @@ export const pluginHandler = async (
 	const localExtra = { ...extra };
 
 	// pre handler
-	if (plugin.before) {
+	const runPre = "pre" in plugin ? plugin.pre : plugin.before;
+	if (typeof runPre === "function") {
 		try {
 			const perfBefore = await measureExecution(
-				() => plugin.before!(localCtx, localExtra),
-				"pluginBeforeHook"
+				() => runPre(localCtx, localExtra),
+				"pluginPreHook"
 			);
 			logger.debug(
 				{
@@ -31,21 +32,29 @@ export const pluginHandler = async (
 					plugin: plugin.name,
 					...perfBefore.performance,
 				},
-				"Executed before hook"
+				"Executed pre hook"
 			);
 		} catch (err) {
 			logger.error(
 				{ err, plugin: plugin.name },
-				"Error executing before hook"
+				"Error executing pre hook"
 			);
 			return;
 		}
 	}
 	// main handler
 	try {
+		const execute = "execute" in plugin ? plugin.execute : undefined;
+		if (!execute) {
+			logger.error(
+				{ plugin: plugin.name },
+				"Plugin has no execute/main handler"
+			);
+			return;
+		}
 		const execPerf = await measureExecution(
-			() => plugin.execute(localCtx, localExtra),
-			"pluginExecute"
+			() => execute(localCtx, localExtra),
+			"execute" in plugin ? "pluginExecute" : "pluginMain"
 		);
 		logger.debug(
 			{
@@ -53,18 +62,19 @@ export const pluginHandler = async (
 				plugin: plugin.name,
 				...execPerf.performance,
 			},
-			"Executed plugin"
+			"execute" in plugin ? "Executed plugin" : "Executed plugin (main)"
 		);
 	} catch (err) {
 		logger.error({ err, plugin: plugin.name }, "Error executing plugin");
 		return;
 	}
 	// post handler
-	if (plugin.after) {
+	const runPost = "post" in plugin ? plugin.post : plugin.after;
+	if (typeof runPost === "function") {
 		try {
 			const perfAfter = await measureExecution(
-				() => plugin.after!(localCtx, localExtra),
-				"pluginAfterHook"
+				() => runPost(localCtx, localExtra),
+				"pluginPostHook"
 			);
 			logger.debug(
 				{
@@ -72,12 +82,12 @@ export const pluginHandler = async (
 					plugin: plugin.name,
 					...perfAfter.performance,
 				},
-				"Executed after hook"
+				"Executed post hook"
 			);
 		} catch (err) {
 			logger.error(
 				{ err, plugin: plugin.name },
-				"Error executing after hook"
+				"Error executing post hook"
 			);
 			return;
 		}
