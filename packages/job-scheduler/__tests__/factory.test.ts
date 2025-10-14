@@ -32,9 +32,6 @@ describe("Factory", () => {
 			dbPath: tempDb,
 			autostart: true,
 		});
-		// wait for init
-		await new Promise((r) => setTimeout(r, 1000));
-
 		// all schedulers created
 		expect(api.interval).toBeDefined();
 		expect(api.time).toBeDefined();
