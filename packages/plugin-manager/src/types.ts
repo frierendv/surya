@@ -7,10 +7,12 @@ import type {
  * Rate limiting options for a plugin.
  */
 export type PluginLimit = {
-	/** Maximum number of allowed executions within the time window. */
-	limit: number;
-	/** Time window in milliseconds for the rate limit. */
-	windowMs: number;
+	/**
+	 * The number of limit reductions.
+	 * Each time the plugin is used, for each use, the limit will be reduced by this amount.
+	 * @default 1
+	 */
+	uses: number;
 };
 
 /**
