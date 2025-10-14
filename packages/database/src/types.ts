@@ -31,7 +31,7 @@ export type SchemaMap = Record<string, any>;
 export type DocumentLike<T> = T & {
 	save(): Promise<void>;
 	delete(): Promise<void>;
-};
+} & AsyncDisposableLike; // supports await using for auto-save on scope exit
 
 export interface CollectionCrud<T = any> {
 	get(key: string): Promise<DocumentLike<T>>;
@@ -48,6 +48,17 @@ export type DatabaseProxy<S extends SchemaMap = any> = {
 } & {
 	close(): Promise<void>;
 	collection<T = any>(name: string): CollectionCrud<T>;
+} & AsyncDisposableLike;
+
+// Minimal async disposable typing without relying on lib.esnext.disposable
+declare global {
+	interface SymbolConstructor {
+		readonly asyncDispose: symbol;
+	}
+}
+
+export type AsyncDisposableLike = {
+	[Symbol.asyncDispose](): Promise<void>;
 };
 
 // no default export — prefer named exports for types

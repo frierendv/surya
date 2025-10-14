@@ -5,6 +5,8 @@ import createModel from "./model";
 import { DiskStorage } from "./storage";
 import type { DatabaseProxy, DBOptions, SchemaMap } from "./types";
 
+// @ts-expect-error read only property is not assignable
+Symbol.asyncDispose ??= Symbol("Symbol.asyncDispose");
 export class Database<S extends SchemaMap = any> {
 	private storage: DiskStorage;
 	private model?: Model<any>;
@@ -21,6 +23,7 @@ export class Database<S extends SchemaMap = any> {
 			close: this.close.bind(this),
 			collection: this.collection.bind(this),
 		};
+		base[Symbol.asyncDispose] = this.close.bind(this);
 		this.proxy = new Proxy(base, {
 			get: (target, prop: string | symbol) => {
 				if (prop in target) {
@@ -66,14 +69,18 @@ export class Database<S extends SchemaMap = any> {
 			await mongoose.disconnect();
 		}
 	}
+
+	async [Symbol.asyncDispose](): Promise<void> {
+		await this.close();
+	}
 }
 
-export async function createDatabase<S extends SchemaMap = any>(
+export const createDatabase = async <S extends SchemaMap = any>(
 	options: DBOptions = {}
-): Promise<DatabaseProxy<S>> {
+): Promise<DatabaseProxy<S>> => {
 	const db = new Database<S>(options);
 	await db.init();
 	return db.handle;
-}
+};
 
 export default Database;
