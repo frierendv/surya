@@ -7,10 +7,12 @@ import type {
  * Rate limiting options for a plugin.
  */
 export type PluginLimit = {
-	/** Maximum number of allowed executions within the time window. */
-	limit: number;
-	/** Time window in milliseconds for the rate limit. */
-	windowMs: number;
+	/**
+	 * The number of limit reductions.
+	 * Each time the plugin is used, for each use, the limit will be reduced by this amount.
+	 * @default 1
+	 */
+	uses: number;
 };
 
 /**
@@ -97,7 +99,7 @@ export interface Plugin extends PluginManifest {
 	 * Pre-execution hooks for a plugin.
 	 * @deprecated Use `pre` instead
 	 */
-	before?: PluginFn;
+	before?: PluginFn<boolean>;
 	/**
 	 * Pre-execution hooks for a plugin.
 	 *
@@ -107,7 +109,7 @@ export interface Plugin extends PluginManifest {
 	 * If this throws, the main function will not be executed.
 	 * @returns A boolean indicating whether to proceed with the main execution.
 	 */
-	pre?: PluginFn;
+	pre?: PluginFn<boolean>;
 	/**
 	 * The main function that gets executed when the plugin is triggered.
 	 * If this throws, the post/after function will not be executed.
