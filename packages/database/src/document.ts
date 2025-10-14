@@ -7,6 +7,7 @@ const compositeKey = (collection: string, key: string) =>
 
 export class Document<T extends RecordValue = any> {
 	private data: T;
+	private dirty = false;
 
 	constructor(
 		private collection: string,
@@ -53,6 +54,7 @@ export class Document<T extends RecordValue = any> {
 				)
 				.exec();
 		}
+		this.dirty = false;
 	}
 
 	async delete(): Promise<void> {
@@ -70,6 +72,15 @@ export class Document<T extends RecordValue = any> {
 	}
 	_setData(next: T) {
 		this.data = next;
+	}
+	_markDirty() {
+		this.dirty = true;
+	}
+
+	async [Symbol.asyncDispose](): Promise<void> {
+		if (this.dirty) {
+			await this.save();
+		}
 	}
 }
 
@@ -90,6 +101,17 @@ function createDocumentProxy<T extends RecordValue>(
 			}
 			const data = { ...target._getData(), [prop as any]: value };
 			target._setData(data);
+			target._markDirty();
+			return true;
+		},
+		deleteProperty(target, prop) {
+			const data = { ...target._getData() };
+			// Only mark dirty if the property existed
+			if (Object.prototype.hasOwnProperty.call(data, prop)) {
+				delete (data as any)[prop as any];
+				target._setData(data);
+				target._markDirty();
+			}
 			return true;
 		},
 		has(target, prop) {
