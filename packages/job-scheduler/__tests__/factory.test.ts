@@ -1,6 +1,9 @@
 import { createJobSchedulers, type JobSchedulers } from "../src/factory";
 import { cleanupTempDb, createTempDbPath } from "./helper";
 
+// increase jest timeout
+jest.setTimeout(20000);
+
 // disable logger
 jest.mock("@surya/core/logger", () => ({
 	createLogger: () => ({

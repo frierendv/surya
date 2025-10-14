@@ -16,7 +16,6 @@ export const cleanupTempDb = (dbPath: string) => {
 export const getJobStore = async (name: string) => {
 	const dbPath = createTempDbPath(name);
 	const store = new JobStore(dbPath);
-	await new Promise((r) => setTimeout(r, 5000)); // wait for DB to be ready
 	return {
 		store,
 		clear: () => {
