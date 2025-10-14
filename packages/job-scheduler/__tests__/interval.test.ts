@@ -70,7 +70,7 @@ describe("IntervalScheduler (interval)", () => {
 			cnt++;
 		});
 
-		const rec = sch.add("tick-2", 50, "tick", undefined, { maxRuns: 2 });
+		const rec = sch.add("tick-2", 50, "tick", undefined, { maxRuns: 3 });
 
 		sch.start();
 
@@ -83,7 +83,7 @@ describe("IntervalScheduler (interval)", () => {
 		sch.stop();
 	});
 
-	it("does not schedule same job twice", () => {
+	it("ignores duplicate job names", async () => {
 		const sch: IntervalScheduler = new IntervalScheduler(store);
 
 		sch.register("tick", async () => {
@@ -92,6 +92,8 @@ describe("IntervalScheduler (interval)", () => {
 
 		const rec1 = sch.add("tick-3", 100, "tick");
 		const rec2 = sch.add("tick-3", 100, "tick");
+		sch.start();
+		await advance(50);
 
 		expect(rec1.id).toBe(rec2.id);
 
@@ -110,6 +112,62 @@ describe("IntervalScheduler (interval)", () => {
 
 		// wait a bit to ensure no errors
 		await advance(250);
+		sch.stop();
+	});
+
+	it("updates job if same name is used", async () => {
+		const sch: IntervalScheduler = new IntervalScheduler(store);
+
+		sch.register("tick", async (_: { x: string }) => {
+			// do nothing
+		});
+
+		const rec1 = sch.add(
+			"tick-3",
+			100,
+			"tick",
+			{ x: "y" },
+			{ maxRuns: 5, maxRetries: 2 }
+		);
+		const rec2 = sch.add(
+			"tick-3",
+			200,
+			"tick",
+			{ x: "z" },
+			{ maxRuns: 10, maxRetries: 0 }
+		);
+		sch.start();
+
+		await advance(50);
+
+		expect(rec1.id).toBe(rec2.id);
+		const j = store.getJob(rec1.id)!;
+		expect(j.active).toBe(true);
+		expect(j.name).toBe("tick-3");
+		expect(j.handlerKey).toBe("tick");
+		expect(j.payload).toEqual({ x: "z" });
+		expect(j.intervalMs).toBe(200);
+		expect(j.maxRuns).toBe(10);
+		expect(j.maxRetries).toBe(0);
+
+		sch.stop();
+	});
+
+	it("does remove job if hard flag is set", async () => {
+		const sch: IntervalScheduler = new IntervalScheduler(store);
+
+		sch.register("tick", async () => {
+			// do nothing
+		});
+
+		const rec = sch.add("tick-5", 100, "tick");
+		sch.start();
+		await advance(50);
+		expect(store.getJob(rec.id)).toBeDefined();
+
+		sch.remove(rec.id, true);
+		expect(store.getJob(rec.id)).toBeUndefined();
+
 		sch.stop();
 	});
 
@@ -154,7 +212,7 @@ describe("IntervalScheduler (interval)", () => {
 		});
 
 		const rec = sch.add("i2", 50, "fail", undefined, {
-			maxRetries: 2,
+			maxRetries: 3,
 			backoffMs: 80,
 		});
 		sch.start();

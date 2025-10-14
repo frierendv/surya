@@ -208,8 +208,8 @@ export class TimeScheduler<
 			handlerKey,
 			payload,
 			runAt: when,
-			maxRetries: retry.maxRetries ?? 0,
-			backoffMs: retry.backoffMs ?? 0,
+			maxRetries: retry.maxRetries ?? 5,
+			backoffMs: retry.backoffMs ?? 2000,
 		} as CreateTimeJob) as JobRecord<Reg[K]>;
 		// only schedule immediately if scheduler is running
 		if (this.running && !rec.paused) {

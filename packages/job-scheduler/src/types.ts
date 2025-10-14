@@ -8,9 +8,17 @@ export type JobHandler<Payload = unknown> = (
 ) => Promise<void> | void;
 
 export interface RetryPolicy {
-	/** maximum number of retries */
+	/**
+	 * Maximum number of retries on failure.
+	 *
+	 * Default: `5`
+	 */
 	maxRetries?: number;
-	/** base backoff between retries */
+	/**
+	 * Initial backoff in milliseconds.
+	 *
+	 * Default: `2000` (2 seconds)
+	 */
 	backoffMs?: number;
 }
 
