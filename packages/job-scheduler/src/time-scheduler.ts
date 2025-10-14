@@ -6,17 +6,12 @@ import schedule, {
 } from "node-schedule";
 import type { CreateCronJob, CreateTimeJob, JobRecord } from "./sqlite";
 import { JobStore } from "./sqlite";
-
-export type JobHandler<Payload = unknown> = (
-	payload: Payload,
-	job: JobRecord<Payload>
-) => Promise<void> | void;
-
-export interface RetryPolicy {
-	maxRetries?: number;
-	/** base backoff between retries */
-	backoffMs?: number;
-}
+import type {
+	JobHandler,
+	JobRegistry,
+	RetryPolicy,
+	SchedulerEvents,
+} from "./types";
 
 export interface TimeSchedulerOptions {
 	logger?: Logger;
@@ -25,18 +20,9 @@ export interface TimeSchedulerOptions {
 /**
  * Time and cron-job-like scheduler using node-schedule for in-process timing and SQLite for persistence.
  */
-export type TimeSchedulerEvents = {
-	"job:add": (job: JobRecord) => void;
-	"job:start": (job: JobRecord) => void;
-	"job:success": (job: JobRecord) => void;
-	"job:failure": (job: JobRecord, error: unknown) => void;
-	"job:finish": (job: JobRecord) => void; // for time jobs when completed
-	"job:pause": (id: string) => void;
-	"job:resume": (id: string) => void;
-	"job:cancel": (id: string) => void;
-};
-
-export class TimeScheduler extends EventEmitter<TimeSchedulerEvents> {
+export class TimeScheduler<
+	Reg extends JobRegistry = JobRegistry,
+> extends EventEmitter<SchedulerEvents> {
 	private store: JobStore;
 	private handlers = new Map<string, JobHandler<any>>();
 	private timers = new Map<string, NodeJob>();
@@ -49,11 +35,14 @@ export class TimeScheduler extends EventEmitter<TimeSchedulerEvents> {
 		this.log = opts.logger ?? createLogger({ name: "time-scheduler" });
 	}
 
+	/**
+	 * Register a handler function.
+	 */
 	register<Key extends string, P = unknown>(
 		key: Key,
 		handler: JobHandler<P>
-	) {
-		this.handlers.set(key, handler as JobHandler<any>);
+	): asserts this is TimeScheduler<JobRegistry<Key, P>> {
+		this.handlers.set(key, handler);
 	}
 
 	start() {
@@ -112,7 +101,12 @@ export class TimeScheduler extends EventEmitter<TimeSchedulerEvents> {
 			});
 			return;
 		}
-		this.store.markRunning(id);
+		// atomic guard to avoid double run
+		const started = this.store.tryMarkRunning(id);
+		if (!started) {
+			// already running or inactive
+			return;
+		}
 		this.emit("job:start", job);
 		try {
 			await Promise.resolve(handler(job.payload, job));
@@ -199,13 +193,16 @@ export class TimeScheduler extends EventEmitter<TimeSchedulerEvents> {
 		this.timers.set(job.id, nj);
 	}
 
-	scheduleAt(
+	/**
+	 * Schedule a one-time job at a specific time.
+	 */
+	scheduleAt<K extends keyof Reg & string>(
 		name: string,
 		when: Date | number,
-		handlerKey: string,
-		payload?: unknown,
+		handlerKey: K,
+		payload?: Reg[K],
 		retry: RetryPolicy = {}
-	): JobRecord {
+	): JobRecord<Reg[K]> {
 		const rec = this.store.createTimeJob({
 			name,
 			handlerKey,
@@ -213,7 +210,7 @@ export class TimeScheduler extends EventEmitter<TimeSchedulerEvents> {
 			runAt: when,
 			maxRetries: retry.maxRetries ?? 0,
 			backoffMs: retry.backoffMs ?? 0,
-		} as CreateTimeJob);
+		} as CreateTimeJob) as JobRecord<Reg[K]>;
 		// only schedule immediately if scheduler is running
 		if (this.running && !rec.paused) {
 			this.scheduleTime(rec);
@@ -222,13 +219,16 @@ export class TimeScheduler extends EventEmitter<TimeSchedulerEvents> {
 		return rec;
 	}
 
-	scheduleCron(
+	/**
+	 * Schedule a cron-like recurring job.
+	 */
+	scheduleCron<K extends keyof Reg & string>(
 		name: string,
 		cronExpr: string,
-		handlerKey: string,
-		payload?: unknown,
+		handlerKey: K,
+		payload?: Reg[K],
 		retry: RetryPolicy = {}
-	): JobRecord {
+	): JobRecord<Reg[K]> {
 		const rec = this.store.createCronJob({
 			name,
 			handlerKey,
@@ -236,7 +236,7 @@ export class TimeScheduler extends EventEmitter<TimeSchedulerEvents> {
 			cronExpr,
 			maxRetries: retry.maxRetries ?? 0,
 			backoffMs: retry.backoffMs ?? 0,
-		} as CreateCronJob);
+		} as CreateCronJob) as JobRecord<Reg[K]>;
 		if (this.running && !rec.paused) {
 			this.scheduleCronInternal(rec);
 		}

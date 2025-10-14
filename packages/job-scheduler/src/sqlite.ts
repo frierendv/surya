@@ -161,6 +161,21 @@ export class JobStore {
 		return rec;
 	}
 
+	/** Find an active job by kind+name+handlerKey */
+	private getActiveByName(
+		kind: JobKind,
+		name: string | null | undefined,
+		handlerKey: string
+	): JobRecord | undefined {
+		if (!name) {
+			return undefined;
+		}
+		const stmt = this.db.prepare(
+			"SELECT * FROM jobs WHERE active = 1 AND kind = ? AND name = ? AND handler_key = ?"
+		);
+		return this.mapRow(stmt.get(kind, name, handlerKey));
+	}
+
 	getJob(id: string): JobRecord | undefined {
 		const stmt = this.db.prepare("SELECT * FROM jobs WHERE id = ?");
 		return this.mapRow(stmt.get(id));
@@ -181,11 +196,34 @@ export class JobStore {
 	}
 
 	createTimeJob(data: CreateTimeJob): JobRecord {
-		const id = data.id ?? randomUUID();
 		const ts = nowMs();
 		const runAt = toMs(data.runAt)!;
 		const payload =
 			data.payload == null ? null : JSON.stringify(data.payload);
+		// De-duplicate: reuse existing active job with same name+handler
+		const existing = this.getActiveByName(
+			"time",
+			data.name ?? null,
+			data.handlerKey
+		);
+		if (existing) {
+			// Update schedule and options on existing record
+			this.db
+				.prepare(
+					"UPDATE jobs SET run_at = @run_at, payload = @payload, max_retries = @max_retries, backoff_ms = @backoff_ms, updated_at = @updated_at WHERE id = @id"
+				)
+				.run({
+					id: existing.id,
+					run_at: runAt,
+					payload,
+					max_retries: data.maxRetries ?? existing.maxRetries ?? 0,
+					backoff_ms: data.backoffMs ?? existing.backoffMs ?? 0,
+					updated_at: ts,
+				});
+			return this.getJob(existing.id)!;
+		}
+
+		const id = data.id ?? randomUUID();
 		const stmt = this.db.prepare(`
 			INSERT INTO jobs (
 				id, kind, name, handler_key, payload, run_at, cron_expr, interval_ms,
@@ -212,10 +250,32 @@ export class JobStore {
 	}
 
 	createCronJob(data: CreateCronJob): JobRecord {
-		const id = data.id ?? randomUUID();
 		const ts = nowMs();
 		const payload =
 			data.payload == null ? null : JSON.stringify(data.payload);
+		// De-duplicate active cron by name+handler
+		const existing = this.getActiveByName(
+			"cron",
+			data.name ?? null,
+			data.handlerKey
+		);
+		if (existing) {
+			this.db
+				.prepare(
+					"UPDATE jobs SET cron_expr = @cron_expr, payload = @payload, max_retries = @max_retries, backoff_ms = @backoff_ms, updated_at = @updated_at WHERE id = @id"
+				)
+				.run({
+					id: existing.id,
+					cron_expr: data.cronExpr,
+					payload,
+					max_retries: data.maxRetries ?? existing.maxRetries ?? 0,
+					backoff_ms: data.backoffMs ?? existing.backoffMs ?? 0,
+					updated_at: ts,
+				});
+			return this.getJob(existing.id)!;
+		}
+
+		const id = data.id ?? randomUUID();
 		const stmt = this.db.prepare(`
 			INSERT INTO jobs (
 				id, kind, name, handler_key, payload, run_at, cron_expr, interval_ms,
@@ -242,10 +302,33 @@ export class JobStore {
 	}
 
 	createIntervalJob(data: CreateIntervalJob): JobRecord {
-		const id = data.id ?? randomUUID();
 		const ts = nowMs();
 		const payload =
 			data.payload == null ? null : JSON.stringify(data.payload);
+		// De-duplicate active interval by name+handler
+		const existing = this.getActiveByName(
+			"interval",
+			data.name ?? null,
+			data.handlerKey
+		);
+		if (existing) {
+			this.db
+				.prepare(
+					"UPDATE jobs SET interval_ms = @interval_ms, payload = @payload, max_runs = @max_runs, max_retries = @max_retries, backoff_ms = @backoff_ms, updated_at = @updated_at WHERE id = @id"
+				)
+				.run({
+					id: existing.id,
+					interval_ms: data.intervalMs,
+					payload,
+					max_runs: data.maxRuns ?? existing.maxRuns ?? null,
+					max_retries: data.maxRetries ?? existing.maxRetries ?? 0,
+					backoff_ms: data.backoffMs ?? existing.backoffMs ?? 0,
+					updated_at: ts,
+				});
+			return this.getJob(existing.id)!;
+		}
+
+		const id = data.id ?? randomUUID();
 		const stmt = this.db.prepare(`
 			INSERT INTO jobs (
 				id, kind, name, handler_key, payload, run_at, cron_expr, interval_ms,
@@ -312,6 +395,20 @@ export class JobStore {
 			.run(ts, id);
 	}
 
+	/**
+	 * Attempt to mark the job as running atomically. Returns true if the state was changed,
+	 * false if the job was already running or inactive.
+	 */
+	tryMarkRunning(id: string): boolean {
+		const ts = nowMs();
+		const info = this.db
+			.prepare(
+				"UPDATE jobs SET status = 'running', attempts = attempts + 1, updated_at = ? WHERE id = ? AND status != 'running' AND active = 1"
+			)
+			.run(ts, id);
+		return info.changes === 1;
+	}
+
 	bumpAttempts(id: string) {
 		const ts = nowMs();
 		this.db
@@ -357,5 +454,11 @@ export class JobStore {
 
 	removeJob(id: string) {
 		this.db.prepare("DELETE FROM jobs WHERE id = ?").run(id);
+	}
+
+	/** Remove all jobs */
+	clearAllJob() {
+		this.db.prepare("DELETE FROM jobs").run();
+		this.db.pragma("vacuum");
 	}
 }
