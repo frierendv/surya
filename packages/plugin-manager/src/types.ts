@@ -97,7 +97,7 @@ export interface Plugin extends PluginManifest {
 	 * Pre-execution hooks for a plugin.
 	 * @deprecated Use `pre` instead
 	 */
-	before?: PluginFn;
+	before?: PluginFn<boolean>;
 	/**
 	 * Pre-execution hooks for a plugin.
 	 *
@@ -107,7 +107,7 @@ export interface Plugin extends PluginManifest {
 	 * If this throws, the main function will not be executed.
 	 * @returns A boolean indicating whether to proceed with the main execution.
 	 */
-	pre?: PluginFn;
+	pre?: PluginFn<boolean>;
 	/**
 	 * The main function that gets executed when the plugin is triggered.
 	 * If this throws, the post/after function will not be executed.
