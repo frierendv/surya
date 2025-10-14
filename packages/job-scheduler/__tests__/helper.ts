@@ -12,18 +12,3 @@ export const cleanupTempDb = (dbPath: string) => {
 		// ignore
 	}
 };
-
-export const getJobStore = async (name: string) => {
-	const dbPath = createTempDbPath(name);
-	const store = new JobStore(dbPath);
-	return {
-		store,
-		clear: () => {
-			store.clearAllJob();
-		},
-		close: () => {
-			store.close();
-			cleanupTempDb(dbPath);
-		},
-	};
-};
