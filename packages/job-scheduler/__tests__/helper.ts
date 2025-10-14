@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { JobStore } from "../src/sqlite";
 
 export const createTempDbPath = (name: string) =>
 	path.join(process.cwd(), `__tmp_jobs_${name}.sqlite`);
