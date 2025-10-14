@@ -1,8 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
-import createJobSchedulers from "../src/factory";
-
-const tmpDb = () => path.join(process.cwd(), "__tmp_jobs_factory.sqlite");
+import { createJobSchedulers, type JobSchedulers } from "../src/factory";
+import { cleanupTempDb, createTempDbPath } from "./helper";
 
 // disable logger
 jest.mock("@surya/core/logger", () => ({
@@ -20,16 +17,25 @@ jest.mock("@surya/core/logger", () => ({
 	}),
 }));
 describe("Factory", () => {
-	afterEach(() => {
-		try {
-			fs.unlinkSync(tmpDb());
-		} catch {
-			// ignore
-		}
+	let tempDb: string;
+	beforeEach(() => {
+		tempDb = createTempDbPath("factory");
 	});
-
+	afterEach(() => {
+		cleanupTempDb(tempDb);
+	});
 	test("creates shared store and autostarts", async () => {
-		const api = createJobSchedulers({ dbPath: tmpDb(), autostart: true });
+		const api: JobSchedulers = createJobSchedulers({
+			dbPath: tempDb,
+			autostart: true,
+		});
+		// wait for init
+		await new Promise((r) => setTimeout(r, 1000));
+
+		// all schedulers created
+		expect(api.interval).toBeDefined();
+		expect(api.time).toBeDefined();
+		expect(api.store).toBeDefined();
 
 		let ran = 0;
 		api.time.register("k1", async () => {

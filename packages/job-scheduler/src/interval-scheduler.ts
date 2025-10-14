@@ -2,18 +2,7 @@ import { EventEmitter } from "@surya/core/events";
 import { createLogger, type Logger } from "@surya/core/logger";
 import { SimpleIntervalJob, Task, ToadScheduler } from "toad-scheduler";
 import { JobStore, type JobRecord } from "./sqlite";
-import { type JobHandler } from "./time-scheduler";
-
-export type IntervalSchedulerEvents = {
-	"job:add": (job: JobRecord) => void;
-	"job:start": (job: JobRecord) => void;
-	"job:success": (job: JobRecord) => void;
-	"job:failure": (job: JobRecord, error: unknown) => void;
-	"job:finish": (job: JobRecord) => void;
-	"job:pause": (id: string) => void;
-	"job:resume": (id: string) => void;
-	"job:remove": (id: string) => void;
-};
+import type { JobHandler, JobRegistry, SchedulerEvents } from "./types";
 
 export interface IntervalSchedulerOptions {
 	logger?: Logger;
@@ -22,7 +11,9 @@ export interface IntervalSchedulerOptions {
 /**
  * Interval job scheduler using toad-scheduler for in-process timing and SQLite for persistence.
  */
-export class IntervalScheduler extends EventEmitter<IntervalSchedulerEvents> {
+export class IntervalScheduler<
+	Reg extends JobRegistry = JobRegistry,
+> extends EventEmitter<SchedulerEvents> {
 	private store: JobStore;
 	private scheduler: ToadScheduler;
 	private handlers = new Map<string, JobHandler<any>>();
@@ -36,18 +27,27 @@ export class IntervalScheduler extends EventEmitter<IntervalSchedulerEvents> {
 		this.scheduler = new ToadScheduler();
 		this.log = opts.logger ?? createLogger({ name: "interval-scheduler" });
 	}
+	/**
+	 * Register a handler function.
+	 */
+	public register<Key extends string, P = unknown>(
+		key: Key,
+		handler: JobHandler<P>
+	): asserts this is IntervalScheduler<JobRegistry<Key, P>> {
+		this.handlers.set(key, handler);
+	}
 
-	add(
+	public add<K extends keyof Reg & string>(
 		name: string,
 		everyMs: number,
-		handlerKey: string,
-		payload?: unknown,
+		handlerKey: K,
+		payload?: Reg[K],
 		opts: {
 			maxRuns?: number | null;
 			maxRetries?: number;
 			backoffMs?: number;
 		} = {}
-	) {
+	): JobRecord<Reg[K]> {
 		const rec = this.store.createIntervalJob({
 			name,
 			handlerKey,
@@ -56,20 +56,13 @@ export class IntervalScheduler extends EventEmitter<IntervalSchedulerEvents> {
 			maxRuns: opts.maxRuns ?? null,
 			maxRetries: opts.maxRetries ?? 0,
 			backoffMs: opts.backoffMs ?? 0,
-		});
+		}) as JobRecord<Reg[K]>;
 		this.emit("job:add", rec);
 		// schedule immediately if running and not paused
 		if (this.running && !rec.paused) {
 			this.schedule(rec);
 		}
 		return rec;
-	}
-
-	register<Key extends string, P = unknown>(
-		key: Key,
-		handler: JobHandler<P>
-	) {
-		this.handlers.set(key, handler as JobHandler<any>);
 	}
 
 	start() {
@@ -142,7 +135,11 @@ export class IntervalScheduler extends EventEmitter<IntervalSchedulerEvents> {
 			return;
 		}
 
-		this.store.markRunning(id);
+		// atomic guard: skip if already running
+		const started = this.store.tryMarkRunning(id);
+		if (!started) {
+			return;
+		}
 		this.emit("job:start", job);
 		try {
 			await Promise.resolve(handler(job.payload, job));
