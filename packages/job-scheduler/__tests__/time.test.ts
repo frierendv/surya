@@ -1,5 +1,8 @@
-import { TimeScheduler } from "../src";
-import { getJobStore } from "./helper";
+import { JobStore, TimeScheduler } from "../src";
+import { cleanupTempDb, createTempDbPath } from "./helper";
+
+// increase jest timeout
+jest.setTimeout(20000);
 
 // disable logger
 jest.mock("@surya/core/logger", () => ({
@@ -17,19 +20,28 @@ jest.mock("@surya/core/logger", () => ({
 	}),
 }));
 describe("TimeSchedule (time & cron)", () => {
-	let jobStore: Awaited<ReturnType<typeof getJobStore>>;
-	beforeAll(async () => {
-		jobStore = await getJobStore("time");
+	let store: JobStore;
+	const dbPath = createTempDbPath("interval");
+	beforeAll(() => {
+		jest.useFakeTimers();
+		jest.setSystemTime(new Date());
+		store = new JobStore(dbPath);
 	});
 	afterEach(() => {
-		jobStore.clear();
+		store.clearAllJob();
 	});
 
 	afterAll(() => {
-		jobStore.close();
+		store.close();
+		cleanupTempDb(dbPath);
+		jest.useRealTimers();
 	});
+	const advance = async (ms: number) => {
+		await jest.advanceTimersByTimeAsync(ms);
+		await Promise.resolve();
+	};
 	test("scheduleAt executes and deactivates", async () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		let ran = 0;
 		sch.register("t", async (payload: any) => {
@@ -43,10 +55,10 @@ describe("TimeSchedule (time & cron)", () => {
 
 		sch.start();
 
-		await new Promise((r) => setTimeout(r, 200));
+		await advance(200);
 
 		expect(ran).toBe(1);
-		const j = jobStore.store.getJob(rec.id)!;
+		const j = store.getJob(rec.id)!;
 		expect(j.active).toBe(false);
 
 		// ensure scheduler is stopped to avoid using DB after tests close the connection
@@ -54,7 +66,7 @@ describe("TimeSchedule (time & cron)", () => {
 	});
 
 	test("scheduleCron keeps running", async () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		let cnt = 0;
 		sch.register("cron", async () => {
@@ -65,7 +77,7 @@ describe("TimeSchedule (time & cron)", () => {
 
 		sch.start();
 
-		await new Promise((r) => setTimeout(r, 2100));
+		await advance(2100);
 
 		expect(cnt).toBeGreaterThanOrEqual(2);
 
@@ -73,7 +85,7 @@ describe("TimeSchedule (time & cron)", () => {
 	});
 
 	it("does not schedule same job twice", () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		sch.register("j", async () => {});
 
@@ -91,20 +103,20 @@ describe("TimeSchedule (time & cron)", () => {
 	});
 
 	it("skips if already running", async () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		let runs = 0;
 		sch.register("long", async () => {
 			runs++;
 			// simulate long task
-			await new Promise((r) => setTimeout(r, 200));
+			await advance(200);
 		});
 
 		sch.scheduleCron("long-runner", "* * * * * *", "long");
 
 		sch.start();
 
-		await new Promise((r) => setTimeout(r, 2000));
+		await advance(2000);
 		// should be around 2 since each run takes 200ms and cron triggers every second
 		expect(runs).toBeGreaterThanOrEqual(1);
 		expect(runs).toBeLessThanOrEqual(3);
@@ -112,7 +124,7 @@ describe("TimeSchedule (time & cron)", () => {
 		sch.stop();
 	});
 	test("time job retries then succeeds", async () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		let attempts = 0;
 		sch.register("rr", async () => {
@@ -132,9 +144,9 @@ describe("TimeSchedule (time & cron)", () => {
 
 		sch.start();
 
-		await new Promise((r) => setTimeout(r, 2000));
+		await advance(2000);
 
-		const j = jobStore.store.getJob(rec.id)!;
+		const j = store.getJob(rec.id)!;
 		expect(attempts).toBeGreaterThanOrEqual(3);
 		expect(j.active).toBe(false);
 		expect(j.runCount).toBeGreaterThanOrEqual(1);
@@ -143,7 +155,7 @@ describe("TimeSchedule (time & cron)", () => {
 	});
 
 	test("time job exhausts retries and deactivates as failed", async () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		sch.register("ff", async () => {
 			throw new Error("always");
@@ -159,9 +171,9 @@ describe("TimeSchedule (time & cron)", () => {
 
 		sch.start();
 
-		await new Promise((r) => setTimeout(r, 1200));
+		await advance(1200);
 
-		const j = jobStore.store.getJob(rec.id)!;
+		const j = store.getJob(rec.id)!;
 		expect(j.active).toBe(false);
 		expect(j.status).toBe("failed");
 		expect(j.attempts).toBeGreaterThanOrEqual(2);
@@ -170,15 +182,15 @@ describe("TimeSchedule (time & cron)", () => {
 	});
 
 	test("cron updates runCount and lastRunAt", async () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		sch.register("c", async () => {});
 		const rec = sch.scheduleCron("every-second", "* * * * * *", "c");
 
 		sch.start();
-		await new Promise((r) => setTimeout(r, 2100));
+		await advance(2100);
 
-		const j = jobStore.store.getJob(rec.id)!;
+		const j = store.getJob(rec.id)!;
 		expect(j.runCount).toBeGreaterThanOrEqual(1);
 		expect(typeof j.lastRunAt).toBe("number");
 
@@ -186,7 +198,7 @@ describe("TimeSchedule (time & cron)", () => {
 	});
 
 	test("pause/resume/cancel time job", async () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		let ran = 0;
 		sch.register("k1", async () => {
@@ -197,24 +209,24 @@ describe("TimeSchedule (time & cron)", () => {
 		sch.pause(rec.id);
 		sch.start();
 
-		await new Promise((r) => setTimeout(r, 250));
+		await advance(250);
 		expect(ran).toBe(0);
 
 		sch.resume(rec.id);
-		await new Promise((r) => setTimeout(r, 250));
+		await advance(250);
 		expect(ran).toBe(1);
 
 		// schedule another and then cancel
 		const rec2 = sch.scheduleAt("t2", Date.now() + 150, "k1");
 		sch.cancel(rec2.id);
-		await new Promise((r) => setTimeout(r, 250));
+		await advance(250);
 		expect(ran).toBe(1);
 
 		sch.stop();
 	});
 
 	test("time job failure with backoff and counters", async () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		let attempts = 0;
 		sch.register("fail", async () => {
@@ -236,9 +248,9 @@ describe("TimeSchedule (time & cron)", () => {
 		);
 
 		sch.start();
-		await new Promise((r) => setTimeout(r, 400));
+		await advance(400);
 
-		const final = jobStore.store.getJob(rec.id)!;
+		const final = store.getJob(rec.id)!;
 		expect(final.active).toBe(false);
 		expect(
 			final.status === "completed" || final.status === "scheduled"
@@ -251,7 +263,7 @@ describe("TimeSchedule (time & cron)", () => {
 	});
 
 	test("time dedup updates existing job instead of creating new one", async () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		sch.register("h", async () => {});
 
@@ -271,7 +283,7 @@ describe("TimeSchedule (time & cron)", () => {
 		);
 
 		expect(r2.id).toBe(r1.id);
-		const j = jobStore.store.getJob(r1.id)!;
+		const j = store.getJob(r1.id)!;
 		expect(j.runAt).toBeGreaterThan(r1.runAt!);
 		expect(j.maxRetries).toBe(2);
 		expect(j.backoffMs).toBe(20);
@@ -280,7 +292,7 @@ describe("TimeSchedule (time & cron)", () => {
 	});
 
 	test("cron dedup updates existing job instead of creating new one", async () => {
-		const sch: TimeScheduler = new TimeScheduler(jobStore.store);
+		const sch: TimeScheduler = new TimeScheduler(store);
 
 		sch.register("c", async () => {});
 
@@ -300,7 +312,7 @@ describe("TimeSchedule (time & cron)", () => {
 		);
 
 		expect(r2.id).toBe(r1.id);
-		const j = jobStore.store.getJob(r1.id)!;
+		const j = store.getJob(r1.id)!;
 		expect(j.cronExpr).toBe("*/2 * * * * *");
 		expect(j.maxRetries).toBe(5);
 		expect(j.backoffMs).toBe(50);

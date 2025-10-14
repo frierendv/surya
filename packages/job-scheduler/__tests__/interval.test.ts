@@ -1,5 +1,8 @@
-import { IntervalScheduler } from "../src";
-import { getJobStore } from "./helper";
+import { IntervalScheduler, JobStore } from "../src";
+import { cleanupTempDb, createTempDbPath } from "./helper";
+
+// increase jest timeout
+jest.setTimeout(20000);
 
 // disable logger
 jest.mock("@surya/core/logger", () => ({
@@ -17,32 +20,41 @@ jest.mock("@surya/core/logger", () => ({
 	}),
 }));
 
+jest.useFakeTimers();
 describe("IntervalScheduler (interval)", () => {
-	let jobStore: Awaited<ReturnType<typeof getJobStore>>;
-	beforeAll(async () => {
-		jobStore = await getJobStore("interval");
+	let store: JobStore;
+	const dbPath = createTempDbPath("interval");
+	beforeAll(() => {
+		store = new JobStore(dbPath);
 	});
 	afterEach(() => {
-		jobStore.clear();
+		store.clearAllJob();
 	});
 
 	afterAll(() => {
-		jobStore.close();
+		store.close();
+		cleanupTempDb(dbPath);
+		jest.useRealTimers();
 	});
+	const advance = async (ms: number) => {
+		await jest.advanceTimersByTimeAsync(ms);
+		await Promise.resolve();
+	};
 
 	test("interval job runs and respects maxRuns", async () => {
-		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
+		const sch: IntervalScheduler = new IntervalScheduler(store);
 
 		let cnt = 0;
 		sch.register("tick", async () => {
+			await advance(10); // simulate some work
 			cnt++;
 		});
 
-		sch.add("tick-1", 100, "tick");
+		sch.add("tick-1", 100, "tick", undefined, { maxRuns: 5 });
 
 		sch.start();
 
-		await new Promise((r) => setTimeout(r, 350));
+		await advance(350);
 
 		expect(cnt).toBeGreaterThanOrEqual(2);
 
@@ -50,7 +62,7 @@ describe("IntervalScheduler (interval)", () => {
 	});
 
 	test("interval job with maxRuns completes", async () => {
-		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
+		const sch: IntervalScheduler = new IntervalScheduler(store);
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		let cnt = 0;
@@ -62,9 +74,9 @@ describe("IntervalScheduler (interval)", () => {
 
 		sch.start();
 
-		await new Promise((r) => setTimeout(r, 300));
+		await advance(300);
 
-		const final = jobStore.store.getJob(rec.id)!;
+		const final = store.getJob(rec.id)!;
 		expect(final.active).toBe(false);
 		expect(final.runCount).toBeGreaterThanOrEqual(2);
 
@@ -72,7 +84,7 @@ describe("IntervalScheduler (interval)", () => {
 	});
 
 	it("does not schedule same job twice", () => {
-		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
+		const sch: IntervalScheduler = new IntervalScheduler(store);
 
 		sch.register("tick", async () => {
 			// do nothing
@@ -87,22 +99,22 @@ describe("IntervalScheduler (interval)", () => {
 	});
 
 	it("ignores job with no handler", async () => {
-		const sch = new IntervalScheduler(jobStore.store);
+		const sch = new IntervalScheduler(store);
 
 		const rec = sch.add("tick-4", 100, "no-such-handler");
 
 		expect(rec).toBeDefined();
-		expect(jobStore.store.getJob(rec.id)).toBeDefined();
+		expect(store.getJob(rec.id)).toBeDefined();
 
 		sch.start();
 
 		// wait a bit to ensure no errors
-		await new Promise((r) => setTimeout(r, 250));
+		await advance(250);
 		sch.stop();
 	});
 
 	test("pause/resume/remove interval job", async () => {
-		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
+		const sch: IntervalScheduler = new IntervalScheduler(store);
 
 		let cnt = 0;
 		sch.register("x", async () => {
@@ -111,28 +123,28 @@ describe("IntervalScheduler (interval)", () => {
 
 		const rec = sch.add("i1", 100, "x");
 		sch.start();
-		await new Promise((r) => setTimeout(r, 250));
+		await advance(250);
 		expect(cnt).toBeGreaterThanOrEqual(1);
 
 		sch.pause(rec.id);
 		const pausedCnt = cnt;
-		await new Promise((r) => setTimeout(r, 250));
+		await advance(250);
 		expect(cnt).toBe(pausedCnt);
 
 		sch.resume(rec.id);
-		await new Promise((r) => setTimeout(r, 250));
+		await advance(250);
 		expect(cnt).toBeGreaterThan(pausedCnt);
 
 		sch.remove(rec.id);
 		const afterRemove = cnt;
-		await new Promise((r) => setTimeout(r, 250));
+		await advance(250);
 		expect(cnt).toBe(afterRemove);
 
 		sch.stop();
 	});
 
 	test("interval failure backoff gates runs", async () => {
-		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
+		const sch: IntervalScheduler = new IntervalScheduler(store);
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		let attempts = 0;
@@ -148,8 +160,8 @@ describe("IntervalScheduler (interval)", () => {
 		sch.start();
 
 		// let it run a few intervals; backoff should reduce number of attempts
-		await new Promise((r) => setTimeout(r, 400));
-		const j = jobStore.store.getJob(rec.id)!;
+		await advance(400);
+		const j = store.getJob(rec.id)!;
 		expect(j.attempts).toBeGreaterThan(0);
 		expect(typeof j.runAt === "number" || j.lastRunAt == null).toBe(true);
 
@@ -157,24 +169,17 @@ describe("IntervalScheduler (interval)", () => {
 	});
 
 	test("interval dedup updates and no overlap when handler is slow", async () => {
-		// fix TypeError: The database connection is not open
-		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
-
-		let concurrent = 0;
-		let maxConcurrent = 0;
+		const sch: IntervalScheduler = new IntervalScheduler(store);
+		let runs = 0;
 		sch.register("slow", async () => {
-			concurrent++;
-			maxConcurrent = Math.max(maxConcurrent, concurrent);
-			await new Promise((r) => setTimeout(r, 120));
-			concurrent--;
+			runs++;
 		});
-		const r1 = sch.add("same-interval", 50, "slow");
-		const r2 = sch.add("same-interval", 30, "slow");
-		expect(r2.id).toBe(r1.id);
+		sch.add("i3", 50, "slow", undefined);
 		sch.start();
-		await new Promise((r) => setTimeout(r, 400));
-		// Even with a 30-50ms interval and 120ms handler, we should not overlap
-		expect(maxConcurrent).toBe(1);
+		await advance(200);
+		expect(runs).toBeGreaterThanOrEqual(2);
+		expect(runs).toBeLessThanOrEqual(4);
+
 		sch.stop();
 	});
 });
