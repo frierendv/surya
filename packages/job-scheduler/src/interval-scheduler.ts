@@ -2,7 +2,12 @@ import { EventEmitter } from "@surya/core/events";
 import { createLogger, type Logger } from "@surya/core/logger";
 import { SimpleIntervalJob, Task, ToadScheduler } from "toad-scheduler";
 import { JobStore, type JobRecord } from "./sqlite";
-import type { JobHandler, JobRegistry, SchedulerEvents } from "./types";
+import type {
+	JobHandler,
+	JobRegistry,
+	RetryPolicy,
+	SchedulerEvents,
+} from "./types";
 
 export interface IntervalSchedulerOptions {
 	logger?: Logger;
@@ -42,10 +47,9 @@ export class IntervalScheduler<
 		everyMs: number,
 		handlerKey: K,
 		payload?: Reg[K],
-		opts: {
+		opts: RetryPolicy & {
+			/** Maximum number of times to run the job. Null for unlimited. */
 			maxRuns?: number | null;
-			maxRetries?: number;
-			backoffMs?: number;
 		} = {}
 	): JobRecord<Reg[K]> {
 		const rec = this.store.createIntervalJob({
@@ -54,8 +58,8 @@ export class IntervalScheduler<
 			payload,
 			intervalMs: everyMs,
 			maxRuns: opts.maxRuns ?? null,
-			maxRetries: opts.maxRetries ?? 0,
-			backoffMs: opts.backoffMs ?? 0,
+			maxRetries: opts.maxRetries ?? 5,
+			backoffMs: opts.backoffMs ?? 2000,
 		}) as JobRecord<Reg[K]>;
 		this.emit("job:add", rec);
 		// schedule immediately if running and not paused
@@ -116,6 +120,27 @@ export class IntervalScheduler<
 		this.jobs.set(job.id, si);
 	}
 
+	/**
+	 * Ensure a job is fully unscheduled from the in-process scheduler and local map.
+	 */
+	private unschedule(id: string) {
+		const j = this.jobs.get(id);
+		if (j) {
+			try {
+				j.stop();
+			} finally {
+				this.jobs.delete(id);
+			}
+		}
+		// Best-effort removal from the underlying scheduler by id
+		try {
+			// toad-scheduler supports removal by id assigned in SimpleIntervalJob options
+			(this.scheduler as any).removeById?.(id);
+		} catch (_err) {
+			// ignore
+		}
+	}
+
 	private async run(id: string) {
 		const job = this.store.getJob(id);
 		if (!job || !job.active || job.paused) {
@@ -165,23 +190,23 @@ export class IntervalScheduler<
 					attempt: fresh.attempts,
 					when,
 				});
+			} else {
+				// Exceeded maximum retries
+				this.log.error("Interval job exceeded maxRetries", {
+					id,
+					attempts: fresh.attempts,
+					maxRetries: fresh.maxRetries,
+				});
+				this.finish(id);
 			}
 		}
 	}
 
 	private finish(id: string) {
 		this.store.completeAndDeactivate(id);
-		const after = this.store.getJob(id) ?? ({ id } as JobRecord);
-		this.emit("job:finish", after);
-		const j = this.jobs.get(id);
-		if (j) {
-			try {
-				j.stop();
-			} catch (_err) {
-				// ignore
-			}
-			this.jobs.delete(id);
-		}
+		const last = this.store.getJob(id) ?? ({ id } as JobRecord);
+		this.emit("job:finish", last);
+		this.unschedule(id);
 	}
 
 	pause(id: string) {
@@ -216,17 +241,15 @@ export class IntervalScheduler<
 		}
 	}
 
-	remove(id: string) {
+	/**
+	 * Remove a job. If `hard` is true, also delete from the store.
+	 */
+	remove(id: string, hard = false) {
 		this.store.setActive(id, false, "cancelled");
 		this.emit("job:remove", id);
-		const j = this.jobs.get(id);
-		if (j) {
-			try {
-				j.stop();
-			} catch (_err) {
-				// ignore
-			}
-			this.jobs.delete(id);
+		this.unschedule(id);
+		if (hard) {
+			this.store.removeJob(id);
 		}
 	}
 }
