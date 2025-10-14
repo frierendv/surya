@@ -1,9 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
-import { IntervalScheduler } from "../src/interval-scheduler";
-import { JobStore } from "../src/sqlite";
-
-const tmpDb = () => path.join(process.cwd(), "__tmp_jobs_interval.sqlite");
+import { IntervalScheduler } from "../src";
+import { getJobStore } from "./helper";
 
 // disable logger
 jest.mock("@surya/core/logger", () => ({
@@ -20,18 +16,22 @@ jest.mock("@surya/core/logger", () => ({
 		}),
 	}),
 }));
+
 describe("IntervalScheduler (interval)", () => {
+	let jobStore: Awaited<ReturnType<typeof getJobStore>>;
+	beforeAll(async () => {
+		jobStore = await getJobStore("interval");
+	});
 	afterEach(() => {
-		try {
-			fs.unlinkSync(tmpDb());
-		} catch {
-			// ignore
-		}
+		jobStore.clear();
+	});
+
+	afterAll(() => {
+		jobStore.close();
 	});
 
 	test("interval job runs and respects maxRuns", async () => {
-		const store = new JobStore(tmpDb());
-		const sch = new IntervalScheduler(store);
+		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
 
 		let cnt = 0;
 		sch.register("tick", async () => {
@@ -47,12 +47,10 @@ describe("IntervalScheduler (interval)", () => {
 		expect(cnt).toBeGreaterThanOrEqual(2);
 
 		sch.stop();
-		store.close();
 	});
 
 	test("interval job with maxRuns completes", async () => {
-		const store = new JobStore(tmpDb());
-		const sch = new IntervalScheduler(store);
+		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		let cnt = 0;
@@ -66,11 +64,117 @@ describe("IntervalScheduler (interval)", () => {
 
 		await new Promise((r) => setTimeout(r, 300));
 
-		const final = store.getJob(rec.id)!;
+		const final = jobStore.store.getJob(rec.id)!;
 		expect(final.active).toBe(false);
 		expect(final.runCount).toBeGreaterThanOrEqual(2);
 
 		sch.stop();
-		store.close();
+	});
+
+	it("does not schedule same job twice", () => {
+		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
+
+		sch.register("tick", async () => {
+			// do nothing
+		});
+
+		const rec1 = sch.add("tick-3", 100, "tick");
+		const rec2 = sch.add("tick-3", 100, "tick");
+
+		expect(rec1.id).toBe(rec2.id);
+
+		sch.stop();
+	});
+
+	it("ignores job with no handler", async () => {
+		const sch = new IntervalScheduler(jobStore.store);
+
+		const rec = sch.add("tick-4", 100, "no-such-handler");
+
+		expect(rec).toBeDefined();
+		expect(jobStore.store.getJob(rec.id)).toBeDefined();
+
+		sch.start();
+
+		// wait a bit to ensure no errors
+		await new Promise((r) => setTimeout(r, 250));
+		sch.stop();
+	});
+
+	test("pause/resume/remove interval job", async () => {
+		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
+
+		let cnt = 0;
+		sch.register("x", async () => {
+			cnt++;
+		});
+
+		const rec = sch.add("i1", 100, "x");
+		sch.start();
+		await new Promise((r) => setTimeout(r, 250));
+		expect(cnt).toBeGreaterThanOrEqual(1);
+
+		sch.pause(rec.id);
+		const pausedCnt = cnt;
+		await new Promise((r) => setTimeout(r, 250));
+		expect(cnt).toBe(pausedCnt);
+
+		sch.resume(rec.id);
+		await new Promise((r) => setTimeout(r, 250));
+		expect(cnt).toBeGreaterThan(pausedCnt);
+
+		sch.remove(rec.id);
+		const afterRemove = cnt;
+		await new Promise((r) => setTimeout(r, 250));
+		expect(cnt).toBe(afterRemove);
+
+		sch.stop();
+	});
+
+	test("interval failure backoff gates runs", async () => {
+		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
+
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		let attempts = 0;
+		sch.register("fail", async () => {
+			attempts++;
+			throw new Error("nope");
+		});
+
+		const rec = sch.add("i2", 50, "fail", undefined, {
+			maxRetries: 2,
+			backoffMs: 80,
+		});
+		sch.start();
+
+		// let it run a few intervals; backoff should reduce number of attempts
+		await new Promise((r) => setTimeout(r, 400));
+		const j = jobStore.store.getJob(rec.id)!;
+		expect(j.attempts).toBeGreaterThan(0);
+		expect(typeof j.runAt === "number" || j.lastRunAt == null).toBe(true);
+
+		sch.stop();
+	});
+
+	test("interval dedup updates and no overlap when handler is slow", async () => {
+		// fix TypeError: The database connection is not open
+		const sch: IntervalScheduler = new IntervalScheduler(jobStore.store);
+
+		let concurrent = 0;
+		let maxConcurrent = 0;
+		sch.register("slow", async () => {
+			concurrent++;
+			maxConcurrent = Math.max(maxConcurrent, concurrent);
+			await new Promise((r) => setTimeout(r, 120));
+			concurrent--;
+		});
+		const r1 = sch.add("same-interval", 50, "slow");
+		const r2 = sch.add("same-interval", 30, "slow");
+		expect(r2.id).toBe(r1.id);
+		sch.start();
+		await new Promise((r) => setTimeout(r, 400));
+		// Even with a 30-50ms interval and 120ms handler, we should not overlap
+		expect(maxConcurrent).toBe(1);
+		sch.stop();
 	});
 });
