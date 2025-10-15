@@ -3,8 +3,11 @@ import { createLogger, type Logger } from "@surya/core/logger";
 import { SimpleIntervalJob, Task, ToadScheduler } from "toad-scheduler";
 import { JobStore, type JobRecord } from "./sqlite";
 import type {
+	Def,
+	DefToRegistry,
 	JobHandler,
 	JobRegistry,
+	MergeDefs,
 	RetryPolicy,
 	SchedulerEvents,
 } from "./types";
@@ -38,11 +41,23 @@ export class IntervalScheduler<
 	public register<Key extends string, P = unknown>(
 		key: Key,
 		handler: JobHandler<P>
-	): asserts this is IntervalScheduler<JobRegistry<Key, P>> {
+	): asserts this is IntervalScheduler<Reg & DefToRegistry<Key, P>> {
 		this.handlers.set(key, handler);
 	}
-
-	public add<K extends keyof Reg & string>(
+	/**
+	 * Register multiple handler functions at once.
+	 */
+	public registerMany<const Arr extends readonly Def[]>(
+		defs: Arr
+	): asserts this is IntervalScheduler<Reg & MergeDefs<Arr>> {
+		for (const def of defs) {
+			this.handlers.set(def.handlerKey, def.handler);
+		}
+	}
+	/**
+	 * Add a new interval job.
+	 */
+	public add<K extends keyof Reg = keyof Reg>(
 		name: string,
 		everyMs: number,
 		handlerKey: K,
@@ -54,7 +69,7 @@ export class IntervalScheduler<
 	): JobRecord<Reg[K]> {
 		const rec = this.store.createIntervalJob({
 			name,
-			handlerKey,
+			handlerKey: handlerKey as string,
 			payload,
 			intervalMs: everyMs,
 			maxRuns: opts.maxRuns ?? null,
