@@ -7,8 +7,11 @@ import schedule, {
 import type { CreateCronJob, CreateTimeJob, JobRecord } from "./sqlite";
 import { JobStore } from "./sqlite";
 import type {
+	Def,
+	DefToRegistry,
 	JobHandler,
 	JobRegistry,
+	MergeDefs,
 	RetryPolicy,
 	SchedulerEvents,
 } from "./types";
@@ -41,8 +44,18 @@ export class TimeScheduler<
 	register<Key extends string, P = unknown>(
 		key: Key,
 		handler: JobHandler<P>
-	): asserts this is TimeScheduler<JobRegistry<Key, P>> {
+	): asserts this is TimeScheduler<Reg & DefToRegistry<Key, P>> {
 		this.handlers.set(key, handler);
+	}
+	/**
+	 * Register multiple handler functions at once.
+	 */
+	public registerMany<const Arr extends readonly Def[]>(
+		defs: Arr
+	): asserts this is TimeScheduler<Reg & MergeDefs<Arr>> {
+		for (const def of defs) {
+			this.handlers.set(def.handlerKey, def.handler);
+		}
 	}
 
 	start() {
