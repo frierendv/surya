@@ -1,8 +1,12 @@
 import { messageHandler } from "@handler/message";
 import { pluginHandler } from "@handler/plugin";
 import { useAuthProvider } from "@libs/auth-provider";
-import { logger, silentLogger } from "@libs/logger";
-import { BaileysSocket, type WASocket } from "@surya/baileys-utils";
+import { baileysLogger, logger } from "@libs/logger";
+import {
+	BaileysSocket,
+	type CreateBaileysOptions,
+	type WASocket,
+} from "@surya/baileys-utils";
 import { attachSendFile } from "@surya/baileys-utils/internals/send-file";
 import {
 	Browsers,
@@ -27,16 +31,18 @@ type InternalWASocket = Pick<WASocket, "sendMessage" | "sendFile">;
  */
 export const socket: InternalWASocket = {} as InternalWASocket;
 
-export const createSocket = () => {
+export const createSocket = (over?: Partial<CreateBaileysOptions>) => {
 	const baileys = new BaileysSocket({
 		authProvider: useAuthProvider(),
 		socketConfig: {
-			logger: silentLogger,
+			logger: baileysLogger,
 			shouldIgnoreJid,
 			browser: Browsers.ubuntu("Edge"),
+			...over?.socketConfig,
 		},
 		maxReconnectAttempts: 10,
 		initialReconnectDelayMs: 3000,
+		...over,
 	});
 	const handleConnectionUpdate = async (update: Partial<ConnectionState>) => {
 		if (update.qr) {
@@ -87,6 +93,11 @@ export const createSocket = () => {
 		if (type !== "notify" || !messages[0]) {
 			return;
 		}
+		// test
+		if (!messages[0]?.key.fromMe) {
+			return;
+		}
+
 		try {
 			const result = await messageHandler(messages[0], baileys.socket!);
 			if (!result) {
