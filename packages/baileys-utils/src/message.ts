@@ -144,10 +144,7 @@ export interface IMessageMeta extends IMessageActions {
 /**
  * Full message context including raw WAMessage fields and normalized metadata/actions.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface IMessageContext extends IMessageMeta {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface IMessageContext extends WAMessage {}
+export interface IMessageContext extends IMessageMeta, WAMessage {}
 
 /**
  * Extract the most relevant text from a proto.IMessage.
