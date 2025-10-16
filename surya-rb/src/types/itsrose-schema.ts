@@ -435,17 +435,17 @@ export interface paths {
 			requestBody: {
 				content: {
 					"application/json": {
-						/**
-						 * @description Each server has their own voices, so you need to specify the server id.
-						 * @enum {unknown}
-						 */
-						server_id: "lovita" | "rose" | "frieren";
-						/** @description Array of audio URLs to be used for cloning the voice. Audio files must be in `mp3`, `wav`, `ogg`, `opus`, `flac`, or `m4a` format. */
+						/** @description Audio URLs (mp3, wav, ogg, opus, flac, m4a). */
 						audio_urls: string[];
 						/** @description Name of the new voice. */
 						name: string;
-						/** @description If set `true` will remove background noise for voice samples using audio isolation model. If the samples do not include background noise, it can make the quality worse. */
+						/** @description If true, remove background noise; may reduce quality if none exists. */
 						remove_background_noise?: boolean;
+						/**
+						 * @description Server id for the target voice bank.
+						 * @enum {unknown}
+						 */
+						server_id: "lovita" | "rose" | "frieren";
 					};
 				};
 			};
@@ -469,9 +469,9 @@ export interface paths {
 							message: string;
 							/** @description Result of the request */
 							result?: {
-								/** @description ID of the newly created voice. */
+								/** @description Newly created voice ID. */
 								voice_id?: string;
-								/** @description Name of the newly created voice. */
+								/** @description Newly created voice name. */
 								name?: string;
 							};
 						};
@@ -550,7 +550,9 @@ export interface paths {
 							 */
 							message: string;
 							/** @description Any response from server. */
-							result?: Record<string, never>;
+							result?: {
+								[key: string]: unknown;
+							};
 						};
 					};
 				};
@@ -615,26 +617,35 @@ export interface paths {
 				content: {
 					"application/json": {
 						/**
-						 * @description Each server has their own voices, so you need to specify the server id.
-						 * @enum {unknown}
-						 */
-						server_id: "lovita" | "rose" | "frieren";
-						/**
-						 * @description Category of the voice. Options are `premade`, `cloned`, `generated`, and `professional`.
-						 * @default premade
+						 * @description Filter by category.
+						 * @example professional
 						 * @enum {unknown}
 						 */
 						category?:
+							| "professional"
 							| "premade"
 							| "cloned"
-							| "generated"
-							| "professional";
-						/** @description The query/search terms, to filter the voices. It filters the voices by name, category, and labels.  */
+							| "generated";
+						/**
+						 * @description Search term (name, category, labels).
+						 * @example Maribeth
+						 */
 						query?: string;
-						/** @description Page number for paginating cause there is lot of voices. */
+						/**
+						 * @description Page number.
+						 * @example 1
+						 */
 						page?: number;
-						/** @description Number of voices to return per page. Default is 10, maximum is 100. Note: The API may return fewer voices than requested if there are not enough matches. */
+						/**
+						 * @description Voices per page (default 10, max 100).
+						 * @example 10
+						 */
 						page_size?: number;
+						/**
+						 * @description Server to search.
+						 * @enum {unknown}
+						 */
+						server_id: "lovita" | "rose" | "frieren";
 					};
 				};
 			};
@@ -658,9 +669,9 @@ export interface paths {
 							message: string;
 							/** @description Result of the request */
 							result?: {
-								/** @description Whether there are more voices to fetch. */
+								/** @description Whether there are more results. */
 								has_more?: boolean;
-								/** @description Array of voices. */
+								/** @description Voices. */
 								voices?: {
 									/** @description ID of the voice. */
 									voice_id?: string;
@@ -669,11 +680,11 @@ export interface paths {
 									/** @description Category of the voice. */
 									category?: string;
 									/**
-									 * @description Known ISO language code of the voice.
+									 * @description ISO language code.
 									 * @default UNKNOWN
 									 */
 									language: string;
-									/** @description An object containing labels associated with the voice. */
+									/** @description Labels associated with the voice. */
 									labels?: Record<string, never>;
 								}[];
 							};
@@ -740,69 +751,133 @@ export interface paths {
 				content: {
 					"multipart/form-data": {
 						/**
-						 * @description Each server has their own voices, so you need to specify the server id.
+						 * @description Each server has its own voices; specify the server id.
 						 * @enum {unknown}
 						 */
 						server_id: "lovita" | "rose" | "frieren";
 						/**
-						 * @description ID of the voice to be used.
+						 * @description Voice ID.
 						 * @example 2vhwPPmYOBQ79F4vkznp
 						 */
 						voice_id: string;
-						/** @description If specified, the generation will be deterministic. Must be integer between 0 and 4294967295. */
+						/** @description If specified, generation is deterministic (0..4294967295). */
 						seed?: number;
 						/**
 						 * @description Output format of the generated audio.
-						 * @enum {unknown}
+						 * @example mp3_44100_128
 						 */
-						output_format?:
-							| "mp3_22050_32"
-							| "mp3_44100_32"
-							| "mp3_44100_64"
-							| "mp3_44100_96"
-							| "mp3_44100_128"
-							| "mp3_44100_192"
-							| "pcm_16000"
-							| "pcm_22050"
-							| "pcm_24000"
-							| "pcm_44100"
-							| "ulaw_8000";
+						output_format?: string;
 						/**
 						 * Voice Settings
 						 * @description Advanced settings for voice generation.
+						 * @example {}
 						 */
-						voice_settings?: {
-							/** @description Determines how stable the voice is and the randomness between each generation. Lower values introduce broader emotional range for the voice. Higher values can result in a monotonous voice with limited emotion. */
-							stability?: number;
-							/** @description Determines how closely the AI should adhere to the original voice when attempting to replicate it. */
-							similarity_boost?: number;
-							/** @description Determines the style exaggeration of the voice. This setting attempts to amplify the style of the original speaker. It does consume additional computational resources and might increase latency if set to anything other than 0. */
-							style?: number;
-							/** @description This setting boosts the similarity to the original speaker. Using this setting requires a slightly higher computational load, which in turn increases latency. */
-							use_speaker_boost?: boolean;
-							/** @description Controls the speed of the generated speech. Values range from 0.7 to 1.2, with 1.0 being the default speed. Lower values create slower, more deliberate speech while higher values produce faster-paced speech. Extreme values can impact the quality of the generated speech. */
-							speed?: number;
-						};
+						voice_settings?:
+							| {
+									/** @description Lower = broader emotional range. Higher = more monotone. */
+									stability?: number;
+									/** @description How closely to adhere to the original voice. */
+									similarity_boost?: number;
+									/** @description Amplifies the style of the original speaker (may increase latency). */
+									style?: number;
+									/** @description Boost similarity to the original speaker (slightly higher latency). */
+									use_speaker_boost?: boolean;
+									/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
+									speed?: number;
+							  }
+							| {
+									/** @description Lower = broader emotional range. Higher = more monotone. */
+									stability?: number;
+									/** @description How closely to adhere to the original voice. */
+									similarity_boost?: number;
+									/** @description Amplifies the style of the original speaker (may increase latency). */
+									style?: number;
+									/** @description Boost similarity to the original speaker (slightly higher latency). */
+									use_speaker_boost?: boolean;
+									/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
+									speed?: number;
+							  }
+							| string;
 						/**
-						 * @description Currently only `eleven_english_sts_v2` and `eleven_multilingual_sts_v2` are supported.
-						 * @default eleven_english_sts_v2
+						 * @description Supported STS models.
 						 * @enum {unknown}
 						 */
 						model_id?:
 							| "eleven_english_sts_v2"
 							| "eleven_multilingual_sts_v2";
-						/**
-						 * Format: binary
-						 * @description Audio file to be converted into text. Supported formats: `mp3`, `wav`, `ogg`, `opus`, `flac`, `m4a`.
-						 */
-						audio: string;
-						/** @description If set, will remove the background noise from your audio input using audio isolation model */
+						/** @description Use audio isolation to remove background noise. */
 						remove_background_noise?: boolean;
 						/**
-						 * @description The format of input audio. Options are `pcm_s16le_16` or `other` For pcm_s16le_16, the input audio must be 16-bit PCM at a 16kHz sample rate, single channel (mono), and little-endian byte order. Latency will be lower than with passing an encoded waveform.
+						 * @description For pcm_s16le_16: 16-bit PCM, 16kHz mono, little-endian. Lower latency.
 						 * @enum {unknown}
 						 */
 						file_format?: "pcm_s16le_16" | "other";
+						init_audio: string;
+					};
+					"application/json": {
+						/**
+						 * @description Each server has its own voices; specify the server id.
+						 * @enum {unknown}
+						 */
+						server_id: "lovita" | "rose" | "frieren";
+						/**
+						 * @description Voice ID.
+						 * @example 2vhwPPmYOBQ79F4vkznp
+						 */
+						voice_id: string;
+						/** @description If specified, generation is deterministic (0..4294967295). */
+						seed?: number;
+						/**
+						 * @description Output format of the generated audio.
+						 * @example mp3_44100_128
+						 */
+						output_format?: string;
+						/**
+						 * Voice Settings
+						 * @description Advanced settings for voice generation.
+						 * @example {}
+						 */
+						voice_settings?:
+							| {
+									/** @description Lower = broader emotional range. Higher = more monotone. */
+									stability?: number;
+									/** @description How closely to adhere to the original voice. */
+									similarity_boost?: number;
+									/** @description Amplifies the style of the original speaker (may increase latency). */
+									style?: number;
+									/** @description Boost similarity to the original speaker (slightly higher latency). */
+									use_speaker_boost?: boolean;
+									/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
+									speed?: number;
+							  }
+							| {
+									/** @description Lower = broader emotional range. Higher = more monotone. */
+									stability?: number;
+									/** @description How closely to adhere to the original voice. */
+									similarity_boost?: number;
+									/** @description Amplifies the style of the original speaker (may increase latency). */
+									style?: number;
+									/** @description Boost similarity to the original speaker (slightly higher latency). */
+									use_speaker_boost?: boolean;
+									/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
+									speed?: number;
+							  }
+							| string;
+						/**
+						 * @description Supported STS models.
+						 * @enum {unknown}
+						 */
+						model_id?:
+							| "eleven_english_sts_v2"
+							| "eleven_multilingual_sts_v2";
+						/** @description Use audio isolation to remove background noise. */
+						remove_background_noise?: boolean;
+						/**
+						 * @description For pcm_s16le_16: 16-bit PCM, 16kHz mono, little-endian. Lower latency.
+						 * @enum {unknown}
+						 */
+						file_format?: "pcm_s16le_16" | "other";
+						init_audio: string;
 					};
 				};
 			};
@@ -892,61 +967,50 @@ export interface paths {
 				content: {
 					"application/json": {
 						/**
-						 * @description Each server has their own voices, so you need to specify the server id.
+						 * @description Each server has its own voices; specify the server id.
 						 * @enum {unknown}
 						 */
 						server_id: "lovita" | "rose" | "frieren";
 						/**
-						 * @description ID of the voice to be used.
+						 * @description Voice ID.
 						 * @example 2vhwPPmYOBQ79F4vkznp
 						 */
 						voice_id: string;
-						/** @description Identifier of the model that will be used. */
-						model_id?: string;
-						/** @description If specified, the generation will be deterministic. Must be integer between 0 and 4294967295. */
+						/** @description If specified, generation is deterministic (0..4294967295). */
 						seed?: number;
 						/**
 						 * @description Output format of the generated audio.
-						 * @enum {unknown}
+						 * @example mp3_44100_128
 						 */
-						output_format?:
-							| "mp3_22050_32"
-							| "mp3_44100_32"
-							| "mp3_44100_64"
-							| "mp3_44100_96"
-							| "mp3_44100_128"
-							| "mp3_44100_192"
-							| "pcm_16000"
-							| "pcm_22050"
-							| "pcm_24000"
-							| "pcm_44100"
-							| "ulaw_8000";
+						output_format?: string;
 						/**
 						 * Voice Settings
 						 * @description Advanced settings for voice generation.
 						 */
 						voice_settings?: {
-							/** @description Determines how stable the voice is and the randomness between each generation. Lower values introduce broader emotional range for the voice. Higher values can result in a monotonous voice with limited emotion. */
+							/** @description Lower = broader emotional range. Higher = more monotone. */
 							stability?: number;
-							/** @description Determines how closely the AI should adhere to the original voice when attempting to replicate it. */
+							/** @description How closely to adhere to the original voice. */
 							similarity_boost?: number;
-							/** @description Determines the style exaggeration of the voice. This setting attempts to amplify the style of the original speaker. It does consume additional computational resources and might increase latency if set to anything other than 0. */
+							/** @description Amplifies the style of the original speaker (may increase latency). */
 							style?: number;
-							/** @description This setting boosts the similarity to the original speaker. Using this setting requires a slightly higher computational load, which in turn increases latency. */
+							/** @description Boost similarity to the original speaker (slightly higher latency). */
 							use_speaker_boost?: boolean;
-							/** @description Controls the speed of the generated speech. Values range from 0.7 to 1.2, with 1.0 being the default speed. Lower values create slower, more deliberate speech while higher values produce faster-paced speech. Extreme values can impact the quality of the generated speech. */
+							/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
 							speed?: number;
 						};
-						/** @description The text that will get converted into speech. */
+						/** @description Model to use. */
+						model_id?: string;
+						/** @description Text to convert to speech. */
 						text: string;
-						/** @description Language code (ISO 639-1) used to enforce a language for the model. Currently only `Turbo v2.5` and `Flash v2.5` support language enforcement. For other models, an error will be returned if `language_code` is provided. */
+						/** @description ISO 639-1 language code. Only Turbo v2.5 / Flash v2.5 support this. */
 						language_code?: string;
-						/** @description The text that came before the text of the current request. Can be used to improve the speech's continuity when concatenating together multiple generations or to influence the speech's continuity in the current generation. */
+						/** @description Text preceding the current request; helps continuity. */
 						previous_text?: string;
-						/** @description The text that comes after the text of the current request. Can be used to improve the speech's continuity when concatenating together multiple generations or to influence the speech's continuity in the current generation. */
+						/** @description Text following the current request; helps continuity. */
 						next_text?: string;
 						/**
-						 * @description This parameter controls text normalization with three modes: `auto`, `on`, and `off`. When set to `auto`, the system will automatically decide whether to apply text normalization (e.g., spelling out numbers). With `on`, text normalization will always be applied, while with `off`, it will be skipped. Cannot be turned on for `eleven_turbo_v2_5` or `eleven_flash_v2_5` models.
+						 * @description Controls text normalization. Cannot be 'on' for eleven_turbo_v2_5 / eleven_flash_v2_5.
 						 * @enum {unknown}
 						 */
 						apply_text_normalization?: "auto" | "on" | "off";
@@ -1797,6 +1861,8 @@ export interface paths {
 					"application/json": {
 						/** @description The image to be processed. It can be a URL or base64 encoded data. */
 						init_image: string;
+						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
+						sync?: boolean;
 						/**
 						 * @description Color string, such as `#FF0000`.Will throw an error if the color string is invalid
 						 * @example #9c1e8f
@@ -1927,6 +1993,8 @@ export interface paths {
 					"application/json": {
 						/** @description The image to be processed. It can be a URL or base64 encoded data. */
 						init_image: string;
+						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
+						sync?: boolean;
 					};
 				};
 			};
@@ -2052,97 +2120,103 @@ export interface paths {
 					"application/json": {
 						/** @description The image to be processed. It can be a URL or base64 encoded data. */
 						init_image: string;
+						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
+						sync?: boolean;
 						/**
 						 * @description The style ID to be applied to the image
 						 * @enum {string}
 						 */
 						style_id?:
-							| "3d_cartoon"
-							| "8bit"
-							| "amiable"
 							| "animal_fest"
-							| "anime"
-							| "anime25d"
-							| "anime_chibi"
-							| "anime_comic"
-							| "anime_dream"
-							| "anime_ghibli"
-							| "anime_shinchan"
-							| "anime_splash"
-							| "balloon"
-							| "blazing_torch"
-							| "cartoon"
-							| "catwoman"
-							| "city"
-							| "clay"
-							| "collage"
-							| "comic_idol"
-							| "comic_rl"
-							| "crystal"
-							| "default"
+							| "old"
 							| "doll"
-							| "dunk"
-							| "eastern"
-							| "expedition"
+							| "metal"
+							| "8bit"
+							| "city"
+							| "blazing_torch"
+							| "clay"
+							| "realism"
+							| "simulife"
+							| "sketch"
+							| "zombie"
+							| "oil_stick"
+							| "balloon"
+							| "pipe_craft"
+							| "crystal"
 							| "felt"
-							| "figure"
-							| "flora_tour"
-							| "fluffy"
-							| "game_dress_up"
-							| "game_fantasy"
-							| "game_gta"
-							| "game_lineage"
-							| "game_lol"
-							| "game_lr"
-							| "game_persona"
-							| "game_ps2"
-							| "game_sim"
-							| "game_stardew_valley"
-							| "game_undawn"
-							| "giftify"
-							| "graduation"
-							| "grains"
-							| "guardians"
-							| "happiness"
-							| "insta"
 							| "jade"
+							| "pink_girl"
+							| "vivid"
+							| "eastern"
+							| "mythical"
+							| "pixel_game"
 							| "league"
-							| "leisure"
 							| "lineage"
-							| "local_graffiti"
-							| "loong_year"
-							| "loose"
+							| "happiness"
 							| "manga"
+							| "sweet"
+							| "pixel_art"
+							| "catwoman"
+							| "loose"
+							| "sakura"
+							| "pocket"
+							| "grains"
+							| "graduation"
+							| "oil_pastel"
+							| "flora_tour"
+							| "loong_year"
+							| "figure"
+							| "prospera"
+							| "guardians"
+							| "expedition"
+							| "leisure"
+							| "giftify"
+							| "amiable"
+							| "3d_cartoon"
+							| "sketch_ii"
+							| "collage"
+							| "mini_doll"
+							| "sketchresize"
+							| "cartoon"
+							| "fluffy"
+							| "insta"
+							| "local_graffiti"
+							| "peking_opera"
+							| "opera"
+							| "torch"
+							| "sport"
+							| "dunk"
+							| "anime25d"
+							| "anime"
+							| "comic_rl"
 							| "manhwa"
 							| "manhwa_female"
 							| "manhwa_male"
-							| "metal"
-							| "mini_doll"
-							| "mythical"
-							| "oil_pastel"
-							| "oil_stick"
-							| "old"
-							| "opera"
-							| "peking_opera"
-							| "pink_girl"
-							| "pipe_craft"
-							| "pixel_art"
-							| "pixel_game"
-							| "pocket"
-							| "powerpuff"
-							| "prospera"
-							| "realism"
-							| "sakura"
 							| "samyang"
-							| "simulife"
-							| "sketch"
-							| "sketch_ii"
-							| "sketchresize"
-							| "sport"
-							| "sweet"
-							| "torch"
-							| "vivid"
-							| "zombie";
+							| "comic_idol"
+							| "anime_ghibli"
+							| "anime_shinchan"
+							| "anime_chibi"
+							| "powerpuff"
+							| "anime_splash"
+							| "anime_dream"
+							| "game_lol"
+							| "game_ps2"
+							| "game_gta"
+							| "game_sim"
+							| "game_lr"
+							| "game_dress_up"
+							| "game_persona"
+							| "game_stardew_valley"
+							| "game_undawn"
+							| "game_lineage"
+							| "game_fantasy"
+							| "k_comic"
+							| "minecraft"
+							| "card_game"
+							| "kartun_dress_up"
+							| "cyberpunk"
+							| "dora";
 					};
 				};
 			};
@@ -2345,6 +2419,8 @@ export interface paths {
 					"application/json": {
 						/** @description The image to be processed. It can be a URL or base64 encoded data. */
 						init_image: string;
+						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
+						sync?: boolean;
 						/**
 						 * @description The expression to be applied to the image.
 						 * @enum {string}
@@ -2438,8 +2514,6 @@ export interface paths {
 			path?: never;
 			cookie?: never;
 		};
-		get?: never;
-		put?: never;
 		/**
 		 * Get Task
 		 * @description **Get** the task status.
@@ -2448,7 +2522,7 @@ export interface paths {
 		 *
 		 *     **Note:** only call if status is `processing`
 		 */
-		post: {
+		get: {
 			parameters: {
 				query: {
 					/** @description The task ID of the request. */
@@ -2572,6 +2646,8 @@ export interface paths {
 				};
 			};
 		};
+		put?: never;
+		post?: never;
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -2605,39 +2681,40 @@ export interface paths {
 					"application/json": {
 						/** @description The image to be processed. It can be a URL or base64 encoded data. */
 						init_image: string;
+						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
+						sync?: boolean;
 						/**
 						 * @description Short code for the hairstyle to be applied.
 						 * @enum {string}
 						 */
 						hair_id?:
-							| "beach_waves"
-							| "blunt_bob"
-							| "blunt_cut"
-							| "classic_bob"
-							| "curly_bob"
-							| "default"
-							| "feathered_bob"
-							| "half_up_half_down"
-							| "long_layers"
-							| "long_straight"
+							| "straight_shoulder-length"
+							| "wavy_shoulder-length"
 							| "long_wavy"
 							| "long_wavy_more-volume"
-							| "loose_curls"
-							| "messy_bun"
-							| "pixie_cut"
-							| "shaggy_layers"
-							| "side_swept_bangs"
-							| "sleek_ponytail"
-							| "sleek_straight"
-							| "soft_waves"
 							| "straight_medium-length"
-							| "straight_shoulder-length"
+							| "wavy"
+							| "long_straight"
+							| "classic_bob"
+							| "pixie_cut"
+							| "long_layers"
+							| "blunt_cut"
+							| "beach_waves"
+							| "side_swept_bangs"
+							| "curly_bob"
 							| "textured_bob"
 							| "tousled_waves"
+							| "loose_curls"
+							| "shaggy_layers"
+							| "feathered_bob"
+							| "soft_waves"
+							| "sleek_straight"
 							| "voluminous_curls"
-							| "wavy"
-							| "wavy_medium-length"
-							| "wavy_shoulder-length";
+							| "blunt_bob"
+							| "messy_bun"
+							| "sleek_ponytail"
+							| "half_up_half_down"
+							| "wavy_medium-length";
 					};
 				};
 			};
@@ -2741,6 +2818,8 @@ export interface paths {
 					"application/json": {
 						/** @description The image to be processed. It can be a URL or base64 encoded data. */
 						init_image: string;
+						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
+						sync?: boolean;
 						/**
 						 * @description The restoration quality level.
 						 *     Options: `HD`, `UHD`, `NG_UHD`.
@@ -2849,21 +2928,21 @@ export interface paths {
 				path?: never;
 				cookie?: never;
 			};
-			/** @description You can use `free_expand_pixel` or `free_expand_ratio` to set the expansion mode. But not both at the same time. */
-			requestBody: {
+			requestBody?: {
 				content: {
-					"application/json": {
-						/** @description The image to be processed. It can be a URL or base64 encoded data. */
-						init_image: string;
-						/** @description Additional semantic guidance prompts for the algorithm, in English, separated by `,` (comma). */
-						extra_prompt?: string;
-						/**
-						 * @description Expansion mode - currently only supports `separate` for single-frame expansion.
-						 * @enum {unknown}
-						 */
-						expand_mode?: "separate";
-					} & (
+					"application/json":
 						| {
+								/** @description The image to be processed. It can be a URL or base64 encoded data. */
+								init_image: string;
+								/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
+								sync?: boolean;
+								/** @description Additional semantic guidance prompts for the algorithm, in English, separated by `,` (comma). */
+								extra_prompt?: string;
+								/**
+								 * @description Expansion mode - currently only supports `separate` for single-frame expansion.
+								 * @enum {unknown}
+								 */
+								expand_mode?: "separate";
 								/**
 								 * @description **Uniform Expansion Ratio**
 								 *
@@ -2879,26 +2958,59 @@ export interface paths {
 								expand_ratio?: number;
 						  }
 						| {
-								/** @description The number of pixels expanded to the left, 100 means 100 pixels to the left */
-								left?: number;
-								/** @description The number of pixels expanded to the right, 100 means 100 pixels to the right */
-								right?: number;
-								/** @description The number of pixels scaled up, 100 means 100 pixels scaled up */
-								top?: number;
-								/** @description The number of pixels that are scaled down, 100 means 100 pixels down */
-								bottom?: number;
+								/** @description The image to be processed. It can be a URL or base64 encoded data. */
+								init_image: string;
+								/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
+								sync?: boolean;
+								/** @description Additional semantic guidance prompts for the algorithm, in English, separated by `,` (comma). */
+								extra_prompt?: string;
+								/**
+								 * @description Expansion mode - currently only supports `separate` for single-frame expansion.
+								 * @enum {unknown}
+								 */
+								expand_mode?: "separate";
+								/**
+								 * Pixel Expansion
+								 * @description Set different expansion pixel values for each side of the image using integer values (in pixels).
+								 */
+								free_expand_pixel?: {
+									/** @description The number of pixels expanded to the left, 100 means 100 pixels to the left */
+									left?: number;
+									/** @description The number of pixels expanded to the right, 100 means 100 pixels to the right */
+									right?: number;
+									/** @description The number of pixels scaled up, 100 means 100 pixels scaled up */
+									top?: number;
+									/** @description The number of pixels that are scaled down, 100 means 100 pixels down */
+									bottom?: number;
+								};
 						  }
 						| {
-								/** @description The ratio of 0.1 to the left is 110% of the width of the original image to the left. */
-								left?: number;
-								/** @description The ratio of 0.1 to the right indicates 110% of the width of the original image to the right. */
-								right?: number;
-								/** @description The scale of 0.1 indicates that the original image is 110% of the height of the original image. */
-								top?: number;
-								/** @description The scale of the downward expansion, 0.1 indicates that the original image is 110% of the height of the downward expansion. */
-								bottom?: number;
-						  }
-					);
+								/** @description The image to be processed. It can be a URL or base64 encoded data. */
+								init_image: string;
+								/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
+								sync?: boolean;
+								/** @description Additional semantic guidance prompts for the algorithm, in English, separated by `,` (comma). */
+								extra_prompt?: string;
+								/**
+								 * @description Expansion mode - currently only supports `separate` for single-frame expansion.
+								 * @enum {unknown}
+								 */
+								expand_mode?: "separate";
+								/**
+								 * Free Expansion
+								 * @description Set different expansion ratios for each side of the image using values between 0.0 and 1.0.
+								 */
+								free_expand_ratio?: {
+									/** @description The ratio of 0.1 to the left is 110% of the width of the original image to the left. */
+									left?: number;
+									/** @description The ratio of 0.1 to the right indicates 110% of the width of the original image to the right. */
+									right?: number;
+									/** @description The scale of 0.1 indicates that the original image is 110% of the height of the original image. */
+									top?: number;
+									/** @description The scale of the downward expansion, 0.1 indicates that the original image is 110% of the height of the downward expansion. */
+									bottom?: number;
+								};
+						  };
 				};
 			};
 			responses: {
@@ -4998,6 +5110,234 @@ export interface paths {
 		};
 		put?: never;
 		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/unmix/get_task": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get task
+		 * @description Get task status of submitted task.
+		 */
+		get: {
+			parameters: {
+				query: {
+					/** @description The ID of the task to check status for. */
+					task_id: string;
+				};
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody?: never;
+			responses: {
+				/** @description Default Response */
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							/** @description Result of the request */
+							result?: {
+								/** @description The ID of the submitted task. */
+								task_id?: string;
+								/**
+								 * @description The status of the task.
+								 * @enum {unknown}
+								 */
+								status?: "processing" | "completed" | "error";
+								/** @description List of separated audio files with their download URLs. */
+								audio_files?: {
+									/** @description The name of the separated audio file. */
+									name?: string;
+									/**
+									 * Format: uri
+									 * @description The download URL of the file.
+									 */
+									audio_url?: string;
+								}[];
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/unmix/submit_task": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Submit new task
+		 * @description Submit a new audio unmixing task.
+		 */
+		post: {
+			parameters: {
+				query?: never;
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody: {
+				content: {
+					"multipart/form-data": {
+						/**
+						 * @description Type of stems to separate:
+						 *     - `vocals_instrumental`: Separate into vocals and instrumental.
+						 *     - `voice_drums_bass_others`: Separate into voice, drums, bass, and others.
+						 *     - `voice_drums_bass_others_v2`: Improved voice/drums/bass/others separation.
+						 * @enum {unknown}
+						 */
+						stems?:
+							| "vocals_instrumental"
+							| "voice_drums_bass_others"
+							| "voice_drums_bass_others_v2";
+						init_audio: string;
+					};
+					"application/json": {
+						/**
+						 * @description Type of stems to separate:
+						 *     - `vocals_instrumental`: Separate into vocals and instrumental.
+						 *     - `voice_drums_bass_others`: Separate into voice, drums, bass, and others.
+						 *     - `voice_drums_bass_others_v2`: Improved voice/drums/bass/others separation.
+						 * @enum {unknown}
+						 */
+						stems?:
+							| "vocals_instrumental"
+							| "voice_drums_bass_others"
+							| "voice_drums_bass_others_v2";
+						init_audio: string;
+					};
+				};
+			};
+			responses: {
+				/** @description Default Response */
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							/** @description Result of the request */
+							result?: {
+								/** @description The ID of the submitted task. */
+								task_id?: string;
+								/**
+								 * @description The status of the task.
+								 * @enum {unknown}
+								 */
+								status?: "processing" | "completed" | "error";
+								/** @description List of separated audio files with their download URLs. */
+								audio_files?: {
+									/** @description The name of the separated audio file. */
+									name?: string;
+									/**
+									 * Format: uri
+									 * @description The download URL of the file.
+									 */
+									audio_url?: string;
+								}[];
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
 		delete?: never;
 		options?: never;
 		head?: never;
