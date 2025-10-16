@@ -13,7 +13,7 @@ export type TUser<Extra extends AnyObject = AnyObject> = Extra & {
 };
 
 export type TDatabase = {
-	users: Record<string, TUser>;
+	users: TUser;
 	groups: AnyObject;
 	settings: AnyObject;
 };
