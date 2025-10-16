@@ -1,4 +1,5 @@
-import { fetchClient } from "@libs/fetch";
+import { fetchClient } from "@/libs/fetch";
+import { scheduler } from "@/libs/scheduler";
 import type { IPlugin } from "@surya/plugin-manager";
 
 type FaceType = "laugh" | "smile" | "pose_ps" | "cool" | "cspv" | "dimples";
@@ -13,7 +14,7 @@ const faceTypes: readonly FaceType[] = [
 
 export default {
 	name: "facial-expression-changer",
-	command: ["facialchanger", "facechange", "faceapp"],
+	command: ["faceapp", "facechange"],
 	category: ["image"],
 	description: "Change facial expression in images using ItsRose API.",
 	execute: async (ctx, { command, usedPrefix, sock }) => {
@@ -34,32 +35,53 @@ export default {
 			);
 		}
 		const buffer = await media.download();
-		const { data, error } = await fetchClient.POST(
+		const { editReply } = await ctx.reply(
+			"Processing your image, please wait..."
+		);
+		const { value, error } = await fetchClient.post(
 			"/image/facial_expression",
 			{
-				body: {
-					init_image: Buffer.from(buffer).toString("base64"),
-					expression,
-				},
+				init_image: Buffer.from(buffer).toString("base64"),
+				expression,
+				sync: false,
 			}
 		);
 
 		if (error) {
-			return ctx.reply(
+			return editReply(
 				`Failed to process image: ${error.message || "Unknown error"}`
 			);
 		}
-		const { status, result, message } = data;
+		const { status, result, message } = value!.data;
 		if (!status || !result?.images) {
-			return ctx.reply(message);
+			return editReply(message);
 		}
-		await sock.sendMessage(
-			ctx.from,
+		if (result.status === "completed") {
+			await editReply("Processing completed!");
+			const { images } = result!;
+			for (const img of images!) {
+				await sock.sendFile(ctx.from, img, { quoted: ctx });
+			}
+			return;
+		}
+		scheduler.interval.add(
+			`${ctx.sender}:facial-changer`,
+			2000,
+			"fetch-image-status",
 			{
-				image: { url: result.images[0]! },
-				caption: `Here is your image with a *${expression}* expression!`,
+				from: ctx.from,
+				sender: ctx.sender,
+				taskId: result.task_id!,
+				caption: `Here's your image with *${expression}* expression`,
+				quoted: {
+					key: ctx.key,
+					message: ctx.message,
+				},
 			},
-			{ quoted: ctx }
+			{ backoffMs: 1000, maxRetries: 3 }
+		);
+		return editReply(
+			"Your image is being processed. This may take a while. You will receive the image once it's done."
 		);
 	},
 } satisfies IPlugin;
