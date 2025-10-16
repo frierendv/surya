@@ -16,7 +16,8 @@ export const logger = createPinoLogger(Pino, {
 	disableTimestamp: true,
 });
 
-export const silentLogger = Pino({
-	level: "silent",
-	base: undefined,
+export const baileysLogger = createPinoLogger(Pino, {
+	level: ((level === "debug" || level === "trace") && level) || "silent",
+	name: "baileys",
+	disableTimestamp: true,
 });
