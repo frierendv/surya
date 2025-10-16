@@ -5,7 +5,7 @@ import {
 	proto,
 } from "baileys";
 import type { MiscMessageGenerationOptions, WAMessage } from "baileys";
-import { WASocket } from "./internals/types";
+import type { WASocket } from "./internals/types";
 import { calculateFileSize, safeString } from "./util";
 
 /**
@@ -291,6 +291,11 @@ export const createMessageContext = (
 		const qId = contextInfo?.stanzaId;
 		const qParticipant = contextInfo?.participant;
 		const qFromMe = qParticipant === myUserId;
+		const qMKey: proto.IMessageKey = {
+			id: qId!,
+			fromMe: qFromMe!,
+			participant: qParticipant!,
+		};
 
 		const replyQuoted: ReplyHandler = async (
 			text: string,
@@ -298,11 +303,7 @@ export const createMessageContext = (
 		) => {
 			const quotedPayload: any = {
 				...msg,
-				key: {
-					id: qId,
-					fromMe: qFromMe,
-					participant: qParticipant,
-				},
+				key: qMKey,
 				...quoted,
 			};
 
@@ -334,9 +335,7 @@ export const createMessageContext = (
 				react: {
 					text,
 					key: {
-						id: qId,
-						fromMe: qFromMe,
-						participant: qParticipant,
+						...qMKey,
 						remoteJid,
 					},
 				},
@@ -348,9 +347,7 @@ export const createMessageContext = (
 				forward: {
 					...msg,
 					key: {
-						id: qId,
-						fromMe: qFromMe,
-						participant: qParticipant,
+						...qMKey,
 						remoteJid,
 					},
 					...quoted,
@@ -385,7 +382,7 @@ export const createMessageContext = (
 	return {
 		from: remoteJid,
 		sender,
-		pushName: safeString(msg.verifiedBizName || msg.pushName),
+		pushName: safeString(msg.verifiedBizName || msg.pushName) as string,
 		text,
 		args,
 		mentionedJid: contextInfo?.mentionedJid?.map(jidNormalizedUser) || [],
