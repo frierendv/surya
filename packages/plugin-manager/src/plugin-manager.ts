@@ -45,7 +45,7 @@ export type PluginManagerOptions = {
 export class PluginManager extends EventEmitter<PluginManagerEvents> {
 	private readonly options: Required<PluginManagerOptions>;
 	private readonly registry = new PluginRegistry();
-	private watcherStop?: () => Promise<void> | void;
+	private watcherStop?: (() => Promise<void> | void) | undefined;
 	private readonly extSet: Set<string>;
 	private readonly inFlight = new Map<string, Promise<void>>();
 	private readonly semaphore: Semaphore;
