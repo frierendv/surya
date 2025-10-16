@@ -62,7 +62,7 @@ npm run dev --workspace=surya-rb
 Or build and run the compiled output.
 
 ```bash
-npm run build --workspace=surya-rb
+npm run build
 npm run start --workspace=surya-rb
 ```
 
