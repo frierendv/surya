@@ -1,26 +1,19 @@
-export interface UserSchema {
+export type AnyObject = Record<string, any>;
+
+export type TPluginInfo = {
+	executions: number;
+	lastExecution: number;
+};
+
+export type TUser<Extra extends AnyObject = AnyObject> = Extra & {
 	age: number;
 	money: number;
 	limit: number;
-	plugins: {
-		[key: string]: {
-			executions: number;
-			lastExecution: number;
-		};
-	};
-	[key: string]: any;
-}
+	plugins: Record<string, TPluginInfo>;
+};
 
-export interface GroupSchema {
-	[key: string]: any;
-}
-
-export interface SettingsSchema {
-	[key: string]: any;
-}
-
-export interface DatabaseSchema {
-	users: UserSchema;
-	groups: GroupSchema;
-	settings: SettingsSchema;
-}
+export type TDatabase = {
+	users: Record<string, TUser>;
+	groups: AnyObject;
+	settings: AnyObject;
+};

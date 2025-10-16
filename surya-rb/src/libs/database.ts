@@ -1,9 +1,9 @@
 import { readEnv } from "@surya/core/read-env";
 import { Database } from "@surya/database";
-import type { DatabaseSchema } from "src/types/database";
+import type { TDatabase } from "src/types/database";
 import mongoose from "./mongodb";
 
-const dbInstance = new Database<DatabaseSchema>({
+const dbInstance = new Database<TDatabase>({
 	file: readEnv("SR_DB_DIR", { defaultValue: "./database" }),
 	mongoConnection: mongoose.connection,
 });
