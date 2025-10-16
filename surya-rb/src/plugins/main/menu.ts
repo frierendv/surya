@@ -1,4 +1,4 @@
-import pm from "@libs/plugin-manager";
+import pm from "@/libs/plugin-manager";
 import type { IPlugin } from "@surya/plugin-manager";
 
 export default {
