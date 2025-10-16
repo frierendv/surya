@@ -6,7 +6,7 @@
 	"license": "MIT",
 	"description": "",
 	"scripts": {
-		"build": "tsup src",
+		"build": "tsup",
 		"clean": "rimraf dist .turbo",
 		"dev": "NODE_ENV=development dotenvx run -- tsx src/index.ts",
 		"gen:itsrose": "npx openapi-typescript https://api.itsrose.net/openapi.json --output src/types/itsrose-schema.ts",
