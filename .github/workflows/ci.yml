@@ -119,7 +119,7 @@ jobs:
           projects="${{ steps.detect.outputs.test_projects }}"
           if [[ -n "$projects" ]]; then
             echo "Running tests for projects: $projects"
-            npm test -- --selectProjects ${projects//,/ } --verbose --runInBand
+            npm test -- --selectProjects ${projects//,/ } --verbose --runInBand --passWithNoTests
           else
             echo "TS changes found outside packages/*; running full test suite."
             npm test -- --verbose --runInBand

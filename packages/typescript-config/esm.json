@@ -2,19 +2,33 @@
 	"$schema": "https://json.schemastore.org/tsconfig",
 	"extends": "./base.json",
 	"compilerOptions": {
-		"target": "esnext",
-		"module": "esnext",
-		"types": ["jest", "node"],
-		"lib": ["dom", "esnext"],
+		"target": "ES2022",
+		"lib": ["ES2022", "ES2024", "DOM", "DOM.Iterable", "ESNext.Disposable"],
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"moduleDetection": "force",
+		"verbatimModuleSyntax": true,
+		"useDefineForClassFields": true,
+
 		"declaration": true,
+		"declarationMap": true,
 		"sourceMap": true,
-		"moduleResolution": "bundler",
-		"skipLibCheck": true,
+
 		"strict": true,
-		"isolatedModules": true,
+		"exactOptionalPropertyTypes": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+		"useUnknownInCatchVariables": true,
 		"noFallthroughCasesInSwitch": true,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true,
+		"skipLibCheck": true,
+
 		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
 		"resolveJsonModule": true,
-		"allowSyntheticDefaultImports": true
+
+		"types": ["jest", "node"],
+		"newLine": "lf"
 	}
 }
