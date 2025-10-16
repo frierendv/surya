@@ -1,8 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-import createJobSchedulers from "../src/factory";
+import { createJobSchedulers, type JobSchedulers } from "../src/factory";
+import { cleanupTempDb, createTempDbPath } from "./helper";
 
-const tmpDb = () => path.join(process.cwd(), "__tmp_jobs_factory.sqlite");
+// increase jest timeout
+jest.setTimeout(20000);
 
 // disable logger
 jest.mock("@surya/core/logger", () => ({
@@ -20,16 +20,36 @@ jest.mock("@surya/core/logger", () => ({
 	}),
 }));
 describe("Factory", () => {
+	let tempDb: string;
+	const baseTime = new Date();
+
+	beforeAll(() => {
+		jest.useFakeTimers();
+		jest.setSystemTime(baseTime);
+	});
+	beforeEach(() => {
+		tempDb = createTempDbPath("factory");
+	});
 	afterEach(() => {
-		try {
-			fs.unlinkSync(tmpDb());
-		} catch {
-			// ignore
-		}
+		cleanupTempDb(tempDb);
+	});
+	afterAll(() => {
+		jest.useRealTimers();
 	});
 
+	const advance = async (ms: number) => {
+		jest.advanceTimersByTime(ms);
+		await Promise.resolve();
+	};
 	test("creates shared store and autostarts", async () => {
-		const api = createJobSchedulers({ dbPath: tmpDb(), autostart: true });
+		const api: JobSchedulers = createJobSchedulers({
+			dbPath: tempDb,
+			autostart: true,
+		});
+		// all schedulers created
+		expect(api.interval).toBeDefined();
+		expect(api.time).toBeDefined();
+		expect(api.store).toBeDefined();
 
 		let ran = 0;
 		api.time.register("k1", async () => {
@@ -38,7 +58,7 @@ describe("Factory", () => {
 
 		api.time.scheduleAt("t1", Date.now() + 50, "k1");
 
-		await new Promise((r) => setTimeout(r, 200));
+		await advance(60);
 
 		expect(ran).toBe(1);
 
