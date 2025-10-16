@@ -126,21 +126,20 @@ const resolveEnvLevel = (): LogLevelName => {
 	return validLevels.includes(raw) ? (raw as LogLevelName) : "info";
 };
 export interface LoggerOptions {
-	name?: string;
-	level?: LogLevelName;
+	name?: string | undefined;
+	level?: LogLevelName | undefined;
 	context?: Record<string, Meta>;
 	/**
 	 * Force JSON output even in development
 	 */
-	prodJson?: boolean;
+	prodJson?: boolean | undefined;
 	/**
 	 * Disable timestamp in output (useful when the environment adds its own)
 	 */
-	disableTimestamp?: boolean;
+	disableTimestamp?: boolean | undefined;
 }
 
-export interface Logger {
-	name?: string;
+export interface Logger extends Pick<LoggerOptions, "name"> {
 	level: LogLevelName;
 	child(opts?: Partial<LoggerOptions>): Logger;
 	enabled(level: LogLevelName): boolean;
