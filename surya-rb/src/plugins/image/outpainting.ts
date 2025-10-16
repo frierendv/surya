@@ -1,4 +1,5 @@
-import { fetchClient } from "@libs/fetch";
+import { fetchClient } from "@/libs/fetch";
+import { scheduler } from "@/libs/scheduler";
 import type { IPlugin } from "@surya/plugin-manager";
 
 export default {
@@ -15,30 +16,51 @@ export default {
 		}
 		const extraPrompt = ctx.text?.trim() || undefined;
 		const buffer = await media.download();
-		const { data, error } = await fetchClient.POST("/image/outpainting", {
-			body: {
-				init_image: Buffer.from(buffer).toString("base64"),
-				expand_ratio: 0.125,
-				extra_prompt: extraPrompt,
-			},
+		const { editReply } = await ctx.reply(
+			"Processing your image, please wait..."
+		);
+		const { value, error } = await fetchClient.post("/image/outpainting", {
+			init_image: Buffer.from(buffer).toString("base64"),
+			expand_ratio: 0.125,
+			extra_prompt: extraPrompt,
 		});
 
 		if (error) {
-			return ctx.reply(
+			return editReply(
 				`Failed to process image: ${error.message || "Unknown error"}`
 			);
 		}
-		const { status, result, message } = data;
+		const { status, result, message } = value!.data;
 		if (!status || !result?.images) {
-			return ctx.reply(message);
+			return editReply(message);
 		}
-		await sock.sendMessage(
-			ctx.from,
+
+		if (result.status === "completed") {
+			await editReply("Processing completed!");
+			const { images } = result!;
+			for (const img of images!) {
+				await sock.sendFile(ctx.from, img, { quoted: ctx });
+			}
+			return;
+		}
+		scheduler.interval.add(
+			`${ctx.sender}:outpainting`,
+			2000,
+			"fetch-image-status",
 			{
-				image: { url: result.images[0]! },
-				caption: "Here is your outpainted image!",
+				from: ctx.from,
+				sender: ctx.sender,
+				taskId: result.task_id!,
+				caption: "Here's your outpainted image",
+				quoted: {
+					key: ctx.key,
+					message: ctx.message,
+				},
 			},
-			{ quoted: ctx }
+			{ backoffMs: 1000, maxRetries: 3 }
+		);
+		await editReply(
+			"Your outpainting task has been submitted successfully!. You will receive the image here once it's ready. Please wait patiently."
 		);
 	},
 } satisfies IPlugin;
