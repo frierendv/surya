@@ -1,8 +1,9 @@
-import { closeDatabase, initDatabase } from "@libs/database";
-import { logger } from "@libs/logger";
-import { connectToDatabase } from "@libs/mongodb";
-import pm from "@libs/plugin-manager";
-import { createSocket } from "./socket/socket";
+import { closeDatabase, initDatabase } from "@/libs/database";
+import { logger } from "@/libs/logger";
+import { connectToDatabase } from "@/libs/mongodb";
+import pm from "@/libs/plugin-manager";
+import { scheduler } from "@/libs/scheduler";
+import { createSocket } from "@/libs/socket";
 
 const start = async () => {
 	try {
@@ -38,6 +39,7 @@ const start = async () => {
 			await baileys.stop();
 			await closeDatabase();
 			await pm.stop();
+			scheduler.close();
 			logger.info("Shutdown complete");
 		} catch (err) {
 			logger.error({ err }, "Error during shutdown");
@@ -46,14 +48,18 @@ const start = async () => {
 		}
 	};
 
+	scheduler.start();
+
 	process.once("SIGINT", () => void shutdown("SIGINT"));
 	process.once("SIGTERM", () => void shutdown("SIGTERM"));
 
 	process.on("unhandledRejection", (reason) => {
 		logger.fatal({ reason }, "Unhandled promise rejection");
+		console.error(reason);
 	});
 	process.on("uncaughtException", (err) => {
 		logger.fatal({ err }, "Uncaught exception");
+		console.error(err);
 	});
 };
 
