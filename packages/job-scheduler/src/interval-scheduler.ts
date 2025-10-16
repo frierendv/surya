@@ -3,11 +3,10 @@ import { createLogger, type Logger } from "@surya/core/logger";
 import { SimpleIntervalJob, Task, ToadScheduler } from "toad-scheduler";
 import { JobStore, type JobRecord } from "./sqlite";
 import type {
-	Def,
-	DefToRegistry,
 	JobHandler,
 	JobRegistry,
-	MergeDefs,
+	MergeRegistry,
+	Registry,
 	RetryPolicy,
 	SchedulerEvents,
 } from "./types";
@@ -20,11 +19,11 @@ export interface IntervalSchedulerOptions {
  * Interval job scheduler using toad-scheduler for in-process timing and SQLite for persistence.
  */
 export class IntervalScheduler<
-	Reg extends JobRegistry = JobRegistry,
+	Reg extends Registry = Registry,
 > extends EventEmitter<SchedulerEvents> {
 	private store: JobStore;
 	private scheduler: ToadScheduler;
-	private handlers = new Map<string, JobHandler<any>>();
+	private handlers = new Map<PropertyKey, JobHandler<any>>();
 	private jobs = new Map<string, SimpleIntervalJob>();
 	private log: Logger;
 	private running = false;
@@ -41,18 +40,20 @@ export class IntervalScheduler<
 	public register<Key extends string, P = unknown>(
 		key: Key,
 		handler: JobHandler<P>
-	): asserts this is IntervalScheduler<Reg & DefToRegistry<Key, P>> {
+	): IntervalScheduler<Registry<Key, P>> {
 		this.handlers.set(key, handler);
+		return this as IntervalScheduler<Registry<Key, P>>;
 	}
 	/**
 	 * Register multiple handler functions at once.
 	 */
-	public registerMany<const Arr extends readonly Def[]>(
+	public registerMany<const Arr extends readonly JobRegistry[]>(
 		defs: Arr
-	): asserts this is IntervalScheduler<Reg & MergeDefs<Arr>> {
+	): IntervalScheduler<MergeRegistry<Arr>> {
 		for (const def of defs) {
-			this.handlers.set(def.handlerKey, def.handler);
+			this.register(def.handlerKey, def.handler);
 		}
+		return this as unknown as IntervalScheduler<MergeRegistry<Arr>>;
 	}
 	/**
 	 * Add a new interval job.

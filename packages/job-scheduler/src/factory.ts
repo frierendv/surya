@@ -2,7 +2,7 @@ import { createLogger, type Logger } from "@surya/core/logger";
 import { IntervalScheduler } from "./interval-scheduler";
 import { JobStore } from "./sqlite";
 import { TimeScheduler } from "./time-scheduler";
-import type { JobRegistry } from "./types";
+import type { Registry } from "./types";
 
 export interface CreateJobSchedulersOptions {
 	dbPath?: string;
@@ -15,11 +15,11 @@ export interface JobSchedulers {
 	/**
 	 * Time scheduler. For one-off and cron-like jobs.
 	 */
-	time: TimeScheduler<JobRegistry>;
+	time: TimeScheduler<Registry>;
 	/**
 	 * Interval scheduler. For repeating jobs with fixed intervals.
 	 */
-	interval: IntervalScheduler<JobRegistry>;
+	interval: IntervalScheduler<Registry>;
 	/**
 	 * Start both schedulers.
 	 */
@@ -38,16 +38,19 @@ export interface JobSchedulers {
 	clearAllJob(): void;
 }
 
-export const createJobSchedulers = (
-	opts: CreateJobSchedulersOptions = {}
+export type CreateJobSchedulers = (
+	opts?: CreateJobSchedulersOptions
+) => JobSchedulers;
+export const createJobSchedulers: CreateJobSchedulers = (
+	opts = {}
 ): JobSchedulers => {
 	const store = new JobStore(opts.dbPath);
 	const logger = opts.logger ?? createLogger({ name: "job-schedulers" });
 
-	const time = new TimeScheduler<JobRegistry>(store, {
+	const time: TimeScheduler<Registry> = new TimeScheduler(store, {
 		logger: logger.child({ name: "time" }),
 	});
-	const interval = new IntervalScheduler<JobRegistry>(store, {
+	const interval: IntervalScheduler<Registry> = new IntervalScheduler(store, {
 		logger: logger.child({ name: "interval" }),
 	});
 
