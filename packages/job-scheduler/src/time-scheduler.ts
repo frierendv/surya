@@ -7,11 +7,10 @@ import schedule, {
 import type { CreateCronJob, CreateTimeJob, JobRecord } from "./sqlite";
 import { JobStore } from "./sqlite";
 import type {
-	Def,
-	DefToRegistry,
 	JobHandler,
 	JobRegistry,
-	MergeDefs,
+	MergeRegistry,
+	Registry,
 	RetryPolicy,
 	SchedulerEvents,
 } from "./types";
@@ -24,7 +23,7 @@ export interface TimeSchedulerOptions {
  * Time and cron-job-like scheduler using node-schedule for in-process timing and SQLite for persistence.
  */
 export class TimeScheduler<
-	Reg extends JobRegistry = JobRegistry,
+	Reg extends Registry = Registry,
 > extends EventEmitter<SchedulerEvents> {
 	private store: JobStore;
 	private handlers = new Map<string, JobHandler<any>>();
@@ -44,18 +43,20 @@ export class TimeScheduler<
 	register<Key extends string, P = unknown>(
 		key: Key,
 		handler: JobHandler<P>
-	): asserts this is TimeScheduler<Reg & DefToRegistry<Key, P>> {
+	): TimeScheduler<Registry<Key, P>> {
 		this.handlers.set(key, handler);
+		return this as TimeScheduler<Registry<Key, P>>;
 	}
 	/**
 	 * Register multiple handler functions at once.
 	 */
-	public registerMany<const Arr extends readonly Def[]>(
+	public registerMany<const Arr extends readonly JobRegistry[]>(
 		defs: Arr
-	): asserts this is TimeScheduler<Reg & MergeDefs<Arr>> {
+	): TimeScheduler<MergeRegistry<Arr>> {
 		for (const def of defs) {
 			this.handlers.set(def.handlerKey, def.handler);
 		}
+		return this as unknown as TimeScheduler<MergeRegistry<Arr>>;
 	}
 
 	start() {
