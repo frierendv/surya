@@ -1,12 +1,18 @@
 export interface UserSchema {
-	name: string;
 	age: number;
-	money?: number;
+	money: number;
+	limit: number;
+	plugins: {
+		[key: string]: {
+			executions: number;
+			lastExecution: number;
+		};
+	};
 	[key: string]: any;
 }
 
 export interface GroupSchema {
-	name: string;
+	[key: string]: any;
 }
 
 export interface SettingsSchema {
