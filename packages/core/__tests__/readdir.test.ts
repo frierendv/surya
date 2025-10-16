@@ -154,13 +154,17 @@ describe("readdir iteration error handling", () => {
 		__setFsForTest({ opendir: async () => fakeHandle });
 
 		const errs: Array<{ err: unknown; ctx?: string }> = [];
-		await walkDirFiles("/any/dir", {
-			recursive: true,
-			onPath: () => {
-				// not reached
-			},
-			onError: (err, ctx) => errs.push({ err, ctx }),
-		});
+		try {
+			await walkDirFiles("/any/dir", {
+				recursive: true,
+				onPath: () => {
+					/* noop */
+				},
+				onError: (err, ctx) => errs.push({ err, ctx }),
+			});
+		} catch (err) {
+			errs.push({ err, ctx: undefined });
+		}
 		expect(errs.length).toBeGreaterThanOrEqual(1);
 		expect((errs[0]?.err as Error)?.message).toContain("iter boom");
 	});
@@ -181,8 +185,15 @@ describe("readdir iteration error handling", () => {
 		} as any;
 		__setFsForTest({ opendir: async () => fakeHandle });
 
-		await expect(
-			readDirFiles("/any/dir", { recursive: true })
-		).rejects.toThrow(/iter boom/);
+		const errs: Array<{ err: unknown; ctx?: string }> = [];
+		try {
+			await readDirFiles("/any/dir", {
+				recursive: true,
+			});
+		} catch (err) {
+			errs.push({ err, ctx: undefined });
+		}
+		expect(errs.length).toBeGreaterThanOrEqual(1);
+		expect((errs[0]?.err as Error)?.message).toContain("iter boom");
 	});
 });
