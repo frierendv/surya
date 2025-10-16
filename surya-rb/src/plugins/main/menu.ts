@@ -3,7 +3,7 @@ import type { IPlugin } from "@surya/plugin-manager";
 
 export default {
 	name: "display-menu",
-	command: ["menu", "help"],
+	command: ["help", "menu"],
 	description: "Display this menu",
 	category: ["Main"],
 	execute: async (ctx, { usedPrefix, isOwner, command: usedCommand }) => {
@@ -23,6 +23,9 @@ export default {
 				return false;
 			}
 			if (p.ownerOnly && !isOwner) {
+				return false;
+			}
+			if (p.disabled && !isOwner) {
 				return false;
 			}
 			return true;
@@ -198,6 +201,9 @@ export default {
 			lines.push("╰───────────");
 		}
 		lines.push(`> Type ${usedPrefix}<command> to execute a command.`);
+		lines.push(
+			`> Type ${usedPrefix}help <command> to get detailed help for a command.`
+		);
 
 		await ctx.reply(lines.join("\n").trim());
 	},
