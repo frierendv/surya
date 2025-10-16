@@ -134,14 +134,16 @@ export const readDirFiles = async (
 	const results = new Map<string, ReadResult>();
 	const readPromises: Promise<void>[] = [];
 
-	for await (const fullPath of walkFilePaths(startDir, {
+	const walkOpts = {
 		recursive,
 		filter: opts.filter,
 		ignore: opts.ignore,
 		swallowIterErrors: false,
 		onOpenDirError: onError,
 		onIterError: onError,
-	})) {
+	} as BaseWalkOpts;
+
+	for await (const fullPath of walkFilePaths(startDir, walkOpts)) {
 		const task = (async () => {
 			await sem.acquire();
 			try {
@@ -184,14 +186,16 @@ export const walkDirFiles = async (
 
 	const pending: Promise<unknown>[] = [];
 
-	for await (const fullPath of walkFilePaths(startDir, {
+	const walkOpts = {
 		recursive,
 		filter: opts.filter,
 		ignore: opts.ignore,
-		swallowIterErrors: true,
+		swallowIterErrors: false,
 		onOpenDirError: onError,
 		onIterError: onError,
-	})) {
+	} as BaseWalkOpts;
+
+	for await (const fullPath of walkFilePaths(startDir, walkOpts)) {
 		try {
 			const maybe = onPath(fullPath);
 			if (maybe && typeof (maybe as any).then === "function") {
