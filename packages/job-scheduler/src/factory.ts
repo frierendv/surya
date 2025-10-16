@@ -2,6 +2,7 @@ import { createLogger, type Logger } from "@surya/core/logger";
 import { IntervalScheduler } from "./interval-scheduler";
 import { JobStore } from "./sqlite";
 import { TimeScheduler } from "./time-scheduler";
+import type { Registry } from "./types";
 
 export interface CreateJobSchedulersOptions {
 	dbPath?: string;
@@ -11,22 +12,45 @@ export interface CreateJobSchedulersOptions {
 
 export interface JobSchedulers {
 	store: JobStore;
-	time: TimeScheduler;
-	interval: IntervalScheduler;
+	/**
+	 * Time scheduler. For one-off and cron-like jobs.
+	 */
+	time: TimeScheduler<Registry>;
+	/**
+	 * Interval scheduler. For repeating jobs with fixed intervals.
+	 */
+	interval: IntervalScheduler<Registry>;
+	/**
+	 * Start both schedulers.
+	 */
 	start(): void;
+	/**
+	 * Stop both schedulers.
+	 */
 	stop(): void;
+	/**
+	 * Stop both schedulers and close the job store.
+	 */
 	close(): void;
+	/**
+	 * Clear all jobs in the job store.
+	 */
+	clearAllJob(): void;
 }
 
-export function createJobSchedulers(
-	opts: CreateJobSchedulersOptions = {}
-): JobSchedulers {
+export type CreateJobSchedulers = (
+	opts?: CreateJobSchedulersOptions
+) => JobSchedulers;
+export const createJobSchedulers: CreateJobSchedulers = (
+	opts = {}
+): JobSchedulers => {
 	const store = new JobStore(opts.dbPath);
 	const logger = opts.logger ?? createLogger({ name: "job-schedulers" });
-	const time = new TimeScheduler(store, {
+
+	const time: TimeScheduler<Registry> = new TimeScheduler(store, {
 		logger: logger.child({ name: "time" }),
 	});
-	const interval = new IntervalScheduler(store, {
+	const interval: IntervalScheduler<Registry> = new IntervalScheduler(store, {
 		logger: logger.child({ name: "interval" }),
 	});
 
@@ -46,6 +70,35 @@ export function createJobSchedulers(
 			api.stop();
 			store.close();
 		},
+		clearAllJob() {
+			try {
+				const timers = (
+					time as unknown as {
+						timers: Map<string, { cancel: () => void }>;
+					}
+				).timers;
+				for (const t of timers.values()) {
+					t.cancel();
+				}
+				timers.clear();
+
+				// Fast-clear interval jobs: remove from scheduler, then clear the map once.
+				const intervalInternals = interval as unknown as {
+					jobs: Map<string, { id?: string | number }>;
+					scheduler: { removeById: (id: string | number) => void };
+				};
+				for (const job of intervalInternals.jobs.values()) {
+					if (job?.id != null) {
+						intervalInternals.scheduler.removeById(job.id);
+					}
+				}
+				intervalInternals.jobs.clear();
+			} catch (error) {
+				logger.error("Failed to clear all jobs", { error });
+			} finally {
+				store.clearAllJob();
+			}
+		},
 	};
 
 	if (opts.autostart ?? true) {
@@ -53,6 +106,4 @@ export function createJobSchedulers(
 	}
 
 	return api;
-}
-
-export default createJobSchedulers;
+};
