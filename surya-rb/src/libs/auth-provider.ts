@@ -1,5 +1,6 @@
 import { readEnv } from "@surya/core/read-env";
 import type { AuthenticationState } from "baileys";
+import mongoose from "mongoose";
 
 let cachedAuthProvider: Promise<{
 	state: AuthenticationState;
@@ -11,15 +12,8 @@ export const useAuthProvider = () => {
 		return cachedAuthProvider;
 	}
 
-	const mongoUri = readEnv("SR_MONGODB_URI", { defaultValue: "" });
-
-	if (mongoUri) {
+	if (mongoose?.connection?.readyState === 1) {
 		cachedAuthProvider = (async () => {
-			const { default: mongoose, connectToDatabase } = await import(
-				"@/libs/mongodb"
-			);
-			await connectToDatabase();
-
 			const { useMongoDBAuthState } = await import(
 				"@surya/mongodb-auth-state"
 			);
