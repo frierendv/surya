@@ -1,4 +1,4 @@
-import { fetchClient } from "@libs/fetch";
+import { fetchClient } from "@/libs/fetch";
 import type { IPlugin } from "@surya/plugin-manager";
 
 export default {

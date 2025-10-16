@@ -1,4 +1,4 @@
-import { logger } from "@libs/logger";
+import { logger } from "@/libs/logger";
 import type { WASocket } from "@surya/baileys-utils";
 import { readEnv } from "@surya/core/read-env";
 import QRCode from "qrcode";

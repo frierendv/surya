@@ -1,6 +1,6 @@
+import type { TDatabase } from "@/types/database";
 import { readEnv } from "@surya/core/read-env";
 import { Database } from "@surya/database";
-import type { TDatabase } from "src/types/database";
 import mongoose from "./mongodb";
 
 const dbInstance = new Database<TDatabase>({

@@ -1,6 +1,6 @@
 import vm from "node:vm";
 import { inspect } from "util";
-import db from "@libs/database";
+import db from "@/libs/database";
 import type { IPlugin } from "@surya/plugin-manager";
 
 const VM_TIMEOUT_MS = 5000;

@@ -1,4 +1,4 @@
-import { createSticker } from "@libs/sticker";
+import { createSticker } from "@/libs/sticker";
 import type { IPlugin } from "@surya/plugin-manager";
 
 export default {

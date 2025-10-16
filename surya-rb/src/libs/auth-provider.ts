@@ -16,7 +16,7 @@ export const useAuthProvider = () => {
 	if (mongoUri) {
 		cachedAuthProvider = (async () => {
 			const { default: mongoose, connectToDatabase } = await import(
-				"@libs/mongodb"
+				"@/libs/mongodb"
 			);
 			await connectToDatabase();
 

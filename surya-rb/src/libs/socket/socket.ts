@@ -1,7 +1,7 @@
-import { messageHandler } from "@handler/message";
-import { pluginHandler } from "@handler/plugin";
-import { useAuthProvider } from "@libs/auth-provider";
-import { baileysLogger, logger } from "@libs/logger";
+import { messageHandler } from "@/handler/message";
+import { pluginHandler } from "@/handler/plugin";
+import { useAuthProvider } from "@/libs/auth-provider";
+import { baileysLogger, logger } from "@/libs/logger";
 import {
 	BaileysSocket,
 	type CreateBaileysOptions,

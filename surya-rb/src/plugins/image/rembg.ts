@@ -1,4 +1,4 @@
-import { fetchClient } from "@libs/fetch";
+import { fetchClient } from "@/libs/fetch";
 import type { IPlugin } from "@surya/plugin-manager";
 
 export default {
@@ -14,10 +14,8 @@ export default {
 			);
 		}
 		const buffer = await media.download();
-		const { data, error } = await fetchClient.POST("/image/rembg", {
-			body: {
-				init_image: Buffer.from(buffer).toString("base64"),
-			},
+		const { value, error } = await fetchClient.post("/image/rembg", {
+			init_image: Buffer.from(buffer).toString("base64"),
 		});
 
 		if (error) {
@@ -25,7 +23,7 @@ export default {
 				`Failed to process image: ${error.message || "Unknown error"}`
 			);
 		}
-		const { status, result, message } = data;
+		const { status, result, message } = value!.data;
 		if (!status || !result?.images) {
 			return ctx.reply(message);
 		}

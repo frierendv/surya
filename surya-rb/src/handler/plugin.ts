@@ -1,6 +1,6 @@
 import db from "@/libs/database";
-import { logger } from "@libs/logger";
-import { measureExecution } from "@libs/performance";
+import { logger } from "@/libs/logger";
+import { measureExecution } from "@/libs/performance";
 import type {
 	IExtraMessageContext,
 	IMessageContext,
