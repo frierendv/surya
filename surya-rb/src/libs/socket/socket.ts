@@ -93,10 +93,6 @@ export const createSocket = (over?: Partial<CreateBaileysOptions>) => {
 		if (type !== "notify" || !messages[0]) {
 			return;
 		}
-		// test
-		if (!messages[0]?.key.fromMe) {
-			return;
-		}
 
 		try {
 			const result = await messageHandler(messages[0], baileys.socket!);
