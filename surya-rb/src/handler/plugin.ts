@@ -1,3 +1,4 @@
+import db from "@/libs/database";
 import { logger } from "@libs/logger";
 import { measureExecution } from "@libs/performance";
 import type {
@@ -18,11 +19,18 @@ export const pluginHandler = async (
 	const localCtx = { ...ctx };
 	const localExtra = { ...extra };
 
+	await using user = await db.users.get(localCtx.sender);
+	// TODO: handle default user values
+	user.limit = user.limit ?? 50;
+	user.money = user.money ?? 0;
+	user.age = user.age ?? 0;
+	user.plugins = user.plugins ?? {};
+
 	// pre handler
 	const runPre = "pre" in plugin ? plugin.pre : plugin.before;
 	if (typeof runPre === "function") {
 		try {
-			const perfBefore = await measureExecution(
+			const { result, ...perfBefore } = await measureExecution(
 				() => runPre(localCtx, localExtra),
 				"pluginPreHook"
 			);
@@ -34,6 +42,14 @@ export const pluginHandler = async (
 				},
 				"Executed pre hook"
 			);
+			// if result !== true return
+			if (result !== true) {
+				logger.warn(
+					{ result },
+					"PreHook not return `true`. Skipping next execution."
+				);
+				return;
+			}
 		} catch (err) {
 			logger.error(
 				{ err, plugin: plugin.name },
@@ -42,6 +58,7 @@ export const pluginHandler = async (
 			return;
 		}
 	}
+
 	// main handler
 	try {
 		const execute = "execute" in plugin ? plugin.execute : undefined;
@@ -52,10 +69,25 @@ export const pluginHandler = async (
 			);
 			return;
 		}
+
+		// TODO: Plugin limiting handling. Wait for merge of PR https://github.com/frierendv/surya/pull/34
+		if (plugin.rateLimit) {
+			if (user.limit < (plugin.rateLimit.uses ?? 1)) {
+				return localCtx.reply(
+					"You have reached your limit. Please wait or contact the bot owner to increase your limit."
+				);
+			}
+			user.limit -= plugin.rateLimit.uses ?? 1;
+		}
+
 		const execPerf = await measureExecution(
 			() => execute(localCtx, localExtra),
-			"execute" in plugin ? "pluginExecute" : "pluginMain"
+			"pluginExecute"
 		);
+		user.plugins[plugin.name] = {
+			executions: (user.plugins[plugin.name]?.executions ?? 0) + 1,
+			lastExecution: Date.now(),
+		};
 		logger.debug(
 			{
 				msg: localCtx,
@@ -89,7 +121,6 @@ export const pluginHandler = async (
 				{ err, plugin: plugin.name },
 				"Error executing post hook"
 			);
-			return;
 		}
 	}
 };
