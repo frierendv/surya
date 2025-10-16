@@ -5,7 +5,8 @@
 		"paths": {
 			"@/*": ["src/*"]
 		},
-		"noUncheckedIndexedAccess": true
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": false
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]
