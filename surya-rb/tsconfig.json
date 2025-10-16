@@ -1,13 +1,9 @@
 {
 	"extends": "@surya/typescript-config/esm.json",
 	"compilerOptions": {
-		"rootDir": "src",
-		"outDir": "dist",
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["src/*"],
-			"@libs/*": ["src/libs/*"],
-			"@handler/*": ["src/handler/*"]
+			"@/*": ["src/*"]
 		},
 		"noUncheckedIndexedAccess": true
 	},
