@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import { dirname, join } from "node:path";
-import { RecordValue } from "./types";
+import type { RecordValue } from "./types";
 
 export interface StorageAdapter {
 	get(collection: string, key: string): Promise<RecordValue | undefined>;
