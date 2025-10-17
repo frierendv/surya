@@ -118,9 +118,12 @@ export const attachSendFile = (sock: any): void => {
 		return;
 	}
 
-	const bound: SendFile = async (jid, content, options) => {
-		const msg = await createSendFile(content, options);
-		return s.sendMessage(jid, msg, { quoted: options?.quoted });
+	const bound: SendFile = async (jid, content, options, quotedMsg) => {
+		const { quoted, ...rest } = options || {};
+
+		const qm = quotedMsg || quoted;
+		const msg = await createSendFile(content, rest);
+		return s.sendMessage(jid, msg, qm ? { quoted: qm } : undefined);
 	};
 
 	Object.defineProperty(s, "sendFile", {

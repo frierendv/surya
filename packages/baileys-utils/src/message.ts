@@ -1,6 +1,11 @@
-import { downloadMediaMessage, jidNormalizedUser, proto } from "baileys";
+import {
+	downloadMediaMessage,
+	jidNormalizedUser,
+	normalizeMessageContent,
+	proto,
+} from "baileys";
 import type { MiscMessageGenerationOptions, WAMessage } from "baileys";
-import { WASocket } from "./internals/types";
+import type { WASocket } from "./internals/types";
 import { calculateFileSize, safeString } from "./util";
 
 /**
@@ -139,10 +144,7 @@ export interface IMessageMeta extends IMessageActions {
 /**
  * Full message context including raw WAMessage fields and normalized metadata/actions.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface IMessageContext extends IMessageMeta {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface IMessageContext extends WAMessage {}
+export interface IMessageContext extends IMessageMeta, WAMessage {}
 
 /**
  * Extract the most relevant text from a proto.IMessage.
@@ -160,6 +162,7 @@ export const getMessageText = (msg?: proto.IMessage | null): string => {
 		inner.extendedTextMessage?.text,
 		inner.imageMessage?.caption,
 		inner.videoMessage?.caption,
+		inner.documentMessage?.caption,
 		inner.documentMessage?.caption,
 	];
 
@@ -219,9 +222,8 @@ export const createQuotedMessage = (
 	message?: proto.IMessage | null
 ): QuotedMessageMeta | null => {
 	// Unwrap ephemeral wrapper if present
-	const inner = message?.ephemeralMessage?.message ?? message;
-	const contextInfo = inner?.extendedTextMessage?.contextInfo;
-	const quotedMessage = contextInfo?.quotedMessage;
+	const contextInfo = message?.extendedTextMessage?.contextInfo;
+	const quotedMessage = normalizeMessageContent(contextInfo?.quotedMessage);
 	if (!quotedMessage) {
 		return null;
 	}
@@ -233,7 +235,7 @@ export const createQuotedMessage = (
 		text,
 		media,
 		...contextInfo,
-		participant: contextInfo.participant as string,
+		participant: contextInfo!.participant as string,
 	};
 };
 
@@ -246,7 +248,8 @@ export const createMessageContext = (
 	sock: WASocket
 ): IMessageContext => {
 	const remoteJid = (msg.key.remoteJid || msg.key.remoteJidAlt)!;
-	const media = createMediaInfo(msg.message);
+	const inner = normalizeMessageContent(msg.message);
+	const media = createMediaInfo(inner);
 	const myUserId = sock.user?.id;
 
 	const sendReply: ReplyHandler = async (text: string, replyOpts = {}) => {
@@ -282,12 +285,17 @@ export const createMessageContext = (
 		sock.sendMessage(remoteJid, { delete: msg.key });
 
 	const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
-	const quoted = createQuotedMessage(msg.message);
+	const quoted = createQuotedMessage(inner);
 	if (quoted) {
 		// quoted context
 		const qId = contextInfo?.stanzaId;
 		const qParticipant = contextInfo?.participant;
 		const qFromMe = qParticipant === myUserId;
+		const qMKey: proto.IMessageKey = {
+			id: qId!,
+			fromMe: qFromMe!,
+			participant: qParticipant!,
+		};
 
 		const replyQuoted: ReplyHandler = async (
 			text: string,
@@ -295,11 +303,7 @@ export const createMessageContext = (
 		) => {
 			const quotedPayload: any = {
 				...msg,
-				key: {
-					id: qId,
-					fromMe: qFromMe,
-					participant: qParticipant,
-				},
+				key: qMKey,
 				...quoted,
 			};
 
@@ -331,9 +335,7 @@ export const createMessageContext = (
 				react: {
 					text,
 					key: {
-						id: qId,
-						fromMe: qFromMe,
-						participant: qParticipant,
+						...qMKey,
 						remoteJid,
 					},
 				},
@@ -345,9 +347,7 @@ export const createMessageContext = (
 				forward: {
 					...msg,
 					key: {
-						id: qId,
-						fromMe: qFromMe,
-						participant: qParticipant,
+						...qMKey,
 						remoteJid,
 					},
 					...quoted,
@@ -376,13 +376,13 @@ export const createMessageContext = (
 			? msg.key.participantAlt || msg.key.participant
 			: remoteJid) ?? undefined
 	);
-	const text = getMessageText(msg.message);
+	const text = getMessageText(inner);
 	const args = text.split(/\s+/).filter((a) => a.length);
 
 	return {
 		from: remoteJid,
 		sender,
-		pushName: safeString(msg.verifiedBizName || msg.pushName),
+		pushName: safeString(msg.verifiedBizName || msg.pushName) as string,
 		text,
 		args,
 		mentionedJid: contextInfo?.mentionedJid?.map(jidNormalizedUser) || [],

@@ -1,5 +1,5 @@
 import type { GroupMetadata } from "baileys";
-import { WASocket } from "./internals/types";
+import type { WASocket } from "./internals/types";
 import type { IMessageContext } from "./message";
 
 export interface IExtraMessageContext<IsGroup extends boolean = boolean> {

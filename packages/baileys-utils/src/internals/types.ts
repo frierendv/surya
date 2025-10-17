@@ -3,16 +3,18 @@ import type {
 	WASocket as BaileysWASocket,
 	MiscMessageGenerationOptions,
 	proto,
+	WAMessage,
 } from "baileys";
 
 export type SendFileOptions = Partial<
 	AnyMediaMessageContent & Pick<MiscMessageGenerationOptions, "quoted">
-> | null;
+>;
 
 export type SendFile = (
 	jid: string,
 	content: any,
-	options?: SendFileOptions
+	options?: SendFileOptions,
+	quoted?: WAMessage
 ) => Promise<proto.WebMessageInfo | undefined>;
 
 export interface WASocket extends BaileysWASocket {

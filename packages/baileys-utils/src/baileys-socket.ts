@@ -205,7 +205,6 @@ export class BaileysSocket extends EventEmitter {
 			shouldSyncHistoryMessage: () => false,
 			syncFullHistory: false,
 			generateHighQualityLinkPreview: true,
-			logger: this.options.socketConfig?.logger,
 			...this.options.socketConfig,
 			auth: {
 				creds: this.auth.state.creds,
