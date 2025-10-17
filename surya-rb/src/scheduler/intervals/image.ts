@@ -60,6 +60,7 @@ const handler: JobHandler<ImageJob> = async (payload, job) => {
 						continue;
 					}
 					await socket.sendFile(payload.from, img, {
+						caption: payload.caption,
 						quoted: payload.quoted,
 					});
 				}
