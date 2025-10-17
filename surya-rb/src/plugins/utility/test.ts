@@ -8,6 +8,7 @@ const testPlugin: IPlugin = {
 	before: async (_ctx, _extra) => {
 		// precondition checks
 		// do something before main handler
+		return true; // return false to abort execution
 	},
 	execute: async (ctx, { sock }) => {
 		await sock.sendMessage(ctx.from, { text: "Test command executed" });

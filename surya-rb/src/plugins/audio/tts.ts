@@ -1,4 +1,4 @@
-import { fetchClient } from "@libs/fetch";
+import { fetchClient } from "@/libs/fetch";
 import type { IPlugin } from "@surya/plugin-manager";
 
 export default {
@@ -23,22 +23,22 @@ export default {
 			options[key] = value ?? "";
 		}
 		const text = ctx.quoted?.text || ctx.text.replace(regex, "").trim();
-		const { data, error } = await fetchClient.POST(
+		const { value, error } = await fetchClient.post(
 			"/elevenlabs/inference_text",
 			{
-				body: {
-					voice_id: "EXAVITQu4vr4xnSDxMaL",
-					server_id: "rose",
-					text,
-					...options,
-				},
+				voice_id: "EXAVITQu4vr4xnSDxMaL",
+				server_id: "rose",
+				text,
+				...options,
 			}
 		);
 		if (error) {
-			await ctx.reply(error.message);
+			await ctx.reply(
+				error.message || "Failed to convert text to speech."
+			);
 			return;
 		}
-		const { status, result, message } = data;
+		const { status, result, message } = value!.data;
 		if (!status || !result?.audio_url) {
 			await ctx.reply(message);
 			return;

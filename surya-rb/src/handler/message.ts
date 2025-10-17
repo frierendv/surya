@@ -1,6 +1,6 @@
-import { logger } from "@libs/logger";
-import { measureExecution, performance } from "@libs/performance";
-import pm from "@libs/plugin-manager";
+import { logger } from "@/libs/logger";
+import { measureExecution, performance } from "@/libs/performance";
+import pm from "@/libs/plugin-manager";
 import {
 	createExtraMessageContext,
 	createMessageContext,

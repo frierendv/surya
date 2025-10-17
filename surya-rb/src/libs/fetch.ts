@@ -1,29 +1,38 @@
+import crypto from "node:crypto";
+import type { paths } from "@/types/itsrose-schema";
 import { readEnv } from "@surya/core/read-env";
-import createClient from "openapi-fetch";
-import type { paths } from "../types/itsrose-schema";
-import { logger } from "./logger";
+import { createOpenApiFetchClient } from "feature-fetch";
 
+const baseUrl = readEnv("SR_ITSROSE_API_URL", { required: true });
+const apiKey = readEnv("SR_ITSROSE_API_KEY", { required: true });
 /**
  * fetch client instance.
  * Used to make HTTP requests to itsrose API
  */
-export const fetchClient = createClient<paths>({
-	baseUrl: readEnv("SR_ITSROSE_API_URL", { required: true }),
+const fetchClient = createOpenApiFetchClient<paths>({
+	prefixUrl: baseUrl,
 	headers: {
-		"Content-Type": "application/json",
-		Accept: "application/json",
-		authorization:
-			"Bearer " + readEnv("SR_ITSROSE_API_KEY", { required: true }),
+		authorization: "Bearer " + apiKey,
 	},
 });
 
-fetchClient.use({
-	onRequest({ request }) {
-		logger.trace(`[fetch] ${request.method} ${request.url}`);
-		return request;
-	},
-	onResponse({ response }) {
-		logger.trace(`[fetch] ${response.status} ${response.url}`);
-		return response;
-	},
-});
+FormData.prototype._generateBoundary = function () {
+	this._boundary = "-".repeat(26) + crypto.randomBytes(12).toString("hex");
+};
+FormData.prototype.getBoundary = function () {
+	if (!this._boundary) {
+		this._generateBoundary();
+	}
+
+	return this._boundary;
+};
+
+export { fetchClient };
+
+declare global {
+	interface FormData {
+		_boundary: string;
+		_generateBoundary(): void;
+		getBoundary(): string;
+	}
+}

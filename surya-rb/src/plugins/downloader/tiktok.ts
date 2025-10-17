@@ -1,4 +1,4 @@
-import { fetchClient } from "@libs/fetch";
+import { fetchClient } from "@/libs/fetch";
 import type { IPlugin } from "@surya/plugin-manager";
 
 export default {
@@ -14,14 +14,14 @@ export default {
 			);
 			return;
 		}
-		const { error, data } = await fetchClient.GET("/tiktok/get_content", {
-			params: { query: { url } },
+		const { error, value } = await fetchClient.get("/tiktok/get_content", {
+			queryParams: { url },
 		});
 		if (error) {
-			await ctx.reply(`Failed to fetch content: ${error.message}`);
+			await ctx.reply(`Failed to fetch content: ${error?.message}`);
 			return;
 		}
-		const { status, message, result } = data;
+		const { status, message, result } = value!.data;
 		if (!status || !result) {
 			return ctx.reply(message);
 		}
@@ -31,14 +31,10 @@ export default {
 			await sock.sendFile(ctx.from, url, { quoted: ctx });
 		}
 		if (result.images && result.music) {
-			await sock.sendMessage(
-				ctx.from,
-				{
-					audio: { url: result.music.play_url! },
-					mimetype: "audio/mp4",
-				},
-				{ quoted: ctx }
-			);
+			await sock.sendFile(ctx.from, result.music.play_url!, {
+				ptt: false,
+				quoted: ctx,
+			});
 		}
 	},
 } satisfies IPlugin;

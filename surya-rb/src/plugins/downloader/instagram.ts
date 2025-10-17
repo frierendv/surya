@@ -1,4 +1,4 @@
-import { fetchClient } from "@libs/fetch";
+import { fetchClient } from "@/libs/fetch";
 import type { IPlugin } from "@surya/plugin-manager";
 
 export default {
@@ -14,17 +14,15 @@ export default {
 			);
 			return;
 		}
-		const { error, data } = await fetchClient.GET(
+		const { error, value } = await fetchClient.get(
 			"/instagram/get_content",
-			{
-				params: { query: { url } },
-			}
+			{ queryParams: { url } }
 		);
 		if (error) {
 			await ctx.reply(`Failed to fetch content: ${error.message}`);
 			return;
 		}
-		const { status, message, result } = data;
+		const { status, message, result } = value!.data;
 		if (!status || !result?.contents) {
 			return ctx.reply(message);
 		}
