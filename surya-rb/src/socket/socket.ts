@@ -14,7 +14,6 @@ import {
 	isJidMetaAI,
 	isJidNewsletter,
 	isJidStatusBroadcast,
-	jidNormalizedUser,
 } from "baileys";
 import type { ConnectionState, MessageUpsertType, WAMessage } from "baileys";
 import { requestPairing } from "./pairing";
@@ -38,6 +37,7 @@ export const createSocket = (over?: Partial<CreateBaileysOptions>) => {
 			logger: baileysLogger,
 			shouldIgnoreJid,
 			browser: Browsers.ubuntu("Edge"),
+			syncFullHistory: true,
 			...over?.socketConfig,
 		},
 		maxReconnectAttempts: 10,
@@ -50,23 +50,8 @@ export const createSocket = (over?: Partial<CreateBaileysOptions>) => {
 		}
 
 		if (update.connection === "open" && baileys.socket) {
-			const user = baileys.socket.user;
-			if (user && (!("phoneNumber" in user) || !user.phoneNumber)) {
-				const botId = jidNormalizedUser(user.id);
-				Object.defineProperty(user, "phoneNumber", {
-					value: botId,
-					enumerable: true,
-				});
-				logger.warn(
-					{ id: user.id, phoneNumber: botId },
-					"Assigning phoneNumber to bot user from ID."
-				);
-			}
-			if (user) {
-				logger.success(
-					{ name: user.name, id: user.phoneNumber },
-					"Baileys connected"
-				);
+			if (baileys.socket.user) {
+				logger.success({ ...baileys.socket.user }, "Baileys connected");
 			}
 
 			if (!(baileys.socket as any).sendFile) {
