@@ -28,7 +28,7 @@
 	"bugs": "https://github.com/frierendv/surya/issues",
 	"homepage": "https://github.com/frierendv/surya#readme",
 	"peerDependencies": {
-		"baileys": "^7.0.0-rc.3",
+		"baileys": "^7.0.0-rc.5",
 		"mongoose": "^8.18.1"
 	},
 	"dependencies": {
