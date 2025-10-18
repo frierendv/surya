@@ -15,7 +15,6 @@
 		"sourceMap": true,
 
 		"strict": true,
-		"exactOptionalPropertyTypes": true,
 		"noUncheckedIndexedAccess": true,
 		"noImplicitOverride": true,
 		"useUnknownInCatchVariables": true,
