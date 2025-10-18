@@ -202,9 +202,6 @@ export class BaileysSocket extends EventEmitter {
 	private createSocketInstance() {
 		const sock = makeWASocket({
 			browser: this.options.browser ?? DEFAULT_BROWSER,
-			shouldSyncHistoryMessage: () => false,
-			syncFullHistory: false,
-			generateHighQualityLinkPreview: true,
 			...this.options.socketConfig,
 			auth: {
 				creds: this.auth.state.creds,
