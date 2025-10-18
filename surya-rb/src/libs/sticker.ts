@@ -1,4 +1,4 @@
-import { PassThrough } from "stream";
+import type { PassThrough } from "stream";
 import { convertToWebp } from "@surya/baileys-utils/internals/converter";
 import { streamToBuffer } from "@surya/ffmpeg-utils";
 // @ts-expect-error: no types
