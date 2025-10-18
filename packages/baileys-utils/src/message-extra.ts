@@ -79,7 +79,7 @@ const buildPrefixRegex = (prefix?: string | string[]): RegExp => {
 	return re;
 };
 
-export const createExtraMessageContext = async (
+export const createExtraMessageContext = (
 	/**
 	 * The message context created by `createMessageContext`.
 	 */
@@ -88,7 +88,7 @@ export const createExtraMessageContext = async (
 	sock: WASocket,
 	/** The prefix or prefixes to use for command detection. */
 	prefix?: string | string[]
-): Promise<IExtraMessageContext> => {
+): IExtraMessageContext => {
 	const isGroup = ctx.from.endsWith("@g.us");
 	const fbObj: IExtraMessageContext = {
 		isGroup,
@@ -124,37 +124,41 @@ export const createExtraMessageContext = async (
 		fbObj.usedPrefix = "";
 	}
 
-	// non-group contexts
-	if (!isGroup) {
-		return fbObj;
-	}
+	/**
+	 *  We handle group metadata and admin status in surya-rb directly now.
+	 *
+	 * This is because fetching group metadata all the time for every message
+	 * can be inefficient, especially for large groups or high message volumes.
+	 * It's better to manage this at a higher level where we can cache results
+	 * and reduce redundant network calls.
+	 */
 
-	const groupMetadata = await sock.groupMetadata(ctx.from);
-	const participants = groupMetadata?.participants ?? [];
-	const senderId = ctx.sender;
-	const botId = sock.user?.id ?? "";
+	// const groupMetadata = await sock.groupMetadata(ctx.from);
+	// const participants = groupMetadata?.participants ?? [];
+	// const senderId = ctx.sender;
+	// const botId = sock.user?.id ?? "";
 
-	// Avoid creating intermediate arrays by scanning participants once.
-	fbObj.groupMetadata = groupMetadata;
-	fbObj.isAdmin = false;
-	fbObj.isBotAdmin = false;
+	// // Avoid creating intermediate arrays by scanning participants once.
+	// fbObj.groupMetadata = groupMetadata;
+	// fbObj.isAdmin = false;
+	// fbObj.isBotAdmin = false;
 
-	for (const p of participants) {
-		const pIds = [p.phoneNumber, p.id, p.lid].filter(Boolean);
-		if (pIds.includes(senderId)) {
-			if (p.admin === "admin" || p.admin === "superadmin") {
-				fbObj.isAdmin = true;
-			}
-		}
-		if (pIds.includes(botId)) {
-			if (p.admin === "admin" || p.admin === "superadmin") {
-				fbObj.isBotAdmin = true;
-			}
-		}
-		if (fbObj.isAdmin && fbObj.isBotAdmin) {
-			break;
-		}
-	}
+	// for (const p of participants) {
+	// 	const pIds = [p.phoneNumber, p.id, p.lid].filter(Boolean);
+	// 	if (pIds.includes(senderId)) {
+	// 		if (p.admin === "admin" || p.admin === "superadmin") {
+	// 			fbObj.isAdmin = true;
+	// 		}
+	// 	}
+	// 	if (pIds.includes(botId)) {
+	// 		if (p.admin === "admin" || p.admin === "superadmin") {
+	// 			fbObj.isBotAdmin = true;
+	// 		}
+	// 	}
+	// 	if (fbObj.isAdmin && fbObj.isBotAdmin) {
+	// 		break;
+	// 	}
+	// }
 
 	return fbObj;
 };
