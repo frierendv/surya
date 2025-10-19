@@ -1,6 +1,6 @@
-# Surya RB
+# surya-rb
 
-Surya RB is a lightweight, modular WhatsApp bot runtime written in TypeScript. It focuses on plugin-first development, fast DX, and clear separations for socket, plugins, database, and scheduling.
+surya-rb is a lightweight, modular WhatsApp bot runtime written in TypeScript. It focuses on plugin-first development, fast DX, and clear separations for socket, plugins, database, and scheduling.
 
 ---
 

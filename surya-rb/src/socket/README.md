@@ -1,6 +1,6 @@
-# libs/socket
+# surya-rb/socket
 
-Baileys socket integration and pairing helpers.
+Baileys socket integration and pairing helpers for surya-rb.
 
 - `socket.ts` — creates and manages the socket lifecycle, attaches `sendFile`, and routes `messages.upsert` to the handlers
 - `index.ts` — exports `createSocket` and a minimal `socket` facade with `sendMessage` and `sendFile`
