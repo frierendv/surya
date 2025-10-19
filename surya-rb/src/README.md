@@ -4,9 +4,10 @@ This directory contains the runtime code for Surya RB.
 
 - `index.ts` — boots the app: connects database, loads plugins, launches socket, starts scheduler
 - `handler/` — dispatching for messages and plugin execution
-- `libs/` — shared utilities (logger, database, socket, scheduler, etc.)
+- `libs/` — shared utilities (logger, database, scheduler, etc.)
 - `plugins/` — built-in plugins grouped by purpose
 - `scheduler/` — cron and interval jobs
+- `socket/` — Baileys socket integration and pairing helpers
 - `types/` — shared and generated types
 
 > [!IMPORTANT]

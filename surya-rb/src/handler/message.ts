@@ -1,13 +1,15 @@
 import { logger } from "@/libs/logger";
-import { measureExecution, performance } from "@/libs/performance";
+import { performance } from "@/libs/performance";
 import pm from "@/libs/plugin-manager";
+import { cachedGroupMetadata, socket } from "@/socket";
 import {
 	createExtraMessageContext,
 	createMessageContext,
 } from "@surya/baileys-utils";
-import type { WASocket } from "@surya/baileys-utils/internals/types";
+import type { IExtraMessageContext } from "@surya/baileys-utils";
 import { readEnv } from "@surya/core/read-env";
-import { jidNormalizedUser, type WAMessage } from "baileys";
+import type { Plugin } from "@surya/plugin-manager";
+import type { GroupMetadata, WAMessage } from "baileys";
 
 const NON_DIGITS_RE = /[^0-9]/g;
 const WS_SPLIT_RE = /\s+/;
@@ -22,7 +24,7 @@ const SR_PREFIXES: string[] = rawPrefixes
 		: rawPrefixes.split("").filter(Boolean)
 	: [];
 
-const getOwnerPL = (num: string) => {
+const getOwnerPL = (num: string): string[] => {
 	if (!num) {
 		return [];
 	}
@@ -32,147 +34,141 @@ const getOwnerPL = (num: string) => {
 		.filter(Boolean);
 };
 
-// Precompute owner set once
-const owners = getOwnerPL(readEnv("SR_OWNER_NUMBER", { defaultValue: "" }));
-const SR_OWNER_SET = new Set<string>([
-	...owners.map((num) => `${num}@s.whatsapp.net`),
-	...owners.map((num) => `${num}@lid`),
-]);
+const buildOwnerSet = (ownerNums: string[]): Set<string> => {
+	return new Set([
+		...ownerNums.map((num) => `${num}@s.whatsapp.net`),
+		...ownerNums.map((num) => `${num}@lid`),
+	]);
+};
 
-export const messageHandler = async (msg: WAMessage, socket: WASocket) => {
+const isOwner = (
+	senderPN: string | undefined,
+	senderLID: string | undefined,
+	ownerSet: Set<string>
+): boolean => {
+	return [
+		senderPN ? ownerSet.has(senderPN) : false,
+		senderLID ? ownerSet.has(senderLID) : false,
+	].some(Boolean);
+};
+
+const checkGroupRoles = (
+	groupMetadata: GroupMetadata,
+	senderId: string,
+	botId: string
+): { isAdmin: boolean; isBotAdmin: boolean } => {
+	let isAdmin = false;
+	let isBotAdmin = false;
+	const participants = groupMetadata?.participants ?? [];
+	for (const p of participants) {
+		const pIds = [p.phoneNumber, p.id, p.lid].filter(Boolean);
+		if (pIds.includes(senderId)) {
+			if (
+				p.admin === "admin" ||
+				p.admin === "superadmin" ||
+				p.admin === null
+			) {
+				isAdmin = true;
+			}
+		}
+		if (pIds.includes(botId)) {
+			if (
+				p.admin === "admin" ||
+				p.admin === "superadmin" ||
+				p.admin === null
+			) {
+				isBotAdmin = true;
+			}
+		}
+		if (isAdmin && isBotAdmin) {
+			break;
+		}
+	}
+	return { isAdmin, isBotAdmin };
+};
+
+const filterPlugins = (
+	candidates: Plugin[],
+	extra: IExtraMessageContext
+): Plugin[] => {
+	const matches: Plugin[] = [];
+	for (const plugin of candidates) {
+		if (!plugin.ignorePrefix && !extra.usedPrefix) {
+			continue;
+		}
+		if (plugin.ownerOnly && !extra.isOwner) {
+			continue;
+		}
+		if (plugin.adminOnly && !extra.isAdmin) {
+			continue;
+		}
+		if (plugin.privateChatOnly && extra.isGroup) {
+			continue;
+		}
+		if (plugin.groupChatOnly && !extra.isGroup) {
+			continue;
+		}
+		matches.push(plugin);
+	}
+	return matches;
+};
+
+const SR_OWNER_SET = buildOwnerSet(
+	getOwnerPL(readEnv("SR_OWNER_NUMBER", { defaultValue: "" }))
+);
+
+export const messageHandler = async (msg: WAMessage) => {
 	if (!msg.message) {
 		return;
 	}
 	performance.start("messageHandler");
 
 	const ctx = createMessageContext(msg, socket);
-
-	const { result: extra, performance: extraPerf } = await measureExecution(
-		() => createExtraMessageContext(ctx, socket, SR_PREFIXES),
-		"createExtraMessageContext"
-	);
-	logger.debug(
-		{ msg: msg.key.id, ...extraPerf },
-		"Created extra message context"
-	);
-
+	const extra = createExtraMessageContext(ctx, socket, SR_PREFIXES);
 	if (!extra || !extra.command) {
 		logger.debug({ msg: msg.key.id }, "No command found in message");
 		return;
 	}
-
 	const candidates = pm.findByCommand(extra.command);
 	if (!candidates || candidates.length === 0) {
 		logger.debug({ cmd: extra.command }, "No plugin found for command");
 		return;
 	}
 
-	// Map any LID JIDs to PN in one deduplicated, parallel pass
-	const { getPNForLID } = extra.sock.signalRepository.lidMapping;
-	const lidSuffix = "@lid";
-
-	type Field = {
-		label: "participant" | "sender" | "from";
-		get: () => string | undefined;
-		set: (v: string) => void;
-	};
-
-	const fields: Field[] = [
-		{
-			label: "participant",
-			get: () => ctx.quoted?.participant,
-			set: (v) => {
-				if (ctx.quoted) {
-					ctx.quoted.participant = v;
-				}
-			},
-		},
-		{
-			label: "sender",
-			get: () => ctx.sender,
-			set: (v) => {
-				ctx.sender = v;
-			},
-		},
-		{
-			label: "from",
-			get: () => ctx.from,
-			set: (v) => {
-				ctx.from = v;
-			},
-		},
-	];
-
-	// Collect unique LIDs
-	const lids = new Set<string>();
-	for (const f of fields) {
-		const v = f.get();
-		if (v && v.endsWith(lidSuffix)) {
-			lids.add(v);
-		}
+	// Compute LID/PN and roles
+	const { getLIDForPN, getPNForLID } = socket.signalRepository.lidMapping;
+	let senderPN: string | undefined = undefined;
+	let senderLID: string | undefined = undefined;
+	if (ctx.key.addressingMode === "pn") {
+		senderPN = ctx.sender;
+		const lid = await getLIDForPN(senderPN);
+		senderLID = lid === null ? undefined : lid;
+	} else if (ctx.key.addressingMode === "lid") {
+		senderLID = ctx.sender;
+		const pn = await getPNForLID(senderLID);
+		senderPN = pn === null ? undefined : pn;
+	}
+	extra.isOwner = isOwner(senderPN, senderLID, SR_OWNER_SET);
+	if (senderLID) {
+		ctx.sender = senderLID;
 	}
 
-	if (lids.size) {
-		const unique = [...lids];
-		// Resolve all LIDs in parallel
-		const pns = await Promise.all(unique.map((lid) => getPNForLID(lid)));
-		// Precompute normalized JIDs
-		const normalized = new Map<string, string>();
-		for (const [i, lid] of unique.entries()) {
-			const pn = pns[i];
-			if (pn) {
-				normalized.set(lid, jidNormalizedUser(pn));
-			}
+	if (extra.isGroup) {
+		let groupMetadata = await cachedGroupMetadata.get(ctx.from);
+		if (!groupMetadata) {
+			groupMetadata = await cachedGroupMetadata.refresh(ctx.from);
 		}
-
-		// Apply results and log
-		for (const f of fields) {
-			const original = f.get();
-			if (!original || !original.endsWith(lidSuffix)) {
-				continue;
-			}
-			const normalizedJid = normalized.get(original);
-			if (!normalizedJid) {
-				continue;
-			}
-			f.set(normalizedJid);
-			logger.debug(
-				{ [f.label]: original, pn: pns[unique.indexOf(original)] },
-				`Mapped ${f.label} LID to PN`
-			);
-		}
+		extra.groupMetadata = groupMetadata;
+		const { isAdmin, isBotAdmin } = checkGroupRoles(
+			groupMetadata,
+			ctx.sender,
+			socket.user?.id ?? ""
+		);
+		extra.isAdmin = isAdmin;
+		extra.isBotAdmin = isBotAdmin;
 	}
 
-	// Fast flags
-	const isOwner = SR_OWNER_SET.has(ctx.sender);
-	const isAdmin = !!extra.isAdmin;
-	const isGroup = !!extra.isGroup;
-	const usedPrefix = !!extra.usedPrefix;
-
-	// Write back once so downstream consumers don't recompute
-	extra.isOwner = isOwner;
-
-	// Single-pass filter (no extra closures, no redundant includes checks)
-	const matches = [];
-	for (const plugin of candidates) {
-		if (!plugin.ignorePrefix && !usedPrefix) {
-			continue;
-		}
-		if (plugin.ownerOnly && !isOwner) {
-			continue;
-		}
-		if (plugin.adminOnly && !isAdmin) {
-			continue;
-		}
-		if (plugin.privateChatOnly && isGroup) {
-			continue;
-		}
-		if (plugin.groupChatOnly && !isGroup) {
-			continue;
-		}
-		matches.push(plugin);
-	}
-
+	const matches = filterPlugins(candidates, extra);
 	if (matches.length === 0) {
 		logger.debug(
 			{ cmd: extra.command },
@@ -197,8 +193,7 @@ export const messageHandler = async (msg: WAMessage, socket: WASocket) => {
 			plugins: matches.length,
 			...perf,
 		},
-		"Matched command to plugins"
+		"Message handled"
 	);
-
 	return { matches, ctx, extra };
 };

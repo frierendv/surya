@@ -24,6 +24,7 @@ const interval = new IntervalScheduler(store, {
 
 const jobErrorHandler = (job: JobRecord, err: unknown) => {
 	logger.error({ ...job }, "Job failed", err);
+	store.removeJob(job.id);
 };
 
 for (const cron of cronJobs) {

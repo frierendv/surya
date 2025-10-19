@@ -1,6 +1,6 @@
-# Surya RB
+# surya-rb
 
-Surya RB is a lightweight, modular WhatsApp bot runtime written in TypeScript. It focuses on plugin-first development, fast DX, and clear separations for socket, plugins, database, and scheduling.
+surya-rb is a lightweight, modular WhatsApp bot runtime written in TypeScript. It focuses on plugin-first development, fast DX, and clear separations for socket, plugins, database, and scheduling.
 
 ---
 
@@ -116,7 +116,7 @@ Copy `.env.example` to `.env` and review these keys:
 
 - Entry: `src/index.ts`
   - Connects DB, initializes local DB handle, loads and watches plugins, starts the Baileys socket, and starts the scheduler.
-- Socket: `src/libs/socket` (pairing code or QR, patched helpers like `sendFile`)
+- Socket: `src/socket` (pairing code or QR, patched helpers like `sendFile`)
 - Plugin manager: `src/libs/plugin-manager.ts`
   - Dev loads from `src/plugins/*.ts`, Prod loads from `dist/plugins/*.js`
 - Scheduler: `src/libs/scheduler.ts` + `src/scheduler/*`

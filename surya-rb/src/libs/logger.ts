@@ -11,13 +11,15 @@ export const logger = createPinoLogger(Pino, {
 		base: undefined,
 		level,
 	},
-	level,
 	name: "surya-rb",
 	disableTimestamp: true,
 });
 
 export const baileysLogger = createPinoLogger(Pino, {
-	level: ((level === "debug" || level === "trace") && level) || "silent",
+	pinoOptions: {
+		base: undefined,
+		level: ((level === "debug" || level === "trace") && level) || "silent",
+	},
 	name: "baileys",
 	disableTimestamp: true,
 });
