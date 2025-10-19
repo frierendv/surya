@@ -1,3 +1,4 @@
+import type { Transform } from "node:stream";
 import {
 	downloadMediaMessage,
 	getContentType,
@@ -50,13 +51,15 @@ export interface IMediaInfo {
 	 */
 	mimetype: string;
 	/**
-	 * The size of the media (human readable).
+	 * The size of the media in bytes.
 	 */
 	size: number;
 	/**
-	 * Download the media content as Buffer/Uint8Array.
+	 * Download the media content as a buffer or stream.
 	 */
-	download: () => Promise<Uint8Array | Buffer>;
+	download: <T extends "stream" | "buffer" = "buffer">(
+		output?: T
+	) => Promise<T extends "stream" ? Transform : Buffer<ArrayBufferLike>>;
 }
 
 /**
@@ -223,19 +226,18 @@ export const createMediaInfo = (
 		return null;
 	}
 
-	const downloadMessage = async () => {
-		const buffer = await downloadMediaMessage(
+	const downloadMessage = async (output = "buffer") => {
+		return downloadMediaMessage(
 			{ message } as proto.IWebMessageInfo,
-			"buffer",
+			output === "stream" ? "stream" : "buffer",
 			{}
 		);
-		return buffer;
 	};
 
 	return {
 		mimetype: content.mimetype! || "application/octet-stream",
-		size: calculateFileSize(content.fileLength!),
-		download: downloadMessage,
+		size: calculateFileSize(content.fileLength || 0),
+		download: downloadMessage as IMediaInfo["download"],
 	};
 };
 
@@ -263,27 +265,6 @@ export const createQuotedMessage = (
 };
 
 /**
- * Create edit/delete handlers for a sent message.
- */
-const createMessageHandlers = (
-	sock: WASocket,
-	remoteJid: string,
-	messageKey: proto.IMessageKey
-) => {
-	const editReply = (newText: string, editOpts = {}) =>
-		sock.sendMessage(remoteJid, {
-			text: newText,
-			edit: messageKey,
-			...editOpts,
-		});
-
-	const deleteReply = () =>
-		sock.sendMessage(remoteJid, { delete: messageKey });
-
-	return { editReply, deleteReply };
-};
-
-/**
  * Create a reply handler that sends a message and returns edit/delete capabilities.
  */
 const createReplyHandler = (
@@ -293,6 +274,24 @@ const createReplyHandler = (
 		| WAMessage
 		| { message: proto.IMessage; key: proto.IMessageKey }
 ): ReplyHandler => {
+	const createHandlers = (
+		sock: WASocket,
+		remoteJid: string,
+		messageKey: proto.IMessageKey
+	) => {
+		const editReply = (newText: string, editOpts = {}) =>
+			sock.sendMessage(remoteJid, {
+				text: newText,
+				edit: messageKey,
+				...editOpts,
+			});
+
+		const deleteReply = () =>
+			sock.sendMessage(remoteJid, { delete: messageKey });
+
+		return { editReply, deleteReply };
+	};
+
 	return async (text: string, replyOpts = {}) => {
 		const replyRes = await sock.sendMessage(
 			remoteJid,
@@ -303,7 +302,7 @@ const createReplyHandler = (
 			throw new Error("Failed to send reply message");
 		}
 
-		return createMessageHandlers(sock, remoteJid, replyRes.key);
+		return createHandlers(sock, remoteJid, replyRes.key);
 	};
 };
 
