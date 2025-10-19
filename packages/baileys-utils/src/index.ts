@@ -10,8 +10,12 @@ export type {
 	IMessageMeta,
 	IMessageContext,
 } from "./message";
-export type { IExtraMessageContext } from "./message-extra";
-export type { IPhoneDetail } from "./phone-number";
+export type {
+	IExtraContext,
+	IExtraGroupContext,
+	IExtraMessageContext,
+	ExtraMessageContext,
+} from "./message-extra";
 export { BaileysSocket } from "./baileys-socket";
 export {
 	getMessageText,
@@ -20,4 +24,3 @@ export {
 	createMessageContext,
 } from "./message";
 export { createExtraMessageContext } from "./message-extra";
-export { getPhoneDetail } from "./phone-number";

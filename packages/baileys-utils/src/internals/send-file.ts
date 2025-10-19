@@ -112,7 +112,10 @@ export const createSendFile = async (
 /**
  * Attach sendFile to a socket instance once (binds the function).
  */
-export const attachSendFile = (sock: any): void => {
+export const attachSendFile = (
+	sock: any,
+	attributes?: PropertyDescriptor & ThisType<any>
+): void => {
 	const s = sock as WASocket;
 	if (typeof s.sendFile === "function") {
 		return;
@@ -131,5 +134,6 @@ export const attachSendFile = (sock: any): void => {
 		writable: false,
 		configurable: false,
 		enumerable: false,
+		...attributes,
 	});
 };
