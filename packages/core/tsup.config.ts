@@ -1,15 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-	entry: {
-		logger: "src/logger.ts",
-		readdir: "src/readdir.ts",
-		string: "src/string.ts",
-		debounce: "src/debounce.ts",
-		semaphore: "src/semaphore.ts",
-		"read-env": "src/read-env.ts",
-		events: "src/events.ts",
-	},
+	entry: ["src"],
 	splitting: false,
 	clean: true,
 	dts: true,
