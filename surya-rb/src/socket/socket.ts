@@ -158,7 +158,7 @@ const createSocket = (over?: Partial<CreateBaileysOptions>) => {
 			}
 
 			if (!(client.socket as any).sendFile) {
-				attachSendFile(client.socket);
+				attachSendFile(client.socket, { configurable: true });
 				logger.info("Patched in sendFile to Baileys socket");
 			}
 			_socket = proxyBind(client.socket);

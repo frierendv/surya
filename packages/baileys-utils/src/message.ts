@@ -208,10 +208,15 @@ export const getMessageText = (msg?: proto.IMessage | null): string => {
 export const createMediaInfo = (
 	message?: proto.IMessage | null
 ): IMediaInfo | null => {
+	const inner =
+		message?.ephemeralMessage?.message ||
+		message?.buttonsMessage ||
+		message?.templateMessage?.hydratedTemplate ||
+		message;
 	const content =
-		message?.documentMessage ||
-		message?.imageMessage ||
-		message?.videoMessage ||
+		inner?.documentMessage ||
+		inner?.imageMessage ||
+		inner?.videoMessage ||
 		message?.audioMessage ||
 		message?.stickerMessage;
 	if (!content) {
@@ -245,10 +250,9 @@ export const createQuotedMessage = (
 	if (!quotedMessage) {
 		return null;
 	}
-	const messageType = getMessageType(quotedMessage)!;
 
-	const media = createMediaInfo(quotedMessage[messageType] as proto.IMessage);
-	const text = getMessageText(quotedMessage[messageType] as proto.IMessage);
+	const media = createMediaInfo(quotedMessage);
+	const text = getMessageText(quotedMessage);
 
 	return {
 		text,
