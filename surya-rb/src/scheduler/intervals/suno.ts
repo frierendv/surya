@@ -8,14 +8,14 @@ type SunoJob = {
 	/** user jid or group */
 	from: string;
 	sender: string;
-	songIds: string[];
+	taskId: string[];
 	quoted?: WAMessage;
 };
 
 const handlerKey = "fetch-suno-song-status" as const;
 const handler: JobHandler<SunoJob> = async (payload, job) => {
 	const { value, error } = await fetchClient.get("/ai_song/get_task", {
-		queryParams: { song_id: payload.songIds.join(",") },
+		queryParams: { task_id: payload.taskId.join(",") },
 	});
 	if (error) {
 		await socket.sendMessage(
@@ -42,14 +42,27 @@ const handler: JobHandler<SunoJob> = async (payload, job) => {
 	}
 	const completedSongs = result.filter((song) => song.status === "completed");
 	if (completedSongs.length) {
+		const firstCompletedSong = completedSongs[0];
+		const messageLines = [
+			"Here are your generated song(s)! Enjoy! 🎵\n",
+			"Title: " + (firstCompletedSong?.title || "N/A"),
+			"Lyrics: " + (firstCompletedSong?.lyrics || "N/A"),
+		];
+		const msg = await socket.sendMessage(
+			payload.from,
+			{
+				text: messageLines.join("\n"),
+			},
+			{ quoted: payload.quoted }
+		);
 		for (const song of completedSongs) {
-			if (!song.audio) {
+			if (!song.audio_url) {
 				continue;
 			}
-			await socket.sendFile(payload.from, song.audio, {
+			await socket.sendFile(payload.from, song.audio_url, {
 				ptt: false,
 				fileName: song.title ? `${song.title}.mp3` : undefined,
-				quoted: payload.quoted,
+				quoted: msg,
 			});
 		}
 		void interval.remove(job.id);
