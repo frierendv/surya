@@ -21,10 +21,52 @@ surya-rb is a lightweight, modular WhatsApp bot runtime written in TypeScript. I
   - `handler/` — message and plugin dispatch
   - `libs/` — cross-cutting utilities
   - `plugins/` — built-in features grouped by category
+  - `socket/` — Baileys socket wrapper and helpers
   - `scheduler/` — cron and interval jobs
   - `types/` — shared types and generated OpenAPI types
 - `.env` / `.env.example` — runtime configuration
 - `package.json` — scripts and dependencies
+
+```tree
+surya-rb
+├── package.json
+├── src
+│   ├── handler
+│   │   ├── message.ts
+│   │   └── plugin.ts
+│   ├── index.ts
+│   ├── libs
+│   │   ├── auth-provider.ts
+│   │   ├── database.ts
+│   │   ├── fetch.ts
+│   │   ├── logger.ts
+│   │   ├── mongodb.ts
+│   │   ├── performance.ts
+│   │   ├── plugin-manager.ts
+│   │   ├── scheduler.ts
+│   │   └── sticker.ts
+│   ├── plugins
+│   ├── scheduler
+│   │   ├── crons
+│   │   │   ├── index.ts
+│   │   │   └── user.ts
+│   │   ├── index.ts
+│   │   └── intervals
+│   │       ├── image.ts
+│   │       ├── index.ts
+│   │       ├── suno.ts
+│   │       └── unmix.ts
+│   ├── socket
+│   │   ├── index.ts
+│   │   ├── pairing.ts
+│   │   ├── proxy.ts
+│   │   └── socket.ts
+│   └── types
+│       ├── database.ts
+│       └── itsrose-schema.ts
+├── tsconfig.json
+└── tsup.config.ts
+```
 
 > [!IMPORTANT]
 > See the per-folder READMEs under `src/*` for deeper docs.

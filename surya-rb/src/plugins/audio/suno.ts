@@ -5,6 +5,8 @@ import type { IPlugin } from "@surya/plugin-manager";
 const flag = {
 	auto: "Automatic generation based on the prompt",
 	lyrics: "Generate the song by lyrics provided",
+	female: "Generate a song with female vocals",
+	male: "Generate a song with male vocals",
 } as const;
 
 // a brief description
@@ -32,14 +34,10 @@ export default {
 	command: ["suno", "suno-ai"],
 	category: ["audio"],
 	description,
-	execute: async (ctx, { command, usedPrefix, sock }) => {
+	execute: async (ctx, { command, usedPrefix }) => {
 		if (!ctx.text) {
 			return ctx.reply(
-				`Please provide a prompt to generate a song.\nUsage: *${usedPrefix}${command} <prompt>* [--flag]\n\nAvailable options for --flag:\n${Object.keys(
-					flag
-				)
-					.map((f) => `\n- *--${f}*: ${flag[f as keyof typeof flag]}`)
-					.join("")}`
+				`Please provide a prompt to generate a song. type *${usedPrefix}help ${command}* for more information.`
 			);
 		}
 		let flagOption = "auto" as keyof typeof flag;
@@ -68,12 +66,15 @@ export default {
 		const requestOptions: Record<string, any> = {
 			mode: "auto",
 			prompt: text,
-			model_version: "v3.5",
+			model: "v4.5",
 		};
 		if (flagOption === "lyrics") {
-			requestOptions.mode = "lyrics";
+			requestOptions.mode = "custom";
 			requestOptions.lyrics = text;
 			delete requestOptions.prompt;
+		}
+		if (flagOption === "female" || flagOption === "male") {
+			requestOptions.gender = flagOption;
 		}
 
 		const { value, error } = await fetchClient.post(
@@ -89,27 +90,17 @@ export default {
 		if (!rspStatus || !result) {
 			return editReply(message);
 		}
-		if (!Array.isArray(result) || !result.length) {
+		if (!result?.task_ids?.length) {
 			return editReply("No song generated, please try again later.");
 		}
 
 		// song id
-		const songIds = result!.map((song) => song.song_id!).filter(Boolean);
-		if (!songIds.length) {
+		const taskId = result?.task_ids!.map((tid) => tid).filter(Boolean);
+		if (!taskId.length) {
 			return editReply(
 				"No song has been generated, please try again later."
 			);
 		}
-		// suno generate 2 songs with same lyrics, title, tags, so we just pick the first one
-		const songMeta = result.find((s) => s.song_id === songIds[0]);
-		const messageLines = [
-			"Song generation task submitted successfully!",
-			`*Title:* ${songMeta?.title || "N/A"}`,
-			`*Tags:* ${songMeta?.tags || "N/A"}\n`,
-			// missing lyric field in api response type
-			(songMeta as any)?.lyric ?? (songMeta as any)?.prompt,
-		];
-		const msg = await editReply(messageLines.join("\n"));
 
 		void scheduler.interval.add(
 			`${ctx.sender}:suno-ai`,
@@ -118,20 +109,16 @@ export default {
 			{
 				from: ctx.from,
 				sender: ctx.sender,
-				songIds,
+				taskId,
 				quoted: {
-					key: msg!.key,
-					message: msg!.message,
+					key: ctx.key,
+					message: ctx.message,
 				},
 			},
 			{ backoffMs: 1000, maxRetries: 3 }
 		);
-		await sock.sendMessage(
-			ctx.from,
-			{
-				text: "You will receive the generated song(s) here once it's ready. *Please wait patiently.*",
-			},
-			{ quoted: msg }
+		await editReply(
+			"You will receive the generated song(s) here once it's ready. *Please wait patiently.*"
 		);
 	},
 } satisfies IPlugin;

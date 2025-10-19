@@ -1,5 +1,5 @@
-import { EventEmitter } from "events";
-import { Boom } from "@hapi/boom";
+import type { Boom } from "@hapi/boom";
+import { EventEmitter } from "@surya/core/events";
 import {
 	DisconnectReason,
 	fetchLatestBaileysVersion,
@@ -9,23 +9,40 @@ import {
 import type {
 	AuthenticationState,
 	BaileysEventMap,
-	WASocket as BaileysWASocket,
 	UserFacingSocketConfig,
 	WABrowserDescription,
 } from "baileys";
-import type { WASocket as InternalWASocket } from "./internals/types";
+import type { WASocket } from "./types";
 
-export type WASocket = InternalWASocket | (InternalWASocket & BaileysWASocket);
+export type SocketEventMap = {
+	stopped: () => void;
+	logged_out: () => void;
+	reconnecting: (info: { attempt: number; delay: number }) => void;
+	reconnect_exhausted: (attempts: number) => void;
+} & {
+	[K in keyof BaileysEventMap]: (payload: BaileysEventMap[K]) => void;
+} & {
+	"*": (
+		event: keyof BaileysEventMap,
+		payload: BaileysEventMap[keyof BaileysEventMap]
+	) => void;
+};
+
+export type Middleware<E extends keyof SocketEventMap = keyof SocketEventMap> =
+	(
+		payload: SocketEventMap[E],
+		next: () => Promise<void>,
+		meta: { event: E; socket: WASocket }
+	) => any | Promise<any>;
 
 export type AuthProps = {
 	state: AuthenticationState;
 	saveCreds: () => Promise<void>;
 };
-export type BaileysAuthProvider = AuthProps | Promise<AuthProps>;
 
 export type CreateBaileysOptions = {
 	/** provide an auth state object to maintain the auth state */
-	authProvider: BaileysAuthProvider;
+	authProvider: AuthProps | Promise<AuthProps>;
 	/** override the default socket config */
 	socketConfig?: Partial<Omit<UserFacingSocketConfig, "auth">>;
 	/** max number of reconnect attempts, 0 = unlimited */
@@ -41,27 +58,12 @@ export type BaileysSocketHandle = {
 	stop: () => Promise<void>;
 };
 
-export type BEvent =
-	| "stopped"
-	| "logged_out"
-	| "reconnecting"
-	| "reconnect_exhausted";
-
 const DEFAULT_BROWSER = ["SuryaRB", "Desktop", "1.0.0"] as WABrowserDescription;
 const DEFAULT_RECONNECT_DELAY = 2000;
-export type Middleware<
-	E extends keyof BaileysEventMap = keyof BaileysEventMap,
-> = (
-	payload: BaileysEventMap[E],
-	next: () => Promise<void>,
-	meta: { event: E; socket: WASocket }
-) => any | Promise<any>;
-
 /**
  * A Baileys socket manager with auto-reconnection and middleware support
  */
-
-export class BaileysSocket extends EventEmitter {
+export class BaileysSocket extends EventEmitter<SocketEventMap> {
 	private options: Required<
 		Pick<
 			CreateBaileysOptions,
@@ -108,7 +110,7 @@ export class BaileysSocket extends EventEmitter {
 		return !this.stopped;
 	}
 
-	use<E extends keyof BaileysEventMap>(
+	use<E extends keyof SocketEventMap>(
 		event: E | "*",
 		mw: Middleware<E>
 	): this {
@@ -292,9 +294,9 @@ export class BaileysSocket extends EventEmitter {
 		return sock as WASocket;
 	}
 
-	private async handle<E extends keyof BaileysEventMap>(
+	private async handle<E extends keyof SocketEventMap>(
 		event: E,
-		payload: BaileysEventMap[E],
+		payload: Parameters<SocketEventMap[E]>[0],
 		sock: WASocket
 	) {
 		// run middleware chain: [global,*] then [specific,event]
@@ -329,36 +331,6 @@ export class BaileysSocket extends EventEmitter {
 		}
 
 		// emit for consumers
-		this.emit(String(event), payload);
-	}
-
-	override removeAllListeners<E extends keyof BaileysEventMap | BEvent>(
-		event?: E
-	): this {
-		const key = event ? String(event) : null;
-		if (key && this.middlewareMap.has(key)) {
-			this.middlewareMap.delete(key);
-		} else if (!key) {
-			this.middlewareMap.clear();
-		}
-		return super.removeAllListeners(event as any);
-	}
-	override on<E extends keyof BaileysEventMap>(
-		event: E,
-		listener: (payload: BaileysEventMap[E]) => void
-	): this {
-		return super.on(event, listener);
-	}
-	override off<E extends keyof BaileysEventMap>(
-		event: E,
-		listener: (payload: BaileysEventMap[E]) => void
-	): this {
-		return super.off(event, listener);
-	}
-	override once<E extends keyof BaileysEventMap>(
-		event: E,
-		listener: (payload: BaileysEventMap[E]) => void
-	): this {
-		return super.once(event, listener);
+		this.emit(String(event) as any, payload);
 	}
 }

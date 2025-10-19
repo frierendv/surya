@@ -13,16 +13,12 @@
 	],
 	"exports": {
 		".": {
-			"import": "./dist/index.js",
-			"types": "./dist/index.d.ts"
-		},
-		"./internals/*": {
-			"import": "./dist/internals/*.js",
-			"types": "./dist/internals/*.d.ts"
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
 		}
 	},
 	"scripts": {
-		"build": "tsup src --dts",
+		"build": "tsup",
 		"build:fast": "tsup src",
 		"clean": "rimraf dist .turbo",
 		"typecheck": "tsc --noEmit"
@@ -36,5 +32,8 @@
 		"baileys": "^7.0.0-rc.5",
 		"file-type": "^21.0.0",
 		"undici": "^7.16.0"
+	},
+	"dependencies": {
+		"@surya/core": "1.0.0"
 	}
 }

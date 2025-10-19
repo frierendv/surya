@@ -1,6 +1,6 @@
 import type { GroupMetadata } from "baileys";
-import type { WASocket } from "./internals/types";
 import type { IMessageContext } from "./message";
+import type { WASocket } from "./types";
 
 export interface IExtraGroupContext {
 	/**

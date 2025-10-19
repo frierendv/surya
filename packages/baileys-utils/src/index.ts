@@ -1,6 +1,5 @@
 export type {
 	CreateBaileysOptions,
-	WASocket,
 	BaileysSocketHandle,
 } from "./baileys-socket";
 export type { Middleware } from "./baileys-socket";
@@ -24,3 +23,6 @@ export {
 	createMessageContext,
 } from "./message";
 export { createExtraMessageContext } from "./message-extra";
+export { createSendFile, attachSendFile } from "./send-file";
+export { convertAudio, convertToWebp } from "./converter";
+export type { SendFileOptions, SendFile, WASocket } from "./types";
