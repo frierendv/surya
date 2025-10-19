@@ -12,15 +12,13 @@ import { attachSendFile } from "@surya/baileys-utils/internals/send-file";
 import { readEnv } from "@surya/core/read-env";
 import {
 	Browsers,
-	getBinaryNodeChild,
 	isJidBroadcast,
-	// isJidMetaAI,
+	isJidMetaAI,
 	isJidNewsletter,
 	isJidStatusBroadcast,
 	jidNormalizedUser,
 } from "baileys";
 import type {
-	BinaryNode,
 	ConnectionState,
 	GroupMetadata,
 	GroupParticipant,
@@ -34,7 +32,7 @@ import { proxyBind } from "./proxy";
 const shouldIgnoreJid = (jid: string) =>
 	isJidBroadcast(jid) ||
 	isJidStatusBroadcast(jid) ||
-	// isJidMetaAI(jid) ||
+	isJidMetaAI(jid) ||
 	isJidNewsletter(jid);
 
 let _socket: WASocket = Object.create(null);
@@ -183,13 +181,7 @@ const createSocket = (over?: Partial<CreateBaileysOptions>) => {
 		if (!remoteJid || shouldIgnoreJid(remoteJid)) {
 			return;
 		}
-		if (message.pushName !== "David") {
-			logger.info(
-				{ id: message.key.id, from: message.key.remoteJid },
-				"Received message"
-			);
-			return;
-		}
+
 		try {
 			const result = await messageHandler(message);
 			if (!result) {
@@ -242,14 +234,6 @@ const createSocket = (over?: Partial<CreateBaileysOptions>) => {
 			await socket.rejectCall(call.id, call.from);
 			return;
 		}
-	});
-	client.socket?.ws.on("CB:ib,,edge_routing", (node: BinaryNode) => {
-		const edgeRoutingNode = getBinaryNodeChild(node, "edge_routing");
-		const routingInfo = getBinaryNodeChild(edgeRoutingNode, "routing_info");
-		console.log(
-			"Edge routing info received:",
-			JSON.stringify(routingInfo, null, 2)
-		);
 	});
 
 	return client;

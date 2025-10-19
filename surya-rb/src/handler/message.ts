@@ -125,8 +125,6 @@ export const messageHandler = async (msg: WAMessage) => {
 
 	const ctx = createMessageContext(msg, socket);
 	const extra = createExtraMessageContext(ctx, socket, SR_PREFIXES);
-	console.log("Context: ", ctx);
-	console.log("Extra: ", extra);
 	if (!extra || !extra.command) {
 		logger.debug({ msg: msg.key.id }, "No command found in message");
 		return;
@@ -197,6 +195,5 @@ export const messageHandler = async (msg: WAMessage) => {
 		},
 		"Message handled"
 	);
-	console.log("Final Context: ", { matches, ctx, extra });
 	return { matches, ctx, extra };
 };
