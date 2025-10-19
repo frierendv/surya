@@ -1,10 +1,15 @@
 import {
 	downloadMediaMessage,
+	getContentType,
 	jidNormalizedUser,
 	normalizeMessageContent,
 	proto,
 } from "baileys";
-import type { MiscMessageGenerationOptions, WAMessage } from "baileys";
+import type {
+	MessageType,
+	MiscMessageGenerationOptions,
+	WAMessage,
+} from "baileys";
 import type { WASocket } from "./internals/types";
 import { calculateFileSize, safeString } from "./util";
 
@@ -146,6 +151,17 @@ export interface IMessageMeta extends IMessageActions {
  */
 export interface IMessageContext extends IMessageMeta, WAMessage {}
 
+export const getMessageType = (
+	message?: proto.IMessage | null
+): NoInfer<MessageType> | null => {
+	if (!message) {
+		return null;
+	}
+
+	// Unwrap ephemeral wrapper if present
+	const inner = message.ephemeralMessage?.message ?? message;
+	return getContentType(inner) as MessageType;
+};
 /**
  * Extract the most relevant text from a proto.IMessage.
  */
@@ -155,15 +171,18 @@ export const getMessageText = (msg?: proto.IMessage | null): string => {
 	}
 
 	// Unwrap ephemeral wrapper if present
-	const inner = msg.ephemeralMessage?.message ?? msg;
+	const inner = (msg.ephemeralMessage?.message ?? msg) as any;
+	if (inner.conversation) {
+		return inner.conversation;
+	}
+	const messageType = getMessageType(inner)!;
 
-	const candidates: (string | undefined | null)[] = [
-		inner.conversation,
-		inner.extendedTextMessage?.text,
-		inner.imageMessage?.caption,
-		inner.videoMessage?.caption,
-		inner.documentMessage?.caption,
-		inner.documentMessage?.caption,
+	const candidates = [
+		inner?.[messageType]?.text,
+		inner?.[messageType]?.caption,
+		inner?.[messageType]?.selectedDisplayText,
+		inner?.[messageType]?.selectedDisplayText,
+		inner?.[messageType]?.body?.text,
 	];
 
 	for (const c of candidates) {
@@ -219,17 +238,17 @@ export const createMediaInfo = (
  * Build quoted message metadata (if the message quotes another).
  */
 export const createQuotedMessage = (
-	message?: proto.IMessage | null
+	contextInfo?: proto.IContextInfo | null
 ): QuotedMessageMeta | null => {
 	// Unwrap ephemeral wrapper if present
-	const contextInfo = message?.extendedTextMessage?.contextInfo;
 	const quotedMessage = normalizeMessageContent(contextInfo?.quotedMessage);
 	if (!quotedMessage) {
 		return null;
 	}
+	const messageType = getMessageType(quotedMessage)!;
 
-	const media = createMediaInfo(quotedMessage);
-	const text = getMessageText(quotedMessage);
+	const media = createMediaInfo(quotedMessage[messageType] as proto.IMessage);
+	const text = getMessageText(quotedMessage[messageType] as proto.IMessage);
 
 	return {
 		text,
@@ -240,6 +259,90 @@ export const createQuotedMessage = (
 };
 
 /**
+ * Create edit/delete handlers for a sent message.
+ */
+const createMessageHandlers = (
+	sock: WASocket,
+	remoteJid: string,
+	messageKey: proto.IMessageKey
+) => {
+	const editReply = (newText: string, editOpts = {}) =>
+		sock.sendMessage(remoteJid, {
+			text: newText,
+			edit: messageKey,
+			...editOpts,
+		});
+
+	const deleteReply = () =>
+		sock.sendMessage(remoteJid, { delete: messageKey });
+
+	return { editReply, deleteReply };
+};
+
+/**
+ * Create a reply handler that sends a message and returns edit/delete capabilities.
+ */
+const createReplyHandler = (
+	sock: WASocket,
+	remoteJid: string,
+	quotedMessage:
+		| WAMessage
+		| { message: proto.IMessage; key: proto.IMessageKey }
+): ReplyHandler => {
+	return async (text: string, replyOpts = {}) => {
+		const replyRes = await sock.sendMessage(
+			remoteJid,
+			{ text, ...replyOpts },
+			{ quoted: quotedMessage }
+		);
+		if (!replyRes) {
+			throw new Error("Failed to send reply message");
+		}
+
+		return createMessageHandlers(sock, remoteJid, replyRes.key);
+	};
+};
+
+/**
+ * Create message actions (reply, react, forward, delete) for a given message key.
+ */
+const createMessageActions = (
+	sock: WASocket,
+	remoteJid: string,
+	messageKey: proto.IMessageKey,
+	message: proto.IMessage,
+	quotedMessage?:
+		| WAMessage
+		| { message: proto.IMessage; key: proto.IMessageKey }
+): IMessageActions => {
+	const reply = quotedMessage
+		? createReplyHandler(sock, remoteJid, quotedMessage)
+		: createReplyHandler(sock, remoteJid, {
+				message,
+				key: messageKey,
+			} as WAMessage);
+
+	const react = (text: string) =>
+		sock.sendMessage(remoteJid, { react: { text, key: messageKey } });
+
+	const forward = (jid: string, opts?: MiscMessageGenerationOptions) =>
+		sock.sendMessage(
+			jid,
+			{
+				forward: {
+					message,
+					key: { ...messageKey, remoteJid },
+				},
+			},
+			opts
+		);
+
+	const deleteMsg = () => sock.sendMessage(remoteJid, { delete: messageKey });
+
+	return { reply, react, forward, delete: deleteMsg };
+};
+
+/**
  * Construct a {MessageContext} that contains both the raw WAMessage and
  * convenient normalized metadata + helper actions.
  */
@@ -247,47 +350,26 @@ export const createMessageContext = (
 	msg: WAMessage,
 	sock: WASocket
 ): IMessageContext => {
-	const remoteJid = (msg.key.remoteJid || msg.key.remoteJidAlt)!;
+	const remoteJid = msg.key.remoteJid!;
 	const inner = normalizeMessageContent(msg.message);
+	const messageType = getMessageType(inner)!;
 	const media = createMediaInfo(inner);
 	const myUserId = sock.user?.id;
 
-	const sendReply: ReplyHandler = async (text: string, replyOpts = {}) => {
-		const replyRes = await sock.sendMessage(
-			remoteJid,
-			{ text, ...replyOpts },
-			{ quoted: msg }
-		);
-		if (!replyRes) {
-			throw new Error("Failed to send reply message");
-		}
+	// Create message actions for the main message
+	const messageActions = createMessageActions(
+		sock,
+		remoteJid,
+		msg.key,
+		msg.message!
+	);
 
-		const editReply = (newText: string, editOpts = {}) =>
-			sock.sendMessage(remoteJid, {
-				text: newText,
-				edit: replyRes.key,
-				...editOpts,
-			});
+	const contextInfo = (inner?.[messageType] as any)
+		?.contextInfo as proto.IContextInfo;
+	const quoted = createQuotedMessage(contextInfo);
 
-		const deleteReply = () =>
-			sock.sendMessage(remoteJid, { delete: replyRes.key });
-
-		return { editReply, deleteReply };
-	};
-
-	const sendReaction = (text: string) =>
-		sock.sendMessage(remoteJid, { react: { text, key: msg.key } });
-
-	const forwardTo = (jid: string, opts?: MiscMessageGenerationOptions) =>
-		sock.sendMessage(jid, { forward: msg }, opts);
-
-	const deleteMessage = () =>
-		sock.sendMessage(remoteJid, { delete: msg.key });
-
-	const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
-	const quoted = createQuotedMessage(inner);
 	if (quoted) {
-		// quoted context
+		// Build quoted message key
 		const qId = contextInfo?.stanzaId;
 		const qParticipant = contextInfo?.participant;
 		const qFromMe = qParticipant === myUserId;
@@ -295,89 +377,54 @@ export const createMessageContext = (
 			id: qId!,
 			fromMe: qFromMe!,
 			participant: qParticipant!,
+			remoteJid,
 		};
 
-		const replyQuoted: ReplyHandler = async (
-			text: string,
-			replyOpts = {}
-		) => {
-			const quotedPayload: any = {
-				...msg,
-				key: qMKey,
-				...quoted,
-			};
-
-			const replyRes = await sock.sendMessage(
-				remoteJid,
-				{ text, ...replyOpts },
-				{ quoted: quotedPayload }
-			);
-			if (!replyRes) {
-				throw new Error("Failed to send quoted reply");
-			}
-
-			const editReply = (newText: string, editOpts = {}) =>
-				sock.sendMessage(remoteJid, {
-					text: newText,
-					edit: replyRes.key,
-					...editOpts,
-				});
-
-			const deleteReply = () =>
-				sock.sendMessage(remoteJid, { delete: replyRes.key });
-
-			return { editReply, deleteReply };
+		const quotedPayload = {
+			message: normalizeMessageContent(contextInfo?.quotedMessage)!,
+			key: qMKey,
 		};
-		Object.assign(quoted, { reply: replyQuoted });
 
-		const reactQuoted = (text: string) =>
-			sock.sendMessage(remoteJid, {
-				react: {
-					text,
-					key: {
-						...qMKey,
-						remoteJid,
-					},
-				},
-			});
-		Object.assign(quoted, { react: reactQuoted });
+		// Create message actions for the quoted message
+		const quotedActions = createMessageActions(
+			sock,
+			remoteJid,
+			qMKey,
+			normalizeMessageContent(contextInfo?.quotedMessage)!,
+			quotedPayload
+		);
 
-		const forwardQuoted = (jid: string) =>
-			sock.sendMessage(jid, {
-				forward: {
-					...msg,
-					key: {
-						...qMKey,
-						remoteJid,
-					},
-					...quoted,
-				},
-			});
-		Object.assign(quoted, { forward: forwardQuoted });
-
+		// Override delete for quoted messages to handle participant
 		const deleteQuoted = () => {
 			if (!qId || !qParticipant) {
 				return;
 			}
 			return sock.sendMessage(remoteJid, {
 				delete: {
-					id: qId,
-					fromMe: qFromMe,
-					remoteJid,
+					...qMKey,
 					...(!qFromMe ? { participant: qParticipant } : {}),
 				},
 			});
 		};
-		Object.assign(quoted, { delete: deleteQuoted });
+
+		Object.assign(quoted, { ...quotedActions, delete: deleteQuoted });
 	}
 
 	const sender = jidNormalizedUser(
-		(remoteJid.endsWith("@g.us")
-			? msg.key.participantAlt || msg.key.participant
-			: remoteJid) ?? undefined
+		remoteJid.endsWith("@g.us") ? msg.key.participant! : remoteJid
 	);
 	const text = getMessageText(inner);
 	const args = text.split(/\s+/).filter((a) => a.length);
+
+	// reference to msg
+	const fullMsg: WAMessage = new Proxy(msg, {
+		get(target, prop: keyof WAMessage) {
+			if (prop in target) {
+				return target[prop];
+			}
+			return undefined;
+		},
+	});
 
 	return {
 		from: remoteJid,
@@ -389,10 +436,7 @@ export const createMessageContext = (
 		groupMentions: contextInfo?.groupMentions || [],
 		media,
 		quoted: quoted as IMessageMeta["quoted"],
-		...msg,
-		reply: sendReply,
-		react: sendReaction,
-		forward: forwardTo,
-		delete: deleteMessage,
+		...fullMsg,
+		...messageActions,
 	};
 };
