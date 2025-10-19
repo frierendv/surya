@@ -2,23 +2,29 @@ import type { GroupMetadata } from "baileys";
 import type { WASocket } from "./internals/types";
 import type { IMessageContext } from "./message";
 
-export interface IExtraMessageContext<IsGroup extends boolean = boolean> {
+export interface IExtraGroupContext {
 	/**
 	 * Whether the message is from a group chat.
 	 */
-	isGroup: IsGroup;
-	/**
-	 * Whether the sender of the message is set as the owner.
-	 */
-	isOwner?: boolean;
+	isGroup: boolean;
 	/**
 	 * Whether the sender of the message is an admin of the group.
 	 */
-	isAdmin?: boolean;
+	isAdmin: boolean;
 	/**
 	 * Whether the bot is an admin of the group.
 	 */
-	isBotAdmin?: boolean;
+	isBotAdmin: boolean;
+	/**
+	 * Metadata about the group if the message is from a group.
+	 */
+	groupMetadata: GroupMetadata;
+}
+export interface IExtraContext {
+	/**
+	 * Whether the sender of the message is set as the owner.
+	 */
+	isOwner: boolean;
 	/**
 	 * The prefix used in the message, if any.
 	 */
@@ -28,14 +34,27 @@ export interface IExtraMessageContext<IsGroup extends boolean = boolean> {
 	 */
 	command: string;
 	/**
-	 * Metadata about the group if the message is from a group.
-	 */
-	groupMetadata: IsGroup extends true ? GroupMetadata : null;
-	/**
 	 * Socket instance.
 	 */
 	sock: WASocket;
 }
+/**
+ * Extra message context that supports both private and group chats.
+ */
+export type ExtraMessageContext = IExtraContext &
+	(
+		| ({
+				isGroup: true;
+		  } & IExtraGroupContext)
+		| ({
+				isGroup: false;
+		  } & Partial<IExtraGroupContext>)
+	);
+
+/**
+ * Backward compatibility type alias.
+ */
+export type IExtraMessageContext = ExtraMessageContext;
 
 const globalPrefix = /^([!./])/;
 
@@ -57,26 +76,72 @@ const buildPrefixRegex = (prefix?: string | string[]): RegExp => {
 	if (!prefix || (Array.isArray(prefix) && prefix.length === 0)) {
 		return globalPrefix;
 	}
-	const key = Array.isArray(prefix)
-		? `arr:${prefix.join("|")}`
-		: `str:${prefix}`;
+
+	// Normalize key for caching
+	const key = Array.isArray(prefix) ? prefix.join("|") : prefix;
 	const cached = prefixRegexCache.get(key);
 	if (cached) {
 		return cached;
 	}
 
-	let pattern: string;
-	if (Array.isArray(prefix)) {
-		// filter out empty entries (defensive) and escape each one
-		const parts = prefix.filter(Boolean).map(escapeRegex);
-		pattern = parts.length ? `^(${parts.join("|")})` : ""; // empty pattern indicates fallback to globalPrefix
-	} else {
-		pattern = prefix ? `^(${escapeRegex(prefix)})` : "";
-	}
+	// Build pattern based on type
+	const prefixes = Array.isArray(prefix) ? prefix : [prefix];
+	const parts = prefixes.filter(Boolean).map(escapeRegex);
 
-	const re = pattern ? new RegExp(pattern) : globalPrefix;
+	const re = parts.length
+		? new RegExp(`^(${parts.join("|")})`)
+		: globalPrefix;
+
 	prefixRegexCache.set(key, re);
 	return re;
+};
+
+/**
+ * Extract command from interactive messages (buttons, lists, templates).
+ * Returns the selected ID/text in lowercase if found.
+ */
+const extractCommandFromInteractive = (ctx: IMessageContext): string | null => {
+	const message = ctx.message;
+	if (!message) {
+		return null;
+	}
+
+	const interactiveId =
+		message.buttonsResponseMessage?.selectedButtonId ||
+		message.listResponseMessage?.singleSelectReply?.selectedRowId ||
+		message.templateButtonReplyMessage?.selectedId;
+
+	return interactiveId && typeof interactiveId === "string"
+		? interactiveId.toLowerCase()
+		: null;
+};
+
+/**
+ * Process text with prefix and update context accordingly.
+ */
+const processCommandWithPrefix = (
+	text: string,
+	prefix: string,
+	ctx: IMessageContext
+): { command: string; usedPrefix: string } => {
+	if (!prefix) {
+		return { command: text.toLowerCase(), usedPrefix: "" };
+	}
+
+	// const command = text.slice(prefix.length).trim().toLowerCase();
+	let command: string;
+	// Check for interactive message command first
+	const interactiveCommand = extractCommandFromInteractive(ctx);
+	if (interactiveCommand) {
+		command = interactiveCommand;
+	} else {
+		// Fallback to normal text command extraction
+		command = text.slice(prefix.length).trim().toLowerCase();
+	}
+
+	ctx.args = ctx.text ? ctx.text.split(/\s+/) : [];
+
+	return { command, usedPrefix: prefix };
 };
 
 export const createExtraMessageContext = (
@@ -88,41 +153,36 @@ export const createExtraMessageContext = (
 	sock: WASocket,
 	/** The prefix or prefixes to use for command detection. */
 	prefix?: string | string[]
-): IExtraMessageContext => {
+): ExtraMessageContext => {
 	const isGroup = ctx.from.endsWith("@g.us");
-	const fbObj: IExtraMessageContext = {
-		isGroup,
-		isOwner: false,
-		isAdmin: false,
-		isBotAdmin: false,
-		usedPrefix: "",
-		command: "",
-		groupMetadata: null,
-		sock,
-	};
-	if (!ctx.args?.[0]) {
-		return fbObj;
-	}
-	const [text] = ctx.args;
 
-	// decide whether to use a custom prefix or the global default
+	// Early return if no args
+	if (!ctx.args?.[0]) {
+		return {
+			isGroup,
+			isOwner: false,
+			isAdmin: false,
+			isBotAdmin: false,
+			usedPrefix: "",
+			command: "",
+			sock,
+		} as ExtraMessageContext;
+	}
+
+	// Get text from interactive message or first arg
+	const text = ctx.args[0];
+
+	// Build or use cached prefix regex
 	const hasCustomPrefix = Array.isArray(prefix)
 		? prefix.length > 0
 		: Boolean(prefix);
 	const regex = hasCustomPrefix ? buildPrefixRegex(prefix) : globalPrefix;
 
+	// Match prefix
 	const match = regex.exec(text);
-	fbObj.command = text.toLowerCase();
-
-	if (match) {
-		fbObj.usedPrefix = match[0];
-		// use ctx.text so that we strip the actual message text (not the tokenized arg)
-		fbObj.command = (
-			ctx.text.slice(fbObj.usedPrefix.length).trim().split(/\s+/)[0] || ""
-		).toLowerCase();
-	} else {
-		fbObj.usedPrefix = "";
-	}
+	const { command, usedPrefix } = match
+		? processCommandWithPrefix(text, match[0], ctx)
+		: { command: text.toLowerCase(), usedPrefix: "" };
 
 	/**
 	 *  We handle group metadata and admin status in surya-rb directly now.
@@ -133,32 +193,13 @@ export const createExtraMessageContext = (
 	 * and reduce redundant network calls.
 	 */
 
-	// const groupMetadata = await sock.groupMetadata(ctx.from);
-	// const participants = groupMetadata?.participants ?? [];
-	// const senderId = ctx.sender;
-	// const botId = sock.user?.id ?? "";
-
-	// // Avoid creating intermediate arrays by scanning participants once.
-	// fbObj.groupMetadata = groupMetadata;
-	// fbObj.isAdmin = false;
-	// fbObj.isBotAdmin = false;
-
-	// for (const p of participants) {
-	// 	const pIds = [p.phoneNumber, p.id, p.lid].filter(Boolean);
-	// 	if (pIds.includes(senderId)) {
-	// 		if (p.admin === "admin" || p.admin === "superadmin") {
-	// 			fbObj.isAdmin = true;
-	// 		}
-	// 	}
-	// 	if (pIds.includes(botId)) {
-	// 		if (p.admin === "admin" || p.admin === "superadmin") {
-	// 			fbObj.isBotAdmin = true;
-	// 		}
-	// 	}
-	// 	if (fbObj.isAdmin && fbObj.isBotAdmin) {
-	// 		break;
-	// 	}
-	// }
-
-	return fbObj;
+	return {
+		isGroup,
+		isOwner: false,
+		isAdmin: false,
+		isBotAdmin: false,
+		usedPrefix,
+		command,
+		sock,
+	} as ExtraMessageContext;
 };
