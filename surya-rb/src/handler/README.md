@@ -1,4 +1,4 @@
-# handler
+# surya-rb/handler
 
 Message and plugin dispatching.
 

@@ -3,7 +3,7 @@ import { logger } from "@/libs/logger";
 import { connectToDatabase } from "@/libs/mongodb";
 import pm from "@/libs/plugin-manager";
 import { scheduler } from "@/libs/scheduler";
-import { createSocket } from "@/libs/socket";
+import { createSocket } from "@/socket";
 
 const start = async () => {
 	try {

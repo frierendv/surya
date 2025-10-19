@@ -42,7 +42,7 @@ export default {
 			// since we don't store the file path in the plugin object
 			// we can only access it through the plugin manager's private properties
 			// this is not ideal, but it works for now
-			const fp = ((pm as any).nameToFile as any).get(
+			const fp = ((pm as any).registry as any).getFileForName(
 				plugin.name
 			) as string;
 			await ctx.reply(readFileSync(fp, "utf-8"));

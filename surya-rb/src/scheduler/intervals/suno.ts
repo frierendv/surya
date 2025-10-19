@@ -1,6 +1,6 @@
 import { fetchClient } from "@/libs/fetch";
 import { interval } from "@/libs/scheduler";
-import { socket } from "@/libs/socket";
+import { socket } from "@/socket";
 import type { JobHandler, JobRecord } from "@surya/job-scheduler";
 import type { WAMessage } from "baileys";
 

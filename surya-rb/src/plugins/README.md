@@ -1,6 +1,6 @@
-# plugins
+# surya-rb/plugins
 
-Built-in plugins are grouped by purpose.
+Built-in plugins for surya-rb, grouped by purpose.
 
 > [!CAUTION]
 > Each plugin should default-export a plugin object consumed by the plugin manager.

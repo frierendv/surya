@@ -1,6 +1,6 @@
-# scheduler
+# surya-rb/scheduler
 
-Job scheduling using `@surya/job-scheduler`.
+Job scheduling for surya-rb using `@surya/job-scheduler`.
 
 - `index.ts` — exports cron and interval job registries
 - `crons/` — cron-based jobs, registered at startup
