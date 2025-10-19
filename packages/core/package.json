@@ -10,30 +10,37 @@
 	],
 	"exports": {
 		"./logger": {
+			"types": "./dist/logger.d.ts",
 			"import": "./dist/logger.mjs",
 			"require": "./dist/logger.js"
 		},
 		"./readdir": {
+			"types": "./dist/readdir.d.ts",
 			"import": "./dist/readdir.mjs",
 			"require": "./dist/readdir.js"
 		},
 		"./string": {
+			"types": "./dist/string.d.ts",
 			"import": "./dist/string.mjs",
 			"require": "./dist/string.js"
 		},
 		"./debounce": {
+			"types": "./dist/debounce.d.ts",
 			"import": "./dist/debounce.mjs",
 			"require": "./dist/debounce.js"
 		},
 		"./semaphore": {
+			"types": "./dist/semaphore.d.ts",
 			"import": "./dist/semaphore.mjs",
 			"require": "./dist/semaphore.js"
 		},
 		"./read-env": {
+			"types": "./dist/read-env.d.ts",
 			"import": "./dist/read-env.mjs",
 			"require": "./dist/read-env.js"
 		},
 		"./events": {
+			"types": "./dist/events.d.ts",
 			"import": "./dist/events.mjs",
 			"require": "./dist/events.js"
 		}
