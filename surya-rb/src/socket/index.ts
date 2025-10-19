@@ -1,1 +1,1 @@
-export { createSocket, socket } from "./socket";
+export { createSocket, socket, cachedGroupMetadata } from "./socket";
