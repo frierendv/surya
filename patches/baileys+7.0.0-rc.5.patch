@@ -1,0 +1,329 @@
+diff --git a/node_modules/baileys/lib/Socket/messages-send.js b/node_modules/baileys/lib/Socket/messages-send.js
+index 9eedc7a..e4fec1c 100644
+--- a/node_modules/baileys/lib/Socket/messages-send.js
++++ b/node_modules/baileys/lib/Socket/messages-send.js
+@@ -2,7 +2,7 @@ import NodeCache from '@cacheable/node-cache';
+ import { Boom } from '@hapi/boom';
+ import { proto } from '../../WAProto/index.js';
+ import { DEFAULT_CACHE_TTLS, WA_DEFAULT_EPHEMERAL } from '../Defaults/index.js';
+-import { aggregateMessageKeysNotFromMe, assertMediaContent, bindWaitForEvent, decryptMediaRetryData, encodeNewsletterMessage, encodeSignedDeviceIdentity, encodeWAMessage, encryptMediaRetryRequest, extractDeviceJids, generateMessageIDV2, generateParticipantHashV2, generateWAMessage, getStatusCodeForMediaRetry, getUrlFromDirectPath, getWAUploadToServer, MessageRetryManager, normalizeMessageContent, parseAndInjectE2ESessions, unixTimestampSeconds } from '../Utils/index.js';
++import { aggregateMessageKeysNotFromMe, assertMediaContent, bindWaitForEvent, decryptMediaRetryData, encodeNewsletterMessage, encodeSignedDeviceIdentity, encodeWAMessage, encryptMediaRetryRequest, extractDeviceJids, generateMessageIDV2, generateParticipantHashV2, generateWAMessage, getContentType, getStatusCodeForMediaRetry, getUrlFromDirectPath, getWAUploadToServer, MessageRetryManager, normalizeMessageContent, parseAndInjectE2ESessions, unixTimestampSeconds } from '../Utils/index.js';
+ import { getUrlInfo } from '../Utils/link-preview.js';
+ import { makeKeyedMutex } from '../Utils/make-mutex.js';
+ import { areJidsSameUser, getBinaryNodeChild, getBinaryNodeChildren, isJidGroup, isLidUser, isPnUser, jidDecode, jidEncode, jidNormalizedUser, S_WHATSAPP_NET } from '../WABinary/index.js';
+@@ -690,6 +690,57 @@ export const makeMessagesSocket = (config) => {
+                 });
+                 logger.debug({ jid }, 'adding device identity');
+             }
++            const content = normalizeMessageContent(message);
++            const contentType = getContentType(content);
++            if (
++				(isJidGroup(jid) || isPnUser(jid) || isLidUser(jid)) &&
++				(contentType === 'interactiveMessage' ||
++					contentType === 'buttonsMessage' ||
++					contentType === 'listMessage')
++			) {
++                const bizNode = { tag: 'biz', attrs: {} };
++                const interactiveMsg =
++                    message?.viewOnceMessage?.message?.interactiveMessage ||
++                    message?.viewOnceMessageV2?.message?.interactiveMessage ||
++                    message?.viewOnceMessageV2Extension?.message?.interactiveMessage ||
++                    message?.interactiveMessage;
++                const buttonsMsg =
++                    message?.viewOnceMessage?.message?.buttonsMessage ||
++                    message?.viewOnceMessageV2?.message?.buttonsMessage ||
++                    message?.viewOnceMessageV2Extension?.message?.buttonsMessage ||
++                    message?.buttonsMessage;
++
++                if (interactiveMsg || buttonsMsg) {
++                    bizNode.content = [
++                        {
++                            tag: 'interactive',
++                            attrs: {
++                                type: 'native_flow',
++                                v: '1',
++                            },
++                            content: [
++                                {
++                                    tag: 'native_flow',
++                                    attrs: { v: '9', name: 'mixed' },
++                                },
++                            ],
++                        },
++                    ];
++                }
++                else if (message?.listMessage) {
++                    bizNode.content = [
++                        {
++                            tag: 'list',
++                            attrs: {
++                                type: 'product_list',
++                                v: '2',
++                            },
++                        },
++                    ];
++                }
++
++                stanza.content.push(bizNode);
++            }
+             if (additionalNodes && additionalNodes.length > 0) {
+                 ;
+                 stanza.content.push(...additionalNodes);
+diff --git a/node_modules/baileys/lib/Types/Message.d.ts b/node_modules/baileys/lib/Types/Message.d.ts
+index a248af2..5110ef3 100644
+--- a/node_modules/baileys/lib/Types/Message.d.ts
++++ b/node_modules/baileys/lib/Types/Message.d.ts
+@@ -75,6 +75,43 @@ type Contextable = {
+ type ViewOnce = {
+     viewOnce?: boolean;
+ };
++type Buttonable = {
++	/** add buttons to the message  */
++	buttons?: proto.Message.ButtonsMessage.IButton[];
++};
++type Templatable = {
++	/** add buttons to the message (conflicts with normal buttons)*/
++	templateButtons?: proto.IHydratedTemplateButton[];
++	footer?: string;
++};
++type Interactiveable = {
++	/** add buttons to the message  */
++	interactiveButtons?: proto.Message.InteractiveMessage.NativeFlowMessage.NativeFlowButton[];
++	title?: string;
++	subtitle?: string;
++	media?: boolean;
++};
++type Shopable = {
++	shop?: proto.Message.InteractiveMessage.ShopMessage.Surface;
++	id?: string;
++	title?: string;
++	subtitle?: string;
++	media?: boolean;
++};
++type Listable = {
++	/** Sections of the List */
++	sections?: proto.Message.ListMessage.ISection[];
++	/** Title of a List Message only */
++	title?: string;
++	/** Text of the button on the list (required) */
++	buttonText?: string;
++	/** ListType of a List Message only */
++	listType?: proto.Message.ListMessage.ListType;
++};
++type Cardsable = {
++    cards?: string[];
++    subtitle?: string;
++};
+ type Editable = {
+     edit?: WAMessageKey;
+ };
+@@ -112,14 +149,14 @@ export type AnyMediaMessageContent = (({
+     image: WAMediaUpload;
+     caption?: string;
+     jpegThumbnail?: string;
+-} & Mentionable & Contextable & WithDimensions) | ({
++} & Mentionable & Contextable & Buttonable & Templatable & Interactiveable & Shopable & Cardsable & WithDimensions) | ({
+     video: WAMediaUpload;
+     caption?: string;
+     gifPlayback?: boolean;
+     jpegThumbnail?: string;
+     /** if set to true, will send as a `video note` */
+     ptv?: boolean;
+-} & Mentionable & Contextable & WithDimensions) | {
++} & Mentionable & Contextable & Buttonable & Templatable & Interactiveable & Shopable & Cardsable & WithDimensions) | {
+     audio: WAMediaUpload;
+     /** if set to true, will send as a `voice note` */
+     ptt?: boolean;
+@@ -133,7 +170,7 @@ export type AnyMediaMessageContent = (({
+     mimetype: string;
+     fileName?: string;
+     caption?: string;
+-} & Contextable)) & {
++} & Contextable & Buttonable & Templatable & Interactiveable & Shopable & Cardsable)) & {
+     mimetype?: string;
+ } & Editable;
+ export type ButtonReplyInfo = {
+@@ -154,11 +191,11 @@ export type WASendableProduct = Omit<proto.Message.ProductMessage.IProductSnapsh
+ export type AnyRegularMessageContent = (({
+     text: string;
+     linkPreview?: WAUrlInfo | null;
+-} & Mentionable & Contextable & Editable) | AnyMediaMessageContent | {
++} & Mentionable & Contextable & Buttonable & Templatable & Interactiveable & Shopable & Cardsable & Listable & Editable) | AnyMediaMessageContent | {
+     event: EventMessageOptions;
+ } | ({
+     poll: PollMessageOptions;
+-} & Mentionable & Contextable & Editable) | {
++} & Mentionable & Contextable & Buttonable & Templatable & Editable) | {
+     contacts: {
+         displayName?: string;
+         contacts: proto.Message.IContactMessage[];
+diff --git a/node_modules/baileys/lib/Utils/messages.js b/node_modules/baileys/lib/Utils/messages.js
+index 30e9b46..d1b1095 100644
+--- a/node_modules/baileys/lib/Utils/messages.js
++++ b/node_modules/baileys/lib/Utils/messages.js
+@@ -461,6 +461,165 @@ export const generateWAMessageContent = async (message, options) => {
+     else {
+         m = await prepareWAMessageMedia(message, options);
+     }
++	if ('buttons' in message && message.buttons) {
++		const buttonMessage = {
++			buttons: message.buttons.map((btn) => ({
++				...btn,
++				type: proto.Message.ButtonsMessage.Button.Type.RESPONSE
++			})),
++		};
++		if ('text' in message) {
++			buttonMessage.contentText = message.text;
++			buttonMessage.headerType = proto.Message.ButtonsMessage.HeaderType.EMPTY;
++		}
++		else {
++			if ('caption' in message) {
++				buttonMessage.contentText = message.caption;
++			}
++
++			const bType = Object.keys(m)[0].replace('Message', '').toUpperCase();
++			buttonMessage.headerType = proto.Message.ButtonsMessage.HeaderType[bType] || proto.Message.ButtonsMessage.HeaderType.EMPTY;
++			Object.assign(buttonMessage, { ...m });
++		}
++
++		if ('title' in message && !!message.title) {
++			buttonMessage.title = message.title;
++			buttonMessage.headerType = proto.Message.ButtonsMessage.HeaderType.TEXT;
++		}
++		if ('footer' in message && !!message.footer) {
++			buttonMessage.footerText = message.footer;
++		}
++		if ('contextInfo' in message && !!message.contextInfo) {
++			buttonMessage.contextInfo = message.contextInfo;
++		}
++		if ('mentions' in message && message.mentions?.length) {
++			buttonMessage.contextInfo = buttonMessage.contextInfo || {};
++			buttonMessage.contextInfo.mentionedJid = message.mentions;
++		}
++		m = { buttonsMessage: buttonMessage };
++	}
++	else if ('templateButtons' in message && message.templateButtons) {
++		const templateMessage = {
++			hydratedButtons: message.templateButtons,
++		};
++		if ('text' in message) {
++			templateMessage.hydratedContentText = message.text;
++		}
++		else {
++			if ('caption' in message) {
++				templateMessage.hydratedContentText = message.caption;
++			}
++			Object.assign(templateMessage, { ...m });
++		}
++		if ('footer' in message && message.footer) {
++			templateMessage.hydratedFooterText = message.footer;
++		}
++		m = {
++			templateMessage: {
++				fourRowTemplate: templateMessage,
++				hydratedFourRowTemplate: templateMessage
++			}
++		};
++	}
++	if ('sections' in message && message.sections) {
++		const listMessage = {
++			sections: message.sections,
++			buttonText: message.buttonText,
++			title: message.title,
++			footerText: message.footer,
++			description: message.text,
++			listType: proto.Message.ListMessage.ListType.SINGLE_SELECT
++		};
++		m = { listMessage: listMessage };
++	}
++	if ('interactiveButtons' in message && !!message.interactiveButtons) {
++		const interactiveMessage = {
++			nativeFlowMessage: WAProto.Message.InteractiveMessage.NativeFlowMessage.create({
++				buttons: message.interactiveButtons,
++			})
++		};
++		if ('text' in message) {
++			interactiveMessage.body = {
++				text: message.text,
++			};
++		}
++		else if ('caption' in message) {
++			interactiveMessage.body = {
++				text: message.caption,
++			}
++			interactiveMessage.header = {
++				title: message.title,
++				subtitle: message.subtitle,
++				hasMediaAttachment: message?.media ?? false,
++			};
++			Object.assign(interactiveMessage.header, { ...m });
++		}
++		if ('footer' in message && !!message.footer) {
++			interactiveMessage.footer = {
++				text: message.footer,
++			};
++		}
++		if ('title' in message && !!message.title) {
++			interactiveMessage.header = {
++				title: message.title,
++				subtitle: message.subtitle,
++				hasMediaAttachment: message?.media ?? false,
++			};
++			Object.assign(interactiveMessage.header, { ...m });
++		}
++		if ('contextInfo' in message && !!message.contextInfo) {
++			interactiveMessage.contextInfo = message.contextInfo;
++		}
++		if ('mentions' in message && !!message.mentions) {
++			interactiveMessage.contextInfo = { mentionedJid: message.mentions };
++		}
++
++		m = { interactiveMessage };
++	}
++	if ('shop' in message && !!message.shop) {
++		const interactiveMessage = {
++			shopStorefrontMessage: proto.Message.InteractiveMessage.ShopMessage.create({
++				surface: message.shop,
++				id: message.id,
++			})
++		};
++		if ('text' in message) {
++			interactiveMessage.body = {
++				text: message.text,
++			};
++		}
++		else if('caption' in message) {
++			interactiveMessage.body = {
++				text: message.caption,
++			}
++			interactiveMessage.header = {
++				title: message.title,
++				subtitle: message.subtitle,
++				hasMediaAttachment: message?.media ?? false,
++			};
++			Object.assign(interactiveMessage.header, { ...m });
++		}
++		if ('footer' in message && !!message.footer) {
++			interactiveMessage.footer = {
++				text: message.footer,
++			};
++		}
++		if ('title' in message && !!message.title) {
++			interactiveMessage.header = {
++				title: message.title,
++				subtitle: message.subtitle,
++				hasMediaAttachment: message?.media ?? false,
++			};
++			Object.assign(interactiveMessage.header, { ...m });
++		}
++		if ('contextInfo' in message && !!message.contextInfo) {
++			interactiveMessage.contextInfo = message.contextInfo;
++		}
++		if ('mentions' in message && !!message.mentions) {
++			interactiveMessage.contextInfo = { mentionedJid: message.mentions };
++		}
++		m = { interactiveMessage };
++	}
+     if ('viewOnce' in message && !!message.viewOnce) {
+         m = { viewOnceMessage: { message: m } };
+     }
