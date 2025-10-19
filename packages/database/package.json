@@ -12,7 +12,7 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "tsup src --dts",
+		"build": "tsup",
 		"build:fast": "tsup src",
 		"clean": "rimraf dist .turbo",
 		"typecheck": "tsc --noEmit"

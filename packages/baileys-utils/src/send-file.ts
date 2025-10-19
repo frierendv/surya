@@ -8,7 +8,7 @@ import {
 	isBuffer,
 	isDataUrl,
 	isLocalFile,
-} from "./media-type";
+} from "./converter/media-type";
 import type { SendFile, SendFileOptions, WASocket } from "./types";
 
 let cachedFs: typeof import("fs") | undefined;

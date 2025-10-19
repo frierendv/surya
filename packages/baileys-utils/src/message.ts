@@ -11,7 +11,7 @@ import type {
 	MiscMessageGenerationOptions,
 	WAMessage,
 } from "baileys";
-import type { WASocket } from "./internals/types";
+import type { WASocket } from "./types";
 import { calculateFileSize, safeString } from "./util";
 
 /**

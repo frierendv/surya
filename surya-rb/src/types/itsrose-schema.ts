@@ -182,13 +182,13 @@ export interface paths {
 		};
 		/**
 		 * Get task
-		 * @description Get song task
+		 * @description Retrieve detailed information about a music generation task.
 		 */
 		get: {
 			parameters: {
 				query: {
-					/** @description The song id, multiple song ids can be separated by comma */
-					song_id: string;
+					/** @description The comma-separated list of task IDs to retrieve */
+					task_id: string;
 				};
 				header?: never;
 				path?: never;
@@ -223,18 +223,18 @@ export interface paths {
 								 * @enum {unknown}
 								 */
 								status?: "processing" | "completed" | "error";
-								/** @description The song id of the task, it can be used to query the task */
+								/** @description The unique identifier of the generated song */
 								song_id?: string;
 								/** @description The generated title of the song */
 								title?: string;
 								/** @description The audio url of the song, it will be null if the task is not finished or failed */
-								audio?: string | null;
-								/** @description The image url of the song, it will be null if the task is not finished or failed */
-								image?: string | null;
-								/** @description The tags of the song */
-								tags?: string;
-								/** @description The audio duration of the song in seconds */
-								audio_duration?: number;
+								audio_url?: string | null;
+								/** @description The duration of the audio in seconds, it will be null if the task is not finished or failed */
+								audio_duration?: number | null;
+								/** @description The cover image url of the song, it will be null if the task is not finished or failed */
+								cover_url?: string | null;
+								/** @description The lyrics of the song, it will be null if the task is not finished or failed */
+								lyrics?: string | null;
 							}[];
 						};
 					};
@@ -287,7 +287,7 @@ export interface paths {
 		put?: never;
 		/**
 		 * Submit task
-		 * @description Generate a new song task
+		 * @description Generate music with or without lyrics using AI models.
 		 */
 		post: {
 			parameters: {
@@ -296,40 +296,78 @@ export interface paths {
 				path?: never;
 				cookie?: never;
 			};
-			/** @description The body of the submit task request */
-			requestBody: {
+			/** @description The request body for submitting a new task */
+			requestBody?: {
 				content: {
-					"application/json": {
-						/**
-						 * @description - `auto`: Automatic mode, will only use the request parameters `prompt` and `model_version`, even if you pass other parameters, such as `lyrics`, `title`, etc., we will not apply them.
-						 *     - `custom`: Custom mode, we will apply all parameters to the generation task, including the updated extended song parameters.
-						 * @example auto
-						 * @enum {string}
-						 */
-						mode: "auto" | "custom";
-						/**
-						 * @description The prompt of the song
-						 * @example A song about love
-						 */
-						prompt: string;
-						/**
-						 * @description The model version.
-						 * @enum {unknown}
-						 */
-						model_version: "v3.5" | "v3.0";
-						/** @description The lyrics of the song */
-						lyrics?: string;
-						/** @description The title of the song */
-						title?: string;
-						/** @description The continue at time of the song in seconds, ignored if mode is auto */
-						continue_at?: number;
-						/** @description The continue song id of the song, ignored if mode is auto */
-						continue_song_id?: string;
-					};
+					"application/json":
+						| {
+								/**
+								 * @description The action mode, must be `auto`
+								 * @enum {unknown}
+								 */
+								mode: "auto";
+								/**
+								 * @description The model version to use for generation
+								 * @example v4.5
+								 * @enum {unknown}
+								 */
+								model:
+									| "v3.0"
+									| "v3.5"
+									| "v4.0"
+									| "v4.5"
+									| "v4.5-plus";
+								/** @description The prompt parameter is used to control the melody, tune, style, and so on of the entire song. */
+								prompt: string;
+								/**
+								 * @description The instrumental parameter is used to control whether the song is pure music or not.
+								 * @example false
+								 */
+								instrumental?: boolean;
+								/**
+								 * @description Voice gender preference, used to control the gender of the singer.
+								 * @enum {unknown}
+								 */
+								gender?: "male" | "female";
+						  }
+						| {
+								/**
+								 * @description The model version to use for generation
+								 * @example v4.5
+								 * @enum {unknown}
+								 */
+								model:
+									| "v3.0"
+									| "v3.5"
+									| "v4.0"
+									| "v4.5"
+									| "v4.5-plus";
+								/** @description The prompt parameter is used to control the melody, tune, style, and so on of the entire song. */
+								prompt: string;
+								/**
+								 * @description The instrumental parameter is used to control whether the song is pure music or not.
+								 * @example false
+								 */
+								instrumental?: boolean;
+								/**
+								 * @description Voice gender preference, used to control the gender of the singer.
+								 * @enum {unknown}
+								 */
+								gender?: "male" | "female";
+								/**
+								 * @description The action mode, must be `custom`
+								 * @enum {unknown}
+								 */
+								mode: "custom";
+								/** @description The lyrics parameter controls what the song is about, If this field is set to None, then pure music will be generated. */
+								lyrics?: string;
+								/** @description Create a title for the song you're writing. */
+								title?: string;
+						  };
 				};
 			};
 			responses: {
-				/** @description The response of the get task request */
+				/** @description The response of the submit task request */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -347,28 +385,13 @@ export interface paths {
 							 */
 							message: string;
 							/**
-							 * TaskResponse
-							 * @description The response of the get task request
+							 * Generate Task Response
+							 * @description The response of the submit task request
 							 */
 							result?: {
-								/**
-								 * @description The status of the task
-								 * @enum {unknown}
-								 */
-								status?: "processing" | "completed" | "error";
-								/** @description The song id of the task, it can be used to query the task */
-								song_id?: string;
-								/** @description The generated title of the song */
-								title?: string;
-								/** @description The audio url of the song, it will be null if the task is not finished or failed */
-								audio?: string | null;
-								/** @description The image url of the song, it will be null if the task is not finished or failed */
-								image?: string | null;
-								/** @description The tags of the song */
-								tags?: string;
-								/** @description The audio duration of the song in seconds */
-								audio_duration?: number;
-							}[];
+								/** @description The list of submitted task ids */
+								task_ids?: string[];
+							};
 						};
 					};
 				};
@@ -1100,7 +1123,8 @@ export interface paths {
 			};
 			requestBody: {
 				content: {
-					/** @example {
+					/**
+					 * @example {
 					 *       "model": "gpt-4.1-mini",
 					 *       "messages": [
 					 *         {
@@ -1108,7 +1132,8 @@ export interface paths {
 					 *           "content": "What is the capital of France?"
 					 *         }
 					 *       ]
-					 *     } */
+					 *     }
+					 */
 					"application/json": {
 						/**
 						 * @description Whether to return the full response or just the message.
@@ -1354,17 +1379,16 @@ export interface paths {
 										strict?: boolean;
 									};
 							  };
-						/** @description If set to `true`, the model response data will be streamed to the client as it is generated using server-sent events. See the Streaming section below for more information, along with the streaming responses guide for more information on how to handle the streaming events.
+						/**
+						 * @description If set to `true`, the model response data will be streamed to the client as it is generated using server-sent events. See the Streaming section below for more information, along with the streaming responses guide for more information on how to handle the streaming events.
 						 *
 						 *     **Note:** Refer to the [Streaming responses guide](https://platform.openai.com/docs/guides/streaming-responses?api-mode=chat) for more information on how to handle the streaming events.
-						 *
-						 *      */
+						 */
 						stream?: boolean;
 						/**
 						 * @description `none` means the model will not call any tool and instead generates a message.
 						 *     `auto` means the model can pick between generating a message or calling one or more tools.
 						 *     `required` means the model must call one or more tools.
-						 *
 						 * @enum {unknown}
 						 */
 						tool_choice?: "none" | "auto" | "required";
@@ -2918,8 +2942,6 @@ export interface paths {
 		/**
 		 * Outpainting
 		 * @description **Outpainting** is a technique used to extend the boundaries of an image by generating new content that seamlessly blends with the existing image.
-		 *
-		 *
 		 */
 		post: {
 			parameters: {
@@ -3447,7 +3469,8 @@ export interface paths {
 			};
 			requestBody: {
 				content: {
-					/** @example {
+					/**
+					 * @example {
 					 *       "server_id": "rose",
 					 *       "model_id": "dreamshaper",
 					 *       "controlnet_model": "canny",
@@ -3464,7 +3487,8 @@ export interface paths {
 					 *       "num_inference_steps": 20,
 					 *       "scheduler": "UniPCMultistepScheduler",
 					 *       "clip_skip": 2
-					 *     } */
+					 *     }
+					 */
 					"application/json": {
 						/**
 						 * @description Each server have different stored models. Default: `rose`
@@ -3801,7 +3825,8 @@ export interface paths {
 			};
 			requestBody: {
 				content: {
-					/** @example {
+					/**
+					 * @example {
 					 *       "server_id": "rose",
 					 *       "model_id": "dreamshaper",
 					 *       "init_image": "",
@@ -3812,7 +3837,8 @@ export interface paths {
 					 *       "num_inference_steps": 20,
 					 *       "scheduler": "DDPMScheduler",
 					 *       "clip_skip": 2
-					 *     } */
+					 *     }
+					 */
 					"application/json": {
 						/**
 						 * @description Each server have different stored models. Default: `rose`
@@ -4125,7 +4151,8 @@ export interface paths {
 			};
 			requestBody: {
 				content: {
-					/** @example {
+					/**
+					 * @example {
 					 *       "server_id": "rose",
 					 *       "model_id": "dreamshaper",
 					 *       "init_image": "",
@@ -4137,7 +4164,8 @@ export interface paths {
 					 *       "num_inference_steps": 20,
 					 *       "scheduler": "DDPMScheduler",
 					 *       "clip_skip": 2
-					 *     } */
+					 *     }
+					 */
 					"application/json": {
 						/**
 						 * @description Each server have different stored models. Default: `rose`
@@ -4636,7 +4664,8 @@ export interface paths {
 			};
 			requestBody: {
 				content: {
-					/** @example {
+					/**
+					 * @example {
 					 *       "server_id": "rose",
 					 *       "model_id": "dreamshaper",
 					 *       "prompt": "1girl",
@@ -4646,7 +4675,8 @@ export interface paths {
 					 *       "num_inference_steps": 20,
 					 *       "scheduler": "DDPMScheduler",
 					 *       "clip_skip": 2
-					 *     } */
+					 *     }
+					 */
 					"application/json": {
 						/**
 						 * @description Each server have different stored models. Default: `rose`

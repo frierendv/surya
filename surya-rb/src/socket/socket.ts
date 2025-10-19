@@ -4,11 +4,11 @@ import { useAuthProvider } from "@/libs/auth-provider";
 import db from "@/libs/database";
 import { baileysLogger, logger } from "@/libs/logger";
 import {
+	attachSendFile,
 	BaileysSocket,
 	type CreateBaileysOptions,
 	type WASocket,
 } from "@surya/baileys-utils";
-import { attachSendFile } from "@surya/baileys-utils/internals/send-file";
 import { readEnv } from "@surya/core/read-env";
 import {
 	Browsers,
