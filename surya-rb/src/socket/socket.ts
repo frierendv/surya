@@ -1,6 +1,7 @@
 import { messageHandler } from "@/handler/message";
 import { pluginHandler } from "@/handler/plugin";
 import { useAuthProvider } from "@/libs/auth-provider";
+import db from "@/libs/database";
 import { baileysLogger, logger } from "@/libs/logger";
 import {
 	BaileysSocket,
@@ -8,82 +9,193 @@ import {
 	type WASocket,
 } from "@surya/baileys-utils";
 import { attachSendFile } from "@surya/baileys-utils/internals/send-file";
+import { readEnv } from "@surya/core/read-env";
 import {
 	Browsers,
+	getBinaryNodeChild,
 	isJidBroadcast,
-	isJidMetaAI,
+	// isJidMetaAI,
 	isJidNewsletter,
 	isJidStatusBroadcast,
+	jidNormalizedUser,
 } from "baileys";
-import type { ConnectionState, MessageUpsertType, WAMessage } from "baileys";
+import type {
+	BinaryNode,
+	ConnectionState,
+	GroupMetadata,
+	GroupParticipant,
+	MessageUpsertType,
+	WAMessage,
+} from "baileys";
+import { LRUCache } from "lru-cache";
 import { requestPairing } from "./pairing";
+import { proxyBind } from "./proxy";
 
 const shouldIgnoreJid = (jid: string) =>
 	isJidBroadcast(jid) ||
 	isJidStatusBroadcast(jid) ||
-	isJidMetaAI(jid) ||
+	// isJidMetaAI(jid) ||
 	isJidNewsletter(jid);
 
-type InternalWASocket = Pick<WASocket, "sendMessage" | "sendFile">;
+let _socket: WASocket = Object.create(null);
 /**
  * Used for external access to the Baileys socket
  */
-export const socket: InternalWASocket = {} as InternalWASocket;
+const socket: WASocket = new Proxy(Object.create(null), {
+	get(_t, prop: keyof WASocket) {
+		const v = _socket[prop];
+		if (typeof v === "function") {
+			return v.bind(_socket);
+		}
+		if (v && typeof v === "object") {
+			return proxyBind(v);
+		}
+		return v;
+	},
+});
 
-export const createSocket = (over?: Partial<CreateBaileysOptions>) => {
-	const baileys = new BaileysSocket({
+const _cacheGroupMetadata = new LRUCache<string, GroupMetadata>({
+	// 5 minutes
+	ttl: 1000 * 60 * 5,
+	max: 1000,
+});
+const cachedGroupMetadata = {
+	get: async (id: string): Promise<GroupMetadata | undefined> => {
+		const cached = _cacheGroupMetadata.get(id);
+		if (cached) {
+			return cached;
+		}
+		await using group = await db.groups.get(id);
+		if (group.metadata) {
+			_cacheGroupMetadata.set(id, group.metadata);
+		}
+		return group.metadata;
+	},
+	set: (id: string, metadata: GroupMetadata) => {
+		_cacheGroupMetadata.set(id, metadata);
+	},
+	refresh: (() => {
+		const inflight = new Map<string, Promise<GroupMetadata>>();
+		return async (id: string): Promise<GroupMetadata> => {
+			const existing = inflight.get(id);
+			if (existing) {
+				return existing;
+			}
+
+			const p = (async (): Promise<GroupMetadata> => {
+				await using group = await db.groups.get(id);
+				const fetchLive = async (): Promise<
+					GroupMetadata | undefined
+				> => {
+					try {
+						if (!socket?.groupMetadata) {
+							return undefined;
+						}
+						const meta = await socket.groupMetadata(id);
+						group.metadata = meta;
+						_cacheGroupMetadata.set(id, group.metadata);
+						return meta;
+					} catch (err) {
+						logger.debug(
+							{ err, id },
+							"cachedGroupMetadata.refresh live fetch failed"
+						);
+						return undefined;
+					}
+				};
+
+				const live = await fetchLive();
+				if (live) {
+					return live;
+				}
+				if (group?.metadata) {
+					_cacheGroupMetadata.set(id, group.metadata);
+				}
+
+				return group.metadata;
+			})();
+			inflight.set(id, p);
+			try {
+				return await p;
+			} finally {
+				inflight.delete(id);
+			}
+		};
+	})(),
+};
+
+const createSocket = (over?: Partial<CreateBaileysOptions>) => {
+	const client = new BaileysSocket({
 		authProvider: useAuthProvider(),
 		socketConfig: {
 			logger: baileysLogger,
 			shouldIgnoreJid,
-			browser: Browsers.ubuntu("Edge"),
+			browser: Browsers.windows("Desktop"),
 			syncFullHistory: true,
+			cachedGroupMetadata: cachedGroupMetadata.get,
 			...over?.socketConfig,
 		},
 		maxReconnectAttempts: 10,
 		initialReconnectDelayMs: 3000,
 		...over,
 	});
+
 	const handleConnectionUpdate = async (update: Partial<ConnectionState>) => {
 		if (update.qr) {
-			await requestPairing(update.qr, baileys.socket);
+			await requestPairing(update.qr, client.socket);
 		}
 
-		if (update.connection === "open" && baileys.socket) {
-			if (baileys.socket.user) {
-				logger.success({ ...baileys.socket.user }, "Baileys connected");
+		if (update.connection === "open" && client.socket) {
+			if (client.socket.user) {
+				// normalize id and lid
+				const [id, lid] = [
+					jidNormalizedUser(client.socket.user.id),
+					jidNormalizedUser(client.socket.user.lid),
+				];
+				Object.assign(client.socket.user, {
+					id,
+					lid,
+				});
+				logger.success({ ...client.socket.user }, "Baileys connected");
 			}
 
-			if (!(baileys.socket as any).sendFile) {
-				attachSendFile(baileys.socket);
+			if (!(client.socket as any).sendFile) {
+				attachSendFile(client.socket);
 				logger.info("Patched in sendFile to Baileys socket");
-				const methods = ["sendMessage", "sendFile"] as const;
-				for (const method of methods) {
-					Object.defineProperty(socket, method, {
-						get: () => baileys.socket![method].bind(baileys.socket),
-					});
-					logger.info(`Patched in ${method} to socket export`);
-				}
 			}
+			_socket = proxyBind(client.socket);
 		}
 	};
 
-	const handleMessageUpsert = async ({
-		messages,
-		type,
-	}: {
+	const handleMessageUpsert = async (upsert: {
 		messages: WAMessage[];
 		type: MessageUpsertType;
 	}) => {
-		if (type !== "notify" || !messages[0]) {
+		if (upsert.type !== "notify") {
+			return;
+		}
+		const message = upsert.messages?.[0] as Required<WAMessage> | undefined;
+		if (!message) {
 			return;
 		}
 
+		const remoteJid = message.key?.remoteJid;
+		if (!remoteJid || shouldIgnoreJid(remoteJid)) {
+			return;
+		}
+		if (message.pushName !== "David") {
+			logger.info(
+				{ id: message.key.id, from: message.key.remoteJid },
+				"Received message"
+			);
+			return;
+		}
 		try {
-			const result = await messageHandler(messages[0], baileys.socket!);
+			const result = await messageHandler(message);
 			if (!result) {
 				return;
 			}
+
 			const { matches, ctx, extra } = result;
 			for (const plugin of matches) {
 				try {
@@ -99,9 +211,48 @@ export const createSocket = (over?: Partial<CreateBaileysOptions>) => {
 			logger.error({ err }, "messages.upsert handler error");
 		}
 	};
+	const handleGroupUpdate = async ([update]: Partial<GroupMetadata>[]) => {
+		if (!update?.id) {
+			return;
+		}
+		try {
+			await cachedGroupMetadata.refresh(update.id);
+		} catch (err) {
+			logger.debug(
+				{ err, id: update.id },
+				"handleGroupUpdate refresh failed"
+			);
+		}
+	};
 
-	baileys.on("connection.update", handleConnectionUpdate);
-	baileys.on("messages.upsert", handleMessageUpsert);
+	client.on("connection.update", handleConnectionUpdate);
+	client.on("messages.upsert", handleMessageUpsert);
+	client.on("groups.update", handleGroupUpdate);
+	client.on("group-participants.update", (update) =>
+		handleGroupUpdate([update as GroupParticipant])
+	);
+	client.on("call", async (calls) => {
+		const call = calls[0];
+		if (!call) {
+			return;
+		}
 
-	return baileys;
+		if (readEnv("NODE_ENV") === "production") {
+			logger.warn({ call }, "Incoming call received - rejecting");
+			await socket.rejectCall(call.id, call.from);
+			return;
+		}
+	});
+	client.socket?.ws.on("CB:ib,,edge_routing", (node: BinaryNode) => {
+		const edgeRoutingNode = getBinaryNodeChild(node, "edge_routing");
+		const routingInfo = getBinaryNodeChild(edgeRoutingNode, "routing_info");
+		console.log(
+			"Edge routing info received:",
+			JSON.stringify(routingInfo, null, 2)
+		);
+	});
+
+	return client;
 };
+
+export { createSocket, socket, cachedGroupMetadata };
