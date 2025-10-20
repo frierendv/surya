@@ -1,6 +1,5 @@
 import type { PassThrough } from "stream";
-import { convertToWebp } from "@surya/baileys-utils";
-import { streamToBuffer } from "@surya/ffmpeg-utils";
+import { convertToWebp, isBuffer, streamToBuffer } from "@surya/ffmpeg-utils";
 // @ts-expect-error: no types
 import webPMux from "node-webpmux";
 
@@ -38,16 +37,12 @@ const generateStickerExif = (author: string, packName: string) => {
 
 export const createSticker = async (
 	input: Buffer | PassThrough,
-	knownInputFormat: "image" | "video" | "webp",
+	InputFormat: "image" | "video" | "webp",
 	{ author = "", packName = "" }
 ): Promise<Buffer> => {
 	const webp =
-		knownInputFormat !== "webp"
-			? convertToWebp(input, knownInputFormat)
-			: input;
-	const webpBuffer = Buffer.isBuffer(webp)
-		? webp
-		: await streamToBuffer(webp);
+		InputFormat !== "webp" ? convertToWebp(input, InputFormat) : input;
+	const webpBuffer = isBuffer(webp) ? webp : await streamToBuffer(webp);
 	const img = new webPMux.Image();
 	await img.load(webpBuffer);
 	const exif = generateStickerExif(author, packName);
