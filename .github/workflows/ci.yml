@@ -78,6 +78,12 @@ jobs:
           node-version: 20.19.5
           cache: "npm"
 
+      - name: Install FFmpeg (for tests)
+        if: runner.os == 'Linux'
+        run: |
+          apt-get update
+          apt-get install -y ffmpeg
+
       - name: Install dependencies
         run: npm ci
 
