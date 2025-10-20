@@ -24,5 +24,9 @@ export {
 } from "./message";
 export { createExtraMessageContext } from "./message-extra";
 export { createSendFile, attachSendFile } from "./send-file";
-export { convertAudio, convertToWebp } from "./converter";
 export type { SendFileOptions, SendFile, WASocket } from "./types";
+
+export {
+	patchGenerateWAMessageContent,
+	patchRelayMessageBusiness,
+} from "./business";

@@ -1,14 +1,13 @@
 import { Readable } from "stream";
-import type { AnyMediaMessageContent } from "baileys";
-import { fetch } from "undici";
-import { convertAudio } from "./converter";
 import {
-	getMediaMimeType,
-	getMediaType,
+	convertAudio,
+	getStreamType,
 	isBuffer,
 	isDataUrl,
 	isLocalFile,
-} from "./converter/media-type";
+} from "@surya/ffmpeg-utils";
+import type { AnyMediaMessageContent } from "baileys";
+import { fetch } from "undici";
 import type { SendFile, SendFileOptions, WASocket } from "./types";
 
 let cachedFs: typeof import("fs") | undefined;
@@ -55,6 +54,22 @@ const downloadFile = async (content: any): Promise<Readable> => {
 
 	throw new Error("Unsupported content type for downloadFile");
 };
+const getMediaType = (mime: string) => {
+	if (mime.startsWith("image/")) {
+		return "image";
+	}
+	if (mime.startsWith("video/")) {
+		return "video";
+	}
+	if (mime.startsWith("audio/")) {
+		return "audio";
+	}
+	// webp is treated as sticker
+	if (mime === "image/webp") {
+		return "sticker";
+	}
+	return "document";
+};
 
 /**
  * sendFile implementation that prepares the media and calls sendMessage.
@@ -70,7 +85,7 @@ export const createSendFile = async (
 	const opts = options ? { ...options } : {};
 
 	let stream = await downloadFile(content);
-	const { fileType, stream: sniffedStream } = await getMediaMimeType(stream);
+	const { fileType, stream: sniffedStream } = await getStreamType(stream);
 	stream = sniffedStream;
 
 	const mediaType = getMediaType(fileType.mime);

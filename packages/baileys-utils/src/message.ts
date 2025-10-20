@@ -1,14 +1,15 @@
 import type { Transform } from "node:stream";
 import {
-	downloadMediaMessage,
+	downloadContentFromMessage,
+	extractMessageContent,
 	getContentType,
 	jidNormalizedUser,
 	normalizeMessageContent,
-	proto,
 } from "baileys";
 import type {
-	MessageType,
+	MediaType,
 	MiscMessageGenerationOptions,
+	proto,
 	WAMessage,
 } from "baileys";
 import type { WASocket } from "./types";
@@ -35,11 +36,11 @@ export type ReplyHandler = (
 		newText: string,
 		/** Additional options for the edit message. */
 		editOpts?: MiscMessageGenerationOptions
-	) => Promise<proto.WebMessageInfo | undefined>;
+	) => Promise<WAMessage | undefined>;
 	/**
 	 * Delete the previously sent reply.
 	 */
-	deleteReply: () => Promise<proto.WebMessageInfo | undefined>;
+	deleteReply: () => Promise<WAMessage | undefined>;
 }>;
 
 /**
@@ -91,7 +92,7 @@ export interface IMessageActions {
 	/**
 	 * React to the message (empty string removes reaction).
 	 */
-	react: (text: string) => Promise<proto.WebMessageInfo | undefined>;
+	react: (text: string) => Promise<WAMessage | undefined>;
 	/**
 	 * Forward the message to another chat JID.
 	 */
@@ -100,11 +101,11 @@ export interface IMessageActions {
 		jid: string,
 		/** Additional options for the forward message. */
 		opts?: MiscMessageGenerationOptions
-	) => Promise<proto.WebMessageInfo | undefined>;
+	) => Promise<WAMessage | undefined>;
 	/**
 	 * Delete the message, if permitted.
 	 */
-	delete: () => Promise<proto.WebMessageInfo | undefined>;
+	delete: () => Promise<WAMessage | undefined>;
 }
 
 /**
@@ -154,17 +155,6 @@ export interface IMessageMeta extends IMessageActions {
  */
 export interface IMessageContext extends IMessageMeta, WAMessage {}
 
-export const getMessageType = (
-	message?: proto.IMessage | null
-): NoInfer<MessageType> | null => {
-	if (!message) {
-		return null;
-	}
-
-	// Unwrap ephemeral wrapper if present
-	const inner = message.ephemeralMessage?.message ?? message;
-	return getContentType(inner) as MessageType;
-};
 /**
  * Extract the most relevant text from a proto.IMessage.
  */
@@ -172,13 +162,14 @@ export const getMessageText = (msg?: proto.IMessage | null): string => {
 	if (!msg) {
 		return "";
 	}
-
-	// Unwrap ephemeral wrapper if present
-	const inner = (msg.ephemeralMessage?.message ?? msg) as any;
-	if (inner.conversation) {
+	const inner = extractMessageContent(msg) as any;
+	if (inner?.conversation) {
 		return inner.conversation;
 	}
-	const messageType = getMessageType(inner)!;
+	const messageType = getContentType(msg);
+	if (!messageType) {
+		return "";
+	}
 
 	const candidates = [
 		inner?.[messageType]?.text,
@@ -211,32 +202,56 @@ export const getMessageText = (msg?: proto.IMessage | null): string => {
 export const createMediaInfo = (
 	message?: proto.IMessage | null
 ): IMediaInfo | null => {
-	const inner =
-		message?.ephemeralMessage?.message ||
-		message?.buttonsMessage ||
-		message?.templateMessage?.hydratedTemplate ||
-		message;
-	const content =
+	const inner = extractMessageContent(message);
+	const mediaContent =
 		inner?.documentMessage ||
 		inner?.imageMessage ||
 		inner?.videoMessage ||
 		message?.audioMessage ||
 		message?.stickerMessage;
-	if (!content) {
+	if (!mediaContent) {
 		return null;
+	}
+	const contentType = getContentType(inner)!;
+	let mediaType = contentType?.replace("Message", "") as MediaType;
+	const media = inner?.[contentType];
+	if (
+		!media ||
+		typeof media !== "object" ||
+		(!("url" in media) && !("thumbnailDirectPath" in media))
+	) {
+		return null;
+	}
+	let download;
+	if ("thumbnailDirectPath" in media && !("url" in media)) {
+		download = {
+			directPath: media.thumbnailDirectPath,
+			mediaKey: media.mediaKey,
+		};
+		mediaType = "thumbnail-link";
+	} else {
+		download = media;
 	}
 
 	const downloadMessage = async (output = "buffer") => {
-		return downloadMediaMessage(
-			{ message } as proto.IWebMessageInfo,
-			output === "stream" ? "stream" : "buffer",
+		const stream = await downloadContentFromMessage(
+			download,
+			mediaType,
 			{}
 		);
+		if (output === "buffer") {
+			const bufferArray = [];
+			for await (const chunk of stream) {
+				bufferArray.push(chunk);
+			}
+			return Buffer.concat(bufferArray);
+		}
+		return stream;
 	};
 
 	return {
-		mimetype: content.mimetype! || "application/octet-stream",
-		size: calculateFileSize(content.fileLength || 0),
+		mimetype: mediaContent.mimetype! || "application/octet-stream",
+		size: calculateFileSize(mediaContent.fileLength || 0),
 		download: downloadMessage as IMediaInfo["download"],
 	};
 };
@@ -354,8 +369,8 @@ export const createMessageContext = (
 	sock: WASocket
 ): IMessageContext => {
 	const remoteJid = msg.key.remoteJid!;
-	const inner = normalizeMessageContent(msg.message);
-	const messageType = getMessageType(inner)!;
+	const inner = extractMessageContent(msg.message)!;
+	const messageType = getContentType(inner)!;
 	const media = createMediaInfo(inner);
 	const myUserId = sock.user?.id;
 
@@ -367,8 +382,8 @@ export const createMessageContext = (
 		msg.message!
 	);
 
-	const contextInfo = (inner?.[messageType] as any)
-		?.contextInfo as proto.IContextInfo;
+	const contextInfo = (inner as any)?.[messageType]
+		.contextInfo as proto.IContextInfo;
 	const quoted = createQuotedMessage(contextInfo);
 
 	if (quoted) {

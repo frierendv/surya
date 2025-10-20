@@ -1,4 +1,3 @@
-import type { Boom } from "@hapi/boom";
 import { EventEmitter } from "@surya/core/events";
 import {
 	DisconnectReason,
@@ -226,7 +225,7 @@ export class BaileysSocket extends EventEmitter<SocketEventMap> {
 				const { connection, lastDisconnect } = update;
 				if (connection === "close" && !this.stopped) {
 					const isLoggedOut =
-						(lastDisconnect?.error as Boom)?.output?.statusCode ===
+						(lastDisconnect?.error as any)?.output?.statusCode ===
 						DisconnectReason.loggedOut;
 					if (isLoggedOut) {
 						this.emit("logged_out");
