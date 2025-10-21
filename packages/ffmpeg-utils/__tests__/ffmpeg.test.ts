@@ -1,17 +1,26 @@
 import { Readable } from "stream";
+import { ffmpeg } from "../src/ffmpeg";
 
 // Mock fluent-ffmpeg to avoid requiring a real ffmpeg binary and to capture calls
 jest.mock("fluent-ffmpeg", () => {
-	const input = jest.fn().mockReturnThis();
-	const inputFormat = jest.fn().mockReturnThis();
-	const pipe = jest.fn();
-	const ctor = jest.fn(() => ({ input, inputFormat, pipe }));
-	return { __esModule: true, default: ctor };
+	// mock all methods used in our wrapper
+	const originalModule = jest.requireActual("fluent-ffmpeg");
+	const mFfmpegCommand = {
+		input: jest.fn().mockReturnThis(),
+		inputFormat: jest.fn().mockReturnThis(),
+		pipe: jest.fn(),
+	};
+	Object.assign(mFfmpegCommand, originalModule.FfmpegCommand);
+
+	const mockFluentFfmpeg = jest.fn(() => mFfmpegCommand);
+	// copy static methods
+	Object.assign(mockFluentFfmpeg, originalModule);
+	return mockFluentFfmpeg;
 });
+jest.mock("ffmpeg-static", () => "mocked-ffmpeg-path");
 
 describe("ffmpeg wrapper", () => {
 	it("inputBuffer adds input stream and optional format", async () => {
-		const { ffmpeg } = await import("../src/ffmpeg");
 		const buffer = Buffer.from("abc");
 		const cmd = ffmpeg();
 
@@ -34,7 +43,6 @@ describe("ffmpeg wrapper", () => {
 	});
 
 	it("toBuffer returns data from pipe stream", async () => {
-		const { ffmpeg } = await import("../src/ffmpeg");
 		const chunks = [Buffer.from("hello "), "world"];
 		const stream = Readable.from(chunks);
 		const cmd = ffmpeg();
@@ -48,7 +56,6 @@ describe("ffmpeg wrapper", () => {
 	});
 
 	it("returns same command object with extended methods", async () => {
-		const { ffmpeg } = await import("../src/ffmpeg");
 		const cmd = ffmpeg();
 		expect(typeof (cmd as any).toBuffer).toBe("function");
 		expect(typeof (cmd as any).inputBuffer).toBe("function");
