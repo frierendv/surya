@@ -1,5 +1,11 @@
+import { createReadStream, readFileSync } from "fs";
+import path from "path";
 import { PassThrough, Readable } from "stream";
-import { streamFromBuffer, streamToBuffer } from "../src/util";
+import { getStreamType, streamFromBuffer, streamToBuffer } from "../src/util";
+
+const rootDir = path.resolve(__dirname, "./__fixtures__");
+
+const pngPath = path.join(rootDir, "sample-image.png");
 
 describe("util streams", () => {
 	test("streamFromBuffer produces a readable that ends", async () => {
@@ -29,5 +35,25 @@ describe("util streams", () => {
 		const err = new Error("boom");
 		pass.emit("error", err);
 		await expect(promise).rejects.toThrow("boom");
+	});
+
+	describe("getStreamType", () => {
+		const pngStream = createReadStream(pngPath);
+		const pngBuffer = readFileSync(pngPath);
+		it("detects stream mime type without consuming it", async () => {
+			const { fileType: ft, stream } = await getStreamType(pngStream);
+			expect(ft).toBeDefined();
+			expect(ft.ext).toBe("png");
+			expect(ft.mime).toBe("image/png");
+
+			const chunks: Buffer[] = [];
+			for await (const chunk of stream as any as Readable) {
+				chunks.push(
+					Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+				);
+			}
+			const reconstituted = Buffer.concat(chunks);
+			expect(reconstituted.equals(pngBuffer)).toBe(true);
+		});
 	});
 });

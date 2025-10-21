@@ -1,7 +1,7 @@
 import { createReadStream, readFileSync } from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
-import { fromBuffer, fromStream } from "file-type";
+import fileType from "file-type";
 import {
 	convertAudio,
 	convertToWebp,
@@ -19,9 +19,9 @@ const mp4Path = path.join(rootDir, "sample-video.mp4");
 const getResultType = async (input: Buffer | Readable) => {
 	let type;
 	if (Buffer.isBuffer(input)) {
-		type = await fromBuffer(input);
+		type = await fileType.fromBuffer(input);
 	} else {
-		type = await fromStream(input as any);
+		type = await fileType.fromStream(input as any);
 	}
 	return type?.mime;
 };
