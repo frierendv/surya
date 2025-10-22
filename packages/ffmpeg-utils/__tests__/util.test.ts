@@ -6,6 +6,7 @@ import { getStreamType, streamFromBuffer, streamToBuffer } from "../src/util";
 const rootDir = path.resolve(__dirname, "./__fixtures__");
 
 const pngPath = path.join(rootDir, "sample-image.png");
+const mp4Path = path.join(rootDir, "sample-video.mp4");
 
 describe("util streams", () => {
 	test("streamFromBuffer produces a readable that ends", async () => {
@@ -17,6 +18,74 @@ describe("util streams", () => {
 			chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
 		}
 		expect(Buffer.concat(chunks).toString()).toBe("abc");
+	});
+
+	test("getStreamType should work on stream from buffer", async () => {
+		const buf = readFileSync(mp4Path);
+		const readable = streamFromBuffer(buf);
+		const { fileType, stream } = await getStreamType(readable);
+		expect(fileType).toBeDefined();
+		expect(fileType.ext).toBe("mp4");
+		expect(fileType.mime).toBe("video/mp4");
+
+		const chunks: Buffer[] = [];
+		for await (const chunk of stream as any as Readable) {
+			chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+		}
+		const reconstituted = Buffer.concat(chunks);
+		expect(reconstituted.equals(buf)).toBe(true);
+	});
+	test("getStreamType should work on PassThrough stream", async () => {
+		const buf = readFileSync(mp4Path);
+		const pass = new PassThrough();
+		pass.end(buf);
+		const { fileType, stream } = await getStreamType(pass);
+		expect(fileType).toBeDefined();
+		expect(fileType.ext).toBe("mp4");
+		expect(fileType.mime).toBe("video/mp4");
+
+		const chunks: Buffer[] = [];
+		for await (const chunk of stream as any as Readable) {
+			chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+		}
+		const reconstituted = Buffer.concat(chunks);
+		expect(reconstituted.equals(buf)).toBe(true);
+	});
+	test("getStreamType should work on ReadableStream", async () => {
+		const buf = readFileSync(mp4Path);
+		const readable = Readable.from(buf);
+		const { fileType, stream } = await getStreamType(readable);
+		expect(fileType).toBeDefined();
+		expect(fileType.ext).toBe("mp4");
+		expect(fileType.mime).toBe("video/mp4");
+
+		const chunks: Buffer[] = [];
+		for await (const chunk of stream as any as Readable) {
+			chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+		}
+		const reconstituted = Buffer.concat(chunks);
+		expect(reconstituted.equals(buf)).toBe(true);
+	});
+	test("getStreamType should work on ReadableStream from web", async () => {
+		const buf = readFileSync(mp4Path);
+		const webStream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(buf);
+				controller.close();
+			},
+		});
+		const readable = Readable.fromWeb(webStream as any);
+		const { fileType, stream } = await getStreamType(readable);
+		expect(fileType).toBeDefined();
+		expect(fileType.ext).toBe("mp4");
+		expect(fileType.mime).toBe("video/mp4");
+
+		const chunks: Buffer[] = [];
+		for await (const chunk of stream as any as Readable) {
+			chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+		}
+		const reconstituted = Buffer.concat(chunks);
+		expect(reconstituted.equals(buf)).toBe(true);
 	});
 
 	test("streamToBuffer collects data from writable-like stream", async () => {
