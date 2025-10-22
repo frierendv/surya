@@ -20,7 +20,7 @@ export default {
 		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/image/i.test(media.mimetype)) {
 			return ctx.reply(
-				`Please reply/send an image.\n\nExample: *${usedPrefix + command}* <style id>`
+				`Please reply/send an image. Type *${usedPrefix}help ${command}* for more information.`
 			);
 		}
 		const styleId = ctx.args[0]?.toLowerCase() || "k_comic";
