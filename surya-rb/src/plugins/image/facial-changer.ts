@@ -43,7 +43,6 @@ export default {
 			{
 				init_image: Buffer.from(buffer).toString("base64"),
 				expression,
-				sync: false,
 			}
 		);
 
@@ -54,7 +53,9 @@ export default {
 		}
 		const { status, result, message } = value!.data;
 		if (!status || !result?.images) {
-			return editReply(message);
+			return editReply(
+				"Failed to process image: " + (message || "Unknown error")
+			);
 		}
 		if (result.status === "completed") {
 			await editReply("Processing completed!");
@@ -64,7 +65,7 @@ export default {
 			}
 			return;
 		}
-		scheduler.interval.add(
+		void scheduler.interval.add(
 			`${ctx.sender}:facial-changer`,
 			2000,
 			"fetch-image-status",
@@ -80,7 +81,7 @@ export default {
 			},
 			{ backoffMs: 1000, maxRetries: 3 }
 		);
-		return editReply(
+		await editReply(
 			"Your image is being processed. This may take a while. You will receive the image once it's done."
 		);
 	},
