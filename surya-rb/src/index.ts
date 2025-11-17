@@ -1,3 +1,4 @@
+import "@dotenvx/dotenvx/config";
 import { closeDatabase, initDatabase } from "@/libs/database";
 import { logger } from "@/libs/logger";
 import { connectToDatabase } from "@/libs/mongodb";
