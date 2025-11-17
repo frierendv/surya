@@ -12,7 +12,7 @@
 		"gen:itsrose": "npx openapi-typescript https://api.itsrose.net/openapi.json --output src/types/itsrose-schema.ts",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
-		"start": "dotenvx run -- node dist/index.js",
+		"start": "node dist/index.js",
 		"typecheck": "tsc --noEmit"
 	},
 	"repository": "frierendv/surya.git",
