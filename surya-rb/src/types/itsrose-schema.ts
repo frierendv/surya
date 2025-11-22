@@ -38,20 +38,19 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
 							result?: {
 								/** @description The API key used for authentication. This is a secret and should be kept private. */
-								apikey?: string;
-								subscription?: {
+								apikey: string;
+								subscription: {
 									/** @description Whether the subscription is active or not */
-									active?: boolean;
+									active: boolean;
 									/**
 									 * Format: date-time
 									 * @description The expiry date of the current subscription plan.
 									 */
-									expiry?: string | null;
+									expiry: string | null;
 									/** @description The name of the subscription plan. This is a string and can be used to identify the plan. */
-									product?: string;
+									product: string;
 								};
 							};
 						};
@@ -128,10 +127,9 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
 							result?: {
-								/** @description Indicates if the service is up and running */
-								ok?: string;
+								/** @description Indicates if the service is operational */
+								ok: boolean;
 							};
 						};
 					};
@@ -196,7 +194,7 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description The response of the get task request */
+				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -213,29 +211,8 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/**
-							 * TaskResponse
-							 * @description The response of the get task request
-							 */
-							result?: {
-								/**
-								 * @description The status of the task
-								 * @enum {unknown}
-								 */
-								status?: "processing" | "completed" | "error";
-								/** @description The unique identifier of the generated song */
-								song_id?: string;
-								/** @description The generated title of the song */
-								title?: string;
-								/** @description The audio url of the song, it will be null if the task is not finished or failed */
-								audio_url?: string | null;
-								/** @description The duration of the audio in seconds, it will be null if the task is not finished or failed */
-								audio_duration?: number | null;
-								/** @description The cover image url of the song, it will be null if the task is not finished or failed */
-								cover_url?: string | null;
-								/** @description The lyrics of the song, it will be null if the task is not finished or failed */
-								lyrics?: string | null;
-							}[];
+							/** @description List of task objects. */
+							result?: components["schemas"]["AISongTaskOutput"][];
 						};
 					};
 				};
@@ -297,77 +274,15 @@ export interface paths {
 				cookie?: never;
 			};
 			/** @description The request body for submitting a new task */
-			requestBody?: {
+			requestBody: {
 				content: {
 					"application/json":
-						| {
-								/**
-								 * @description The action mode, must be `auto`
-								 * @enum {unknown}
-								 */
-								mode: "auto";
-								/**
-								 * @description The model version to use for generation
-								 * @example v4.5
-								 * @enum {unknown}
-								 */
-								model:
-									| "v3.0"
-									| "v3.5"
-									| "v4.0"
-									| "v4.5"
-									| "v4.5-plus";
-								/** @description The prompt parameter is used to control the melody, tune, style, and so on of the entire song. */
-								prompt: string;
-								/**
-								 * @description The instrumental parameter is used to control whether the song is pure music or not.
-								 * @example false
-								 */
-								instrumental?: boolean;
-								/**
-								 * @description Voice gender preference, used to control the gender of the singer.
-								 * @enum {unknown}
-								 */
-								gender?: "male" | "female";
-						  }
-						| {
-								/**
-								 * @description The model version to use for generation
-								 * @example v4.5
-								 * @enum {unknown}
-								 */
-								model:
-									| "v3.0"
-									| "v3.5"
-									| "v4.0"
-									| "v4.5"
-									| "v4.5-plus";
-								/** @description The prompt parameter is used to control the melody, tune, style, and so on of the entire song. */
-								prompt: string;
-								/**
-								 * @description The instrumental parameter is used to control whether the song is pure music or not.
-								 * @example false
-								 */
-								instrumental?: boolean;
-								/**
-								 * @description Voice gender preference, used to control the gender of the singer.
-								 * @enum {unknown}
-								 */
-								gender?: "male" | "female";
-								/**
-								 * @description The action mode, must be `custom`
-								 * @enum {unknown}
-								 */
-								mode: "custom";
-								/** @description The lyrics parameter controls what the song is about, If this field is set to None, then pure music will be generated. */
-								lyrics?: string;
-								/** @description Create a title for the song you're writing. */
-								title?: string;
-						  };
+						| components["schemas"]["AISongSubmitTaskAuto"]
+						| components["schemas"]["AISongSubmitTaskCustom"];
 				};
 			};
 			responses: {
-				/** @description The response of the submit task request */
+				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -384,13 +299,10 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/**
-							 * Generate Task Response
-							 * @description The response of the submit task request
-							 */
+							/** @description The response of the submit task request */
 							result?: {
 								/** @description The list of submitted task ids */
-								task_ids?: string[];
+								task_ids: string[];
 							};
 						};
 					};
@@ -455,21 +367,10 @@ export interface paths {
 				path?: never;
 				cookie?: never;
 			};
+			/** @description Schema for cloning a voice using ElevenLabs API. */
 			requestBody: {
 				content: {
-					"application/json": {
-						/** @description Audio URLs (mp3, wav, ogg, opus, flac, m4a). */
-						audio_urls: string[];
-						/** @description Name of the new voice. */
-						name: string;
-						/** @description If true, remove background noise; may reduce quality if none exists. */
-						remove_background_noise?: boolean;
-						/**
-						 * @description Server id for the target voice bank.
-						 * @enum {unknown}
-						 */
-						server_id: "lovita" | "rose" | "frieren";
-					};
+					"application/json": components["schemas"]["ElevenLabsCloneVoiceInput"];
 				};
 			};
 			responses: {
@@ -490,12 +391,12 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
+							/** @description Clone voice response. */
 							result?: {
 								/** @description Newly created voice ID. */
-								voice_id?: string;
+								voice_id: string;
 								/** @description Newly created voice name. */
-								name?: string;
+								name: string;
 							};
 						};
 					};
@@ -555,7 +456,7 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description Any response from server. */
+				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -573,9 +474,7 @@ export interface paths {
 							 */
 							message: string;
 							/** @description Any response from server. */
-							result?: {
-								[key: string]: unknown;
-							};
+							result?: unknown;
 						};
 					};
 				};
@@ -636,40 +535,10 @@ export interface paths {
 				path?: never;
 				cookie?: never;
 			};
+			/** @description Schema for searching voices using ElevenLabs API. */
 			requestBody: {
 				content: {
-					"application/json": {
-						/**
-						 * @description Filter by category.
-						 * @example professional
-						 * @enum {unknown}
-						 */
-						category?:
-							| "professional"
-							| "premade"
-							| "cloned"
-							| "generated";
-						/**
-						 * @description Search term (name, category, labels).
-						 * @example Maribeth
-						 */
-						query?: string;
-						/**
-						 * @description Page number.
-						 * @example 1
-						 */
-						page?: number;
-						/**
-						 * @description Voices per page (default 10, max 100).
-						 * @example 10
-						 */
-						page_size?: number;
-						/**
-						 * @description Server to search.
-						 * @enum {unknown}
-						 */
-						server_id: "lovita" | "rose" | "frieren";
-					};
+					"application/json": components["schemas"]["ElevenLabsSearchVoiceInput"];
 				};
 			};
 			responses: {
@@ -690,26 +559,12 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
+							/** @description Voice search response. */
 							result?: {
 								/** @description Whether there are more results. */
-								has_more?: boolean;
+								has_more: boolean;
 								/** @description Voices. */
-								voices?: {
-									/** @description ID of the voice. */
-									voice_id?: string;
-									/** @description Name of the voice. */
-									name?: string;
-									/** @description Category of the voice. */
-									category?: string;
-									/**
-									 * @description ISO language code.
-									 * @default UNKNOWN
-									 */
-									language: string;
-									/** @description Labels associated with the voice. */
-									labels?: Record<string, never>;
-								}[];
+								voices: components["schemas"]["ElevenLabsVoice"][];
 							};
 						};
 					};
@@ -769,139 +624,11 @@ export interface paths {
 				path?: never;
 				cookie?: never;
 			};
-			/** @description Converts voice into speech using the specified voice. */
+			/** @description Voice inference payload supporting JSON and multipart/form-data submissions. */
 			requestBody: {
 				content: {
-					"multipart/form-data": {
-						/**
-						 * @description Each server has its own voices; specify the server id.
-						 * @enum {unknown}
-						 */
-						server_id: "lovita" | "rose" | "frieren";
-						/**
-						 * @description Voice ID.
-						 * @example 2vhwPPmYOBQ79F4vkznp
-						 */
-						voice_id: string;
-						/** @description If specified, generation is deterministic (0..4294967295). */
-						seed?: number;
-						/**
-						 * @description Output format of the generated audio.
-						 * @example mp3_44100_128
-						 */
-						output_format?: string;
-						/**
-						 * Voice Settings
-						 * @description Advanced settings for voice generation.
-						 * @example {}
-						 */
-						voice_settings?:
-							| {
-									/** @description Lower = broader emotional range. Higher = more monotone. */
-									stability?: number;
-									/** @description How closely to adhere to the original voice. */
-									similarity_boost?: number;
-									/** @description Amplifies the style of the original speaker (may increase latency). */
-									style?: number;
-									/** @description Boost similarity to the original speaker (slightly higher latency). */
-									use_speaker_boost?: boolean;
-									/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
-									speed?: number;
-							  }
-							| {
-									/** @description Lower = broader emotional range. Higher = more monotone. */
-									stability?: number;
-									/** @description How closely to adhere to the original voice. */
-									similarity_boost?: number;
-									/** @description Amplifies the style of the original speaker (may increase latency). */
-									style?: number;
-									/** @description Boost similarity to the original speaker (slightly higher latency). */
-									use_speaker_boost?: boolean;
-									/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
-									speed?: number;
-							  }
-							| string;
-						/**
-						 * @description Supported STS models.
-						 * @enum {unknown}
-						 */
-						model_id?:
-							| "eleven_english_sts_v2"
-							| "eleven_multilingual_sts_v2";
-						/** @description Use audio isolation to remove background noise. */
-						remove_background_noise?: boolean;
-						/**
-						 * @description For pcm_s16le_16: 16-bit PCM, 16kHz mono, little-endian. Lower latency.
-						 * @enum {unknown}
-						 */
-						file_format?: "pcm_s16le_16" | "other";
-						init_audio: string;
-					};
-					"application/json": {
-						/**
-						 * @description Each server has its own voices; specify the server id.
-						 * @enum {unknown}
-						 */
-						server_id: "lovita" | "rose" | "frieren";
-						/**
-						 * @description Voice ID.
-						 * @example 2vhwPPmYOBQ79F4vkznp
-						 */
-						voice_id: string;
-						/** @description If specified, generation is deterministic (0..4294967295). */
-						seed?: number;
-						/**
-						 * @description Output format of the generated audio.
-						 * @example mp3_44100_128
-						 */
-						output_format?: string;
-						/**
-						 * Voice Settings
-						 * @description Advanced settings for voice generation.
-						 * @example {}
-						 */
-						voice_settings?:
-							| {
-									/** @description Lower = broader emotional range. Higher = more monotone. */
-									stability?: number;
-									/** @description How closely to adhere to the original voice. */
-									similarity_boost?: number;
-									/** @description Amplifies the style of the original speaker (may increase latency). */
-									style?: number;
-									/** @description Boost similarity to the original speaker (slightly higher latency). */
-									use_speaker_boost?: boolean;
-									/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
-									speed?: number;
-							  }
-							| {
-									/** @description Lower = broader emotional range. Higher = more monotone. */
-									stability?: number;
-									/** @description How closely to adhere to the original voice. */
-									similarity_boost?: number;
-									/** @description Amplifies the style of the original speaker (may increase latency). */
-									style?: number;
-									/** @description Boost similarity to the original speaker (slightly higher latency). */
-									use_speaker_boost?: boolean;
-									/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
-									speed?: number;
-							  }
-							| string;
-						/**
-						 * @description Supported STS models.
-						 * @enum {unknown}
-						 */
-						model_id?:
-							| "eleven_english_sts_v2"
-							| "eleven_multilingual_sts_v2";
-						/** @description Use audio isolation to remove background noise. */
-						remove_background_noise?: boolean;
-						/**
-						 * @description For pcm_s16le_16: 16-bit PCM, 16kHz mono, little-endian. Lower latency.
-						 * @enum {unknown}
-						 */
-						file_format?: "pcm_s16le_16" | "other";
-						init_audio: string;
-					};
+					"multipart/form-data": components["schemas"]["ElevenLabsInferenceVoiceInput"];
+					"application/json": components["schemas"]["ElevenLabsInferenceVoiceInput"];
 				};
 			};
 			responses: {
@@ -922,11 +649,7 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
-							result?: {
-								/** @description Audio URL. */
-								audio_url?: string;
-							};
+							result?: components["schemas"]["ElevenLabsInferenceOutput"];
 						};
 					};
 				};
@@ -985,59 +708,10 @@ export interface paths {
 				path?: never;
 				cookie?: never;
 			};
-			/** @description Converts text into speech using the specified voice. */
+			/** @description Schema for ElevenLabs text inference requests. */
 			requestBody: {
 				content: {
-					"application/json": {
-						/**
-						 * @description Each server has its own voices; specify the server id.
-						 * @enum {unknown}
-						 */
-						server_id: "lovita" | "rose" | "frieren";
-						/**
-						 * @description Voice ID.
-						 * @example 2vhwPPmYOBQ79F4vkznp
-						 */
-						voice_id: string;
-						/** @description If specified, generation is deterministic (0..4294967295). */
-						seed?: number;
-						/**
-						 * @description Output format of the generated audio.
-						 * @example mp3_44100_128
-						 */
-						output_format?: string;
-						/**
-						 * Voice Settings
-						 * @description Advanced settings for voice generation.
-						 */
-						voice_settings?: {
-							/** @description Lower = broader emotional range. Higher = more monotone. */
-							stability?: number;
-							/** @description How closely to adhere to the original voice. */
-							similarity_boost?: number;
-							/** @description Amplifies the style of the original speaker (may increase latency). */
-							style?: number;
-							/** @description Boost similarity to the original speaker (slightly higher latency). */
-							use_speaker_boost?: boolean;
-							/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
-							speed?: number;
-						};
-						/** @description Model to use. */
-						model_id?: string;
-						/** @description Text to convert to speech. */
-						text: string;
-						/** @description ISO 639-1 language code. Only Turbo v2.5 / Flash v2.5 support this. */
-						language_code?: string;
-						/** @description Text preceding the current request; helps continuity. */
-						previous_text?: string;
-						/** @description Text following the current request; helps continuity. */
-						next_text?: string;
-						/**
-						 * @description Controls text normalization. Cannot be 'on' for eleven_turbo_v2_5 / eleven_flash_v2_5.
-						 * @enum {unknown}
-						 */
-						apply_text_normalization?: "auto" | "on" | "off";
-					};
+					"application/json": components["schemas"]["ElevenLabsInferenceTextInput"];
 				};
 			};
 			responses: {
@@ -1058,11 +732,7 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
-							result?: {
-								/** @description Audio URL. */
-								audio_url?: string;
-							};
+							result?: components["schemas"]["ElevenLabsInferenceOutput"];
 						};
 					};
 				};
@@ -1121,332 +791,10 @@ export interface paths {
 				path?: never;
 				cookie?: never;
 			};
+			/** @description Chat completion request body. */
 			requestBody: {
 				content: {
-					/**
-					 * @example {
-					 *       "model": "gpt-4.1-mini",
-					 *       "messages": [
-					 *         {
-					 *           "role": "user",
-					 *           "content": "What is the capital of France?"
-					 *         }
-					 *       ]
-					 *     }
-					 */
-					"application/json": {
-						/**
-						 * @description Whether to return the full response or just the message.
-						 *
-						 *     **Note:** if `full_response` is set to `true`, the response will include the full response object, any internal functions (i.e image generator) will not be executed.
-						 * @default false
-						 */
-						full_response?: boolean;
-						/**
-						 * @description The [model](https://platform.openai.com/docs/models) to use for the request. Fallback `gpt-4.1-mini`
-						 * @example gpt-4.1-mini
-						 * @enum {unknown}
-						 */
-						model: "gpt-4.1-mini" | "gpt-4.1-nano";
-						messages: (
-							| {
-									/** @description An optional name for the participant.Provides the model information to differentiate between participants of the same role. */
-									name?: string;
-									/**
-									 * @description The role of the messages author, in this case `assistant`.
-									 * @enum {unknown}
-									 */
-									role?: "assistant";
-									content?:
-										| string
-										| (
-												| {
-														/** @description The text content */
-														text: string;
-														/**
-														 * @description The content type
-														 * @enum {unknown}
-														 */
-														type: "text";
-												  }
-												| {
-														/** @description The refusal message generated by the model. */
-														refusal: string;
-														/** @description The type of the message. */
-														type: string;
-												  }
-										  )[];
-							  }
-							| {
-									/** @description An optional name for the participant.Provides the model information to differentiate between participants of the same role. */
-									name?: string;
-									/**
-									 * @description The role of the messages author, in this case `user`.
-									 * @example user
-									 * @enum {unknown}
-									 */
-									role?: "user";
-									content?:
-										| string
-										| (
-												| {
-														/** @description The text content */
-														text: string;
-														/**
-														 * @description The content type
-														 * @enum {unknown}
-														 */
-														type: "text";
-												  }
-												| {
-														image_url: {
-															url: string;
-															/** @description Specifies the detail level of the image. Learn more in the [Vision guide](https://platform.openai.com/docs/guides/vision#low-or-high-fidelity-image-understanding). */
-															details?: string;
-														};
-														/**
-														 * @description The content type. Always `image_url`.
-														 * @enum {unknown}
-														 */
-														type: "image_url";
-												  }
-												| {
-														/**
-														 * Audio content
-														 * @description Audio content, used when passing the audio to the model.
-														 */
-														input_audio: {
-															/** @description Base64 encoded audio data. */
-															data: string;
-															/**
-															 * @description The format of the encoded audio data. Currently supports `wav` and `mp3`.
-															 * @enum {unknown}
-															 */
-															format:
-																| "wav"
-																| "mp3";
-														};
-														/**
-														 * @description The type of the content part. Always `input_audio`.
-														 * @enum {unknown}
-														 */
-														type: "input_audio";
-												  }
-												| {
-														/**
-														 * File content
-														 * @description File content, used when passing the file to the model.
-														 */
-														file: {
-															/** @description The base64 encoded file data, used when passing the file to the model as a string. */
-															file_data: string;
-															/** @description The ID of an uploaded file to use as input. */
-															file_id?: string;
-															/** @description The name of the file, used when passing the file to the model as a string. */
-															file_name?: string;
-														};
-														/**
-														 * @description The type of the content part. Always `file`.
-														 * @enum {unknown}
-														 */
-														type: "file";
-												  }
-										  )[];
-							  }
-							| {
-									/** @description An optional name for the participant.Provides the model information to differentiate between participants of the same role. */
-									name?: string;
-									/**
-									 * @description The role of the messages author, in this case `system`.
-									 * @enum {unknown}
-									 */
-									role?: "system";
-									/** @description The content of the message. */
-									content?:
-										| string
-										| {
-												/** @description The text content */
-												text: string;
-												/**
-												 * @description The content type
-												 * @enum {unknown}
-												 */
-												type: "text";
-										  }[];
-							  }
-							| {
-									/** @description An optional name for the participant.Provides the model information to differentiate between participants of the same role. */
-									name?: string;
-									/**
-									 * @description The role of the messages author, in this case `tool`.
-									 * @enum {unknown}
-									 */
-									role?: "tool";
-									/** @description The content of the message. */
-									content?:
-										| string
-										| {
-												/** @description The text content */
-												text: string;
-												/**
-												 * @description The content type
-												 * @enum {unknown}
-												 */
-												type: "text";
-										  }[];
-							  }
-							| {
-									/**
-									 * @description The role of the function. Always `function`.
-									 * @enum {unknown}
-									 */
-									role: "function";
-									/** @description The name of the function to call. */
-									name: string;
-									/** @description The contents of the `function` message. */
-									content: string;
-							  }
-							| {
-									/** @description An optional name for the participant.Provides the model information to differentiate between participants of the same role. */
-									name?: string;
-									/**
-									 * @description The role of the messages author, in this case `developer`.
-									 * @enum {unknown}
-									 */
-									role?: "developer";
-									/** @description The content of the message. */
-									content?:
-										| string
-										| {
-												/** @description The text content */
-												text: string;
-												/**
-												 * @description The content type
-												 * @enum {unknown}
-												 */
-												type: "text";
-										  }[];
-							  }
-						)[];
-						/** @description Controls the randomness of the model's output. Lower values make the output more deterministic, while higher values make it more random. */
-						temperature?: number;
-						/**
-						 * @deprecated
-						 * @description Deprecated in favor of tools.
-						 *
-						 *     A list of functions the model may generate JSON inputs for.
-						 */
-						functions?: {
-							/**
-							 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
-							 * @example foo_bar
-							 */
-							name: string;
-							/** @description A description of what the function does, used by the model to choose when and how to call the function. */
-							description?: string;
-							/** @description The parameters the functions accepts, described as a JSON Schema object. See the [guide](https://platform.openai.com/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. */
-							parameters?: Record<string, never>;
-						}[];
-						/**
-						 * @deprecated
-						 * @description Controls which (if any) function is called by the model.
-						 *
-						 *     `auto` means the model can pick between generating a message or calling a function.
-						 *     `none` means the model will not call a function and instead generates a message.
-						 * @enum {unknown}
-						 */
-						function_call?: "auto" | "none";
-						/** @description An object specifying the format that the model must output. */
-						response_format?:
-							| {
-									/** @enum {unknown} */
-									type?: "text" | "json_object";
-							  }
-							| {
-									/** @enum {unknown} */
-									type?: "json_schema";
-									schema?: {
-										/**
-										 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
-										 * @example foo_bar
-										 */
-										name: string;
-										/** @description A description of what the response format is for, used by the model to determine how to respond in the format. */
-										description?: string;
-										/** @description The schema for the response format, described as a JSON Schema object. Learn how to build JSON schemas [here](https://json-schema.org/). */
-										schema?: Record<string, never>;
-										/** @description Whether to enable strict schema adherence when generating the output. If set to true, the model will always follow the exact schema defined in the schema field. Only a subset of JSON Schema is supported when strict is true. To learn more, read the [Structured Outputs guide](https://platform.openai.com/docs/guides/structured-outputs). */
-										strict?: boolean;
-									};
-							  };
-						/**
-						 * @description If set to `true`, the model response data will be streamed to the client as it is generated using server-sent events. See the Streaming section below for more information, along with the streaming responses guide for more information on how to handle the streaming events.
-						 *
-						 *     **Note:** Refer to the [Streaming responses guide](https://platform.openai.com/docs/guides/streaming-responses?api-mode=chat) for more information on how to handle the streaming events.
-						 */
-						stream?: boolean;
-						/**
-						 * @description `none` means the model will not call any tool and instead generates a message.
-						 *     `auto` means the model can pick between generating a message or calling one or more tools.
-						 *     `required` means the model must call one or more tools.
-						 * @enum {unknown}
-						 */
-						tool_choice?: "none" | "auto" | "required";
-						/** @description A list of tools the model may call. */
-						tools?: {
-							/**
-							 * @description The type of the tool. Currently, only `function` is supported.
-							 * @default function
-							 * @enum {unknown}
-							 */
-							type: "function";
-							function?: {
-								/**
-								 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
-								 * @example foo_bar
-								 */
-								name: string;
-								/** @description A description of what the function does, used by the model to choose when and how to call the function. */
-								description?: string;
-								/** @description The parameters the functions accepts, described as a JSON Schema object. See the [guide](https://platform.openai.com/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. */
-								parameters?: Record<string, never>;
-								/** @description Whether to enable `strict` schema adherence when generating the function call. If set to `true`, the model will follow the exact schema defined in the parameters field. Only a subset of JSON Schema is supported when `strict` is `true`. Learn more about Structured Outputs in the [function calling guide](https://platform.openai.com/docs/api-reference/chat/docs/guides/function-calling). */
-								strict?: boolean;
-							};
-						}[];
-						/**
-						 * Web search options
-						 * @description Options for the web search tool. Learn more about the [web search tool](https://platform.openai.com/docs/guides/tools-web-search?api-mode=chat).
-						 */
-						web_search_options?: {
-							/**
-							 * @description High level guidance for the amount of context window space to use for the search.
-							 * @enum {unknown}
-							 */
-							search_context_size?: "low" | "medium" | "high";
-							user_location?: null | {
-								/**
-								 * @description The type of location approximation. Always `approximate`.
-								 * @enum {unknown}
-								 */
-								type: "approximate";
-								/**
-								 * Approximate location
-								 * @description Approximate location parameters for the search.
-								 */
-								approximate: {
-									/** @description Free text input for the city of the user, e.g. `San Francisco`. */
-									city?: string;
-									/** @description The two-letter [ISO country code](https://en.wikipedia.org/wiki/ISO_3166-1) of the user, e.g. `US`. */
-									country?: string;
-									/** @description Free text input for the region of the user, e.g. `CA` or `California`. */
-									region?: string;
-									/** @description The [IANA timezone](https://timeapi.io/documentation/iana-timezones) of the user, e.g. `America/Los_Angeles`. */
-									timezone?: string;
-								};
-							};
-						};
-					};
+					"application/json": components["schemas"]["GPTOpenAIChatCompletionRequest"];
 				};
 			};
 			responses: {
@@ -1467,230 +815,81 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
+							/** @description Chat response payload. */
 							result?:
 								| {
 										/** @description The model used to generate the response. */
-										model?: string;
-										/** @description The message generated by the model. */
-										message?: {
+										model: string;
+										/**
+										 * Model Message
+										 * @description The message generated by the model.
+										 */
+										message: {
 											/**
 											 * @description The role of the message author.
 											 * @example assistant
 											 */
-											role?: string;
+											role: string;
 											/**
 											 * @description The content of the message.
 											 * @example The capital of France is Paris.
 											 */
-											content?: string;
-											/**
-											 * @description The function model wants to call, if any.
-											 * @example null
-											 */
+											content: string;
 											function_call?: {
+												/** @description The arguments to pass to the function, as a JSON string. */
+												arguments?: string;
 												/**
 												 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
 												 * @example foo_bar
 												 */
 												name: string;
-												/**
-												 * @description The arguments to pass to the function, as a JSON string.
-												 * @example {"foo":"bar"}
-												 */
-												arguments?: string;
 											} | null;
-											/**
-											 * @description The tool model wants to call, if any.
-											 * @example null
-											 */
 											tool_calls?: {
-												/**
-												 * @description The ID of the tool call.
-												 * @example 123
-												 */
+												/** @description The ID of the tool call. */
 												id?: string;
 												/**
 												 * @description The type of the tool call.
-												 * @example function
-												 * @enum {unknown}
+												 * @enum {string}
 												 */
-												type?: "function";
-												function?: {
+												type: "function";
+												/**
+												 * Function Call
+												 * @description The function model wants to call, if any.
+												 */
+												function: {
+													/** @description The arguments to pass to the function, as a JSON string. */
+													arguments?: string;
 													/**
 													 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
 													 * @example foo_bar
 													 */
 													name: string;
-													/**
-													 * @description The arguments to pass to the function, as a JSON string.
-													 * @example {"foo":"bar"}
-													 */
-													arguments?: string;
 												};
 											} | null;
 											/** @description `web_search` annotations. */
 											annotations?: {
 												/**
 												 * @description The type of the URL citation. Always `url_citation`.
-												 * @enum {unknown}
+												 * @enum {string}
 												 */
-												type?: "url_citation";
-												/**
-												 * URL citation
-												 * @description A URL citation when using web search.
-												 */
-												url_citation?: {
+												type: "url_citation";
+												/** @description A URL citation when using web search. */
+												url_citation: {
 													/** @description The index of the last character of the URL citation in the message. */
-													end_index?: number;
+													end_index: number;
 													/** @description The index of the first character of the URL citation in the message. */
-													start_index?: number;
+													start_index: number;
 													/** @description The title of the URL citation. */
-													title?: string;
+													title: string;
 													/** @description The URL of the citation. */
-													url?: string;
+													url: string;
 												};
 											}[];
-											/**
-											 * @description An array of base64 encoded images, if the model generated any.
-											 * @example null
-											 */
+											/** @description An array of base64 encoded images, if the model generated any. */
 											images?: (string | null)[];
 										};
 								  }
-								| {
-										/** @description The ID of the response. */
-										id?: string;
-										/** @description The type of the response. */
-										object?: string;
-										/** @description The time the response was created. */
-										created?: number;
-										/** @description The model used to generate the response. */
-										model?: string;
-										/**
-										 * Choices
-										 * @description The choices returned by the model. Each choice contains a message and a finish reason.
-										 */
-										choices?: (
-											| {
-													/** @description The index of the choice. */
-													index?: number;
-													/** @description The message generated by the model. */
-													message?:
-														| {
-																/**
-																 * @description The role of the message author.
-																 * @example assistant
-																 */
-																role?: string;
-																/**
-																 * @description The content of the message.
-																 * @example The capital of France is Paris.
-																 */
-																content?: string;
-																/**
-																 * @description The function model wants to call, if any.
-																 * @example null
-																 */
-																function_call?: {
-																	/**
-																	 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
-																	 * @example foo_bar
-																	 */
-																	name: string;
-																	/**
-																	 * @description The arguments to pass to the function, as a JSON string.
-																	 * @example {"foo":"bar"}
-																	 */
-																	arguments?: string;
-																} | null;
-																/**
-																 * @description The tool model wants to call, if any.
-																 * @example null
-																 */
-																tool_calls?: {
-																	/**
-																	 * @description The ID of the tool call.
-																	 * @example 123
-																	 */
-																	id?: string;
-																	/**
-																	 * @description The type of the tool call.
-																	 * @example function
-																	 * @enum {unknown}
-																	 */
-																	type?: "function";
-																	function?: {
-																		/**
-																		 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
-																		 * @example foo_bar
-																		 */
-																		name: string;
-																		/**
-																		 * @description The arguments to pass to the function, as a JSON string.
-																		 * @example {"foo":"bar"}
-																		 */
-																		arguments?: string;
-																	};
-																} | null;
-																/** @description `web_search` annotations. */
-																annotations?: {
-																	/**
-																	 * @description The type of the URL citation. Always `url_citation`.
-																	 * @enum {unknown}
-																	 */
-																	type?: "url_citation";
-																	/**
-																	 * URL citation
-																	 * @description A URL citation when using web search.
-																	 */
-																	url_citation?: {
-																		/** @description The index of the last character of the URL citation in the message. */
-																		end_index?: number;
-																		/** @description The index of the first character of the URL citation in the message. */
-																		start_index?: number;
-																		/** @description The title of the URL citation. */
-																		title?: string;
-																		/** @description The URL of the citation. */
-																		url?: string;
-																	};
-																}[];
-																/**
-																 * @description An array of base64 encoded images, if the model generated any.
-																 * @example null
-																 */
-																images?: (
-																	| string
-																	| null
-																)[];
-														  }
-														| Record<string, never>;
-													/** @description The reason the choice was finished. */
-													finish_reason?: string;
-											  }
-											| Record<string, never>
-										)[];
-										usage?: {
-											/** @description The number of tokens used in the prompt. */
-											prompt_tokens?: number;
-											/** @description The number of tokens used to generate the completion. */
-											completion_tokens?: number;
-											/** @description The total number of tokens used. */
-											total_tokens?: number;
-											/** @description The number of tokens used in the prompt, including cached and audio tokens. */
-											prompt_tokens_details?: {
-												cached_tokens?: number;
-												audio_tokens?: number;
-											};
-											/** @description The number of tokens used to generate the completion, including reasoning, audio, accepted, and rejected prediction tokens. */
-											completion_tokens_details?: {
-												reasoning_tokens?: number;
-												audio_tokens?: number;
-												accepted_prediction_tokens?: number;
-												rejected_prediction_tokens?: number;
-											};
-										};
-								  };
+								| components["schemas"]["GPTOpenAIChatCompletionResponse"];
 						};
 					};
 				};
@@ -1712,14 +911,12 @@ export interface paths {
 						"application/json": components["schemas"]["ResponseSchema"];
 					};
 				};
-				/** @description Internal server error */
+				/** @description Default Response */
 				500: {
 					headers: {
 						[name: string]: unknown;
 					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
+					content?: never;
 				};
 			};
 		};
@@ -1749,26 +946,33 @@ export interface paths {
 				path?: never;
 				cookie?: never;
 			};
-			requestBody?: {
+			requestBody: {
 				content: {
 					"application/json": {
-						/** @default gpt-3.5-turbo */
-						model?: string;
-						messages?: {
+						/**
+						 * @description The model to use for the request. Fallback to fastest model available.
+						 * @enum {string}
+						 */
+						model:
+							| "gpt-3.5-turbo"
+							| "gpt-4o-mini"
+							| "gpt-4.1-mini"
+							| "gpt-4.1"
+							| "gpt-5-mini"
+							| "gpt-5"
+							| "gpt-5-codex"
+							| "x-ai/grok-code-fast-1";
+						messages: {
 							/**
-							 * @example user
-							 * @enum {string}
+							 * @description The role of the message author.
+							 * @example assistant
 							 */
-							role:
-								| "assistant"
-								| "user"
-								| "system"
-								| "tool"
-								| "function";
-							/** @example Define love in simple way */
-							content: string | Record<string, never>;
-							/** @example Frieren */
-							name?: string;
+							role: string;
+							/**
+							 * @description The content of the message.
+							 * @example The capital of France is Paris.
+							 */
+							content: string;
 						}[];
 					};
 				};
@@ -1791,33 +995,31 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
 							result?: {
-								model?: string;
-								message?: {
-									/** @enum {string} */
-									role?:
-										| "assistant"
-										| "user"
-										| "function"
-										| "tool";
+								/** @description The model used to generate the response. */
+								model: string;
+								message: {
 									/**
-									 * @description The message content
-									 * @default null
+									 * @description The role of the message author.
+									 * @example assistant
 									 */
-									content: string | null;
+									role: string;
 									/**
-									 * @description The generated images base64
-									 * @default null
+									 * @description The content of the message.
+									 * @example The capital of France is Paris.
 									 */
-									images: null | string[];
-									/** @description When the model requests a function call */
+									content: string;
 									function_call?: {
-										/** @description The function name */
-										name?: string;
-										/** @description The function arguments */
+										/** @description The arguments to pass to the function, as a JSON string. */
 										arguments?: string;
-									};
+										/**
+										 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
+										 * @example foo_bar
+										 */
+										name: string;
+									} | null;
+									/** @description An array of base64 encoded images, if the model generated any. */
+									images?: (string | null)[];
 								};
 							};
 						};
@@ -1883,16 +1085,13 @@ export interface paths {
 			requestBody: {
 				content: {
 					"application/json": {
-						/** @description The image to be processed. It can be a URL or base64 encoded data. */
-						init_image: string;
-						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
-						sync?: boolean;
 						/**
-						 * @description Color string, such as `#FF0000`.Will throw an error if the color string is invalid
-						 * @example #9c1e8f
+						 * Color
+						 * @description Color string, such as `#FF0000`. Supports HEX, RGB, and common color names.
 						 */
-						color?: string;
+						color: string;
 						/**
+						 * Clothing Category
 						 * @description The type of clothes to be changed.
 						 *
 						 *      - `None` No specific clothing type selected.
@@ -1902,10 +1101,9 @@ export interface paths {
 						 *     - `coat` Coat color change.
 						 *     - `up-down` Color change for both top and bottom.
 						 *     - `jumpsuit` One-piece suit color change.
-						 * @default None
 						 * @enum {string}
 						 */
-						category?:
+						category:
 							| "None"
 							| "dress"
 							| "up"
@@ -1913,6 +1111,17 @@ export interface paths {
 							| "coat"
 							| "up-down"
 							| "jumpsuit";
+						/**
+						 * Initial Image
+						 * @description The initial image to be processed.
+						 */
+						init_image: string;
+						/**
+						 * Synchronous Processing
+						 * @description Whether to process the task synchronously. Defaults to false.
+						 * @default false
+						 */
+						sync?: boolean;
 					};
 				};
 			};
@@ -1934,20 +1143,27 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/**
-							 * Response
-							 * @description Result of the request
-							 */
 							result?: {
-								/** @description Unique identifier for the submitted processing task. */
-								task_id?: string;
 								/**
+								 * Status
 								 * @description Current processing state of the task.
 								 * @enum {string}
 								 */
-								status?: "processing" | "completed" | "error";
-								images?: (string | null)[];
-								/** @description Additional task-related metadata, if any. */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+								/**
+								 * Metadata
+								 * @description Additional task-related metadata, if any
+								 */
 								metadata?: Record<string, never>;
 							};
 						};
@@ -2015,9 +1231,16 @@ export interface paths {
 			requestBody: {
 				content: {
 					"application/json": {
-						/** @description The image to be processed. It can be a URL or base64 encoded data. */
+						/**
+						 * Initial Image
+						 * @description The initial image to be processed.
+						 */
 						init_image: string;
-						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
+						/**
+						 * Synchronous Processing
+						 * @description Whether to process the task synchronously. Defaults to false.
+						 * @default false
+						 */
 						sync?: boolean;
 					};
 				};
@@ -2040,24 +1263,18 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/**
-							 * Cloth Segmentation Response
-							 * @description Result of the request
-							 */
 							result?: {
-								/** @description Unique identifier for the submitted processing task. */
-								task_id?: string;
 								/**
-								 * @description Current processing state of the task.
-								 * @enum {string}
+								 * Segmentation Images
+								 * @description The Segmentation mask images urls
 								 */
-								status?: "processing" | "completed" | "error";
-								/** @description Additional task-related metadata, if any. */
-								metadata?: Record<string, never>;
-								/** @description The Segmentation mask images urls */
-								images?: {
-									/** @enum {string} */
-									label?:
+								images: {
+									/**
+									 * Label
+									 * @description The label of the clothing segment.
+									 * @enum {string}
+									 */
+									label:
 										| "background"
 										| "headpiece"
 										| "hair"
@@ -2077,9 +1294,23 @@ export interface paths {
 										| "accessories"
 										| "jumpsuit"
 										| "mannequin_stand";
-									/** @description The Segmentation mask image url */
-									url?: string;
+									/**
+									 * URL
+									 * @description The Segmentation mask image url
+									 */
+									url: string;
 								}[];
+								/**
+								 * Initial Image
+								 * @description The initial image to be processed.
+								 */
+								init_image: string;
+								/**
+								 * Synchronous Processing
+								 * @description Whether to process the task synchronously. Defaults to false.
+								 * @default false
+								 */
+								sync: boolean;
 							};
 						};
 					};
@@ -2142,15 +1373,12 @@ export interface paths {
 			requestBody: {
 				content: {
 					"application/json": {
-						/** @description The image to be processed. It can be a URL or base64 encoded data. */
-						init_image: string;
-						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
-						sync?: boolean;
 						/**
+						 * Style ID
 						 * @description The style ID to be applied to the image
 						 * @enum {string}
 						 */
-						style_id?:
+						style_id:
 							| "animal_fest"
 							| "old"
 							| "doll"
@@ -2241,6 +1469,17 @@ export interface paths {
 							| "kartun_dress_up"
 							| "cyberpunk"
 							| "dora";
+						/**
+						 * Initial Image
+						 * @description The initial image to be processed.
+						 */
+						init_image: string;
+						/**
+						 * Synchronous Processing
+						 * @description Whether to process the task synchronously. Defaults to false.
+						 * @default false
+						 */
+						sync?: boolean;
 					};
 				};
 			};
@@ -2262,20 +1501,27 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/**
-							 * DifferentMe Response
-							 * @description Result of the request
-							 */
 							result?: {
-								/** @description Unique identifier for the submitted processing task. */
-								task_id?: string;
 								/**
+								 * Status
 								 * @description Current processing state of the task.
 								 * @enum {string}
 								 */
-								status?: "processing" | "completed" | "error";
-								images?: (string | null)[];
-								/** @description Additional task-related metadata, if any. */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+								/**
+								 * Metadata
+								 * @description Additional task-related metadata, if any
+								 */
 								metadata?: Record<string, never>;
 							};
 						};
@@ -2342,16 +1588,9 @@ export interface paths {
 			requestBody: {
 				content: {
 					"application/json": {
-						/** @description The image to be processed. It can be a URL or base64 encoded data. */
 						init_image: string;
-						/**
-						 * @description Enhancement mode:
-						 *     - `1`: General image enhancement
-						 *     - `2`: Optimized for portraits (faces)
-						 *     - `3`: Optimized for images containing text
-						 * @default 2
-						 */
-						type?: number;
+						/** @default 2 */
+						type?: 1 | 2 | 3;
 					};
 				};
 			};
@@ -2373,10 +1612,9 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
 							result?: {
 								/** @description A list of processed image URLs */
-								images?: string[];
+								images: ((string | string)[] | null)[];
 							};
 						};
 					};
@@ -2441,21 +1679,29 @@ export interface paths {
 			requestBody: {
 				content: {
 					"application/json": {
-						/** @description The image to be processed. It can be a URL or base64 encoded data. */
-						init_image: string;
-						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
-						sync?: boolean;
 						/**
-						 * @description The expression to be applied to the image.
+						 * Expression
+						 * @description The expression to be applied to the image
 						 * @enum {string}
 						 */
-						expression?:
+						expression:
 							| "laugh"
 							| "smile"
 							| "pose_ps"
 							| "cool"
 							| "cspv"
 							| "dimples";
+						/**
+						 * Initial Image
+						 * @description The initial image to be processed.
+						 */
+						init_image: string;
+						/**
+						 * Synchronous Processing
+						 * @description Whether to process the task synchronously. Defaults to false.
+						 * @default false
+						 */
+						sync?: boolean;
 					};
 				};
 			};
@@ -2477,20 +1723,27 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/**
-							 * AI Expression Response
-							 * @description Result of the request
-							 */
 							result?: {
-								/** @description Unique identifier for the submitted processing task. */
-								task_id?: string;
 								/**
+								 * Status
 								 * @description Current processing state of the task.
 								 * @enum {string}
 								 */
-								status?: "processing" | "completed" | "error";
-								images?: (string | null)[];
-								/** @description Additional task-related metadata, if any. */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+								/**
+								 * Metadata
+								 * @description Additional task-related metadata, if any
+								 */
 								metadata?: Record<string, never>;
 							};
 						};
@@ -2549,7 +1802,7 @@ export interface paths {
 		get: {
 			parameters: {
 				query: {
-					/** @description The task ID of the request. */
+					/** @description The unique identifier for the task to retrieve */
 					task_id: string;
 				};
 				header?: never;
@@ -2575,69 +1828,29 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/**
-							 * Task Response
-							 * @description Result of the request
-							 */
-							result?:
-								| {
-										/** @description Unique identifier for the submitted processing task. */
-										task_id?: string;
-										/**
-										 * @description Current processing state of the task.
-										 * @enum {string}
-										 */
-										status?:
-											| "processing"
-											| "completed"
-											| "error";
-										images?: (string | null)[];
-										/** @description Additional task-related metadata, if any. */
-										metadata?: Record<string, never>;
-								  }
-								| {
-										/** @description Unique identifier for the submitted processing task. */
-										task_id?: string;
-										/**
-										 * @description Current processing state of the task.
-										 * @enum {string}
-										 */
-										status?:
-											| "processing"
-											| "completed"
-											| "error";
-										/** @description Additional task-related metadata, if any. */
-										metadata?: Record<string, never>;
-										/** @description The Segmentation mask images urls */
-										images?: {
-											/**
-											 * @description The label of the segmentation mask
-											 * @enum {string}
-											 */
-											label?:
-												| "background"
-												| "headpiece"
-												| "hair"
-												| "gloves"
-												| "glasses"
-												| "top"
-												| "dress"
-												| "coat"
-												| "socks"
-												| "pants"
-												| "skin"
-												| "scarf etc."
-												| "skirt"
-												| "face"
-												| "shoes"
-												| "bag"
-												| "accessories"
-												| "jumpsuit"
-												| "mannequin_stand";
-											/** @description The Segmentation mask image url */
-											url?: string;
-										}[];
-								  };
+							result?: {
+								/**
+								 * Status
+								 * @description Current processing state of the task.
+								 * @enum {string}
+								 */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+								/**
+								 * Metadata
+								 * @description Additional task-related metadata, if any
+								 */
+								metadata?: Record<string, never>;
+							};
 						};
 					};
 				};
@@ -2703,15 +1916,12 @@ export interface paths {
 			requestBody: {
 				content: {
 					"application/json": {
-						/** @description The image to be processed. It can be a URL or base64 encoded data. */
-						init_image: string;
-						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
-						sync?: boolean;
 						/**
+						 * Hair Style ID
 						 * @description Short code for the hairstyle to be applied.
 						 * @enum {string}
 						 */
-						hair_id?:
+						hair_id:
 							| "straight_shoulder-length"
 							| "wavy_shoulder-length"
 							| "long_wavy"
@@ -2739,6 +1949,17 @@ export interface paths {
 							| "sleek_ponytail"
 							| "half_up_half_down"
 							| "wavy_medium-length";
+						/**
+						 * Initial Image
+						 * @description The initial image to be processed.
+						 */
+						init_image: string;
+						/**
+						 * Synchronous Processing
+						 * @description Whether to process the task synchronously. Defaults to false.
+						 * @default false
+						 */
+						sync?: boolean;
 					};
 				};
 			};
@@ -2760,20 +1981,27 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/**
-							 * Hair Transfer Response
-							 * @description Result of the request
-							 */
 							result?: {
-								/** @description Unique identifier for the submitted processing task. */
-								task_id?: string;
 								/**
+								 * Status
 								 * @description Current processing state of the task.
 								 * @enum {string}
 								 */
-								status?: "processing" | "completed" | "error";
-								images?: (string | null)[];
-								/** @description Additional task-related metadata, if any. */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+								/**
+								 * Metadata
+								 * @description Additional task-related metadata, if any
+								 */
 								metadata?: Record<string, never>;
 							};
 						};
@@ -2840,21 +2068,28 @@ export interface paths {
 			requestBody: {
 				content: {
 					"application/json": {
-						/** @description The image to be processed. It can be a URL or base64 encoded data. */
-						init_image: string;
-						/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
-						sync?: boolean;
 						/**
+						 * Restoration Mode
 						 * @description The restoration quality level.
 						 *     Options: `HD`, `UHD`, `NG_UHD`.
 						 *
 						 *     - `HD` High Definition mode.
 						 *     - `UHD` Ultra High Definition mode.
 						 *     - `NG_UHD` Next Generation Ultra High Definition mode. Recommended for high-quality restoration.
-						 * @default HD
-						 * @enum {unknown}
+						 * @enum {string}
 						 */
-						restoration_mode?: "HD" | "UHD" | "NG_UHD";
+						restoration_mode: "HD" | "UHD" | "NG_UHD";
+						/**
+						 * Initial Image
+						 * @description The initial image to be processed.
+						 */
+						init_image: string;
+						/**
+						 * Synchronous Processing
+						 * @description Whether to process the task synchronously. Defaults to false.
+						 * @default false
+						 */
+						sync?: boolean;
 					};
 				};
 			};
@@ -2876,197 +2111,27 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/**
-							 * Image Restoration Response
-							 * @description Result of the request
-							 */
 							result?: {
-								/** @description Unique identifier for the submitted processing task. */
-								task_id?: string;
 								/**
+								 * Status
 								 * @description Current processing state of the task.
 								 * @enum {string}
 								 */
-								status?: "processing" | "completed" | "error";
-								images?: (string | null)[];
-								/** @description Additional task-related metadata, if any. */
-								metadata?: Record<string, never>;
-							};
-						};
-					};
-				};
-				/** @description Invalid request error */
-				400: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Authorization error */
-				401: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Internal server error */
-				500: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-			};
-		};
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/image/outpainting": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Outpainting
-		 * @description **Outpainting** is a technique used to extend the boundaries of an image by generating new content that seamlessly blends with the existing image.
-		 */
-		post: {
-			parameters: {
-				query?: never;
-				header?: never;
-				path?: never;
-				cookie?: never;
-			};
-			requestBody?: {
-				content: {
-					"application/json":
-						| {
-								/** @description The image to be processed. It can be a URL or base64 encoded data. */
-								init_image: string;
-								/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
-								sync?: boolean;
-								/** @description Additional semantic guidance prompts for the algorithm, in English, separated by `,` (comma). */
-								extra_prompt?: string;
+								status: "processing" | "completed" | "error";
 								/**
-								 * @description Expansion mode - currently only supports `separate` for single-frame expansion.
-								 * @enum {unknown}
+								 * Task ID
+								 * @description The unique identifier for the task
 								 */
-								expand_mode?: "separate";
+								task_id: string;
 								/**
-								 * @description **Uniform Expansion Ratio**
-								 *
-								 *     Apply consistent expansion across all directions using a single ratio value (0.0-1.0).
-								 *
-								 *     For example:
-								 *     - 0.1 = 110% expansion in all directions
-								 *     - 0.5 = 150% expansion in all directions
-								 *
-								 *     **Note:** Mutually exclusive with `free_expand_ratio` and `free_expand_pixel`. Only one expansion method can be specified.
-								 * @example 0.125
+								 * Generated Images
+								 * @description Array of generated images.
 								 */
-								expand_ratio?: number;
-						  }
-						| {
-								/** @description The image to be processed. It can be a URL or base64 encoded data. */
-								init_image: string;
-								/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
-								sync?: boolean;
-								/** @description Additional semantic guidance prompts for the algorithm, in English, separated by `,` (comma). */
-								extra_prompt?: string;
+								images: (string | string)[] | null;
 								/**
-								 * @description Expansion mode - currently only supports `separate` for single-frame expansion.
-								 * @enum {unknown}
+								 * Metadata
+								 * @description Additional task-related metadata, if any
 								 */
-								expand_mode?: "separate";
-								/**
-								 * Pixel Expansion
-								 * @description Set different expansion pixel values for each side of the image using integer values (in pixels).
-								 */
-								free_expand_pixel?: {
-									/** @description The number of pixels expanded to the left, 100 means 100 pixels to the left */
-									left?: number;
-									/** @description The number of pixels expanded to the right, 100 means 100 pixels to the right */
-									right?: number;
-									/** @description The number of pixels scaled up, 100 means 100 pixels scaled up */
-									top?: number;
-									/** @description The number of pixels that are scaled down, 100 means 100 pixels down */
-									bottom?: number;
-								};
-						  }
-						| {
-								/** @description The image to be processed. It can be a URL or base64 encoded data. */
-								init_image: string;
-								/** @description Whether to process the image synchronously. If `true`, the request will wait for the processing to complete or timeout. If `false`, the request will return immediately with a task ID. */
-								sync?: boolean;
-								/** @description Additional semantic guidance prompts for the algorithm, in English, separated by `,` (comma). */
-								extra_prompt?: string;
-								/**
-								 * @description Expansion mode - currently only supports `separate` for single-frame expansion.
-								 * @enum {unknown}
-								 */
-								expand_mode?: "separate";
-								/**
-								 * Free Expansion
-								 * @description Set different expansion ratios for each side of the image using values between 0.0 and 1.0.
-								 */
-								free_expand_ratio?: {
-									/** @description The ratio of 0.1 to the left is 110% of the width of the original image to the left. */
-									left?: number;
-									/** @description The ratio of 0.1 to the right indicates 110% of the width of the original image to the right. */
-									right?: number;
-									/** @description The scale of 0.1 indicates that the original image is 110% of the height of the original image. */
-									top?: number;
-									/** @description The scale of the downward expansion, 0.1 indicates that the original image is 110% of the height of the downward expansion. */
-									bottom?: number;
-								};
-						  };
-				};
-			};
-			responses: {
-				/** @description Default Response */
-				200: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": {
-							/**
-							 * @description Status of the request
-							 * @default true
-							 */
-							status: boolean;
-							/**
-							 * @description Additional message
-							 * @default success
-							 */
-							message: string;
-							/**
-							 * Outpainting Response
-							 * @description Result of the request
-							 */
-							result?: {
-								/** @description Unique identifier for the submitted processing task. */
-								task_id?: string;
-								/**
-								 * @description Current processing state of the task.
-								 * @enum {string}
-								 */
-								status?: "processing" | "completed" | "error";
-								images?: (string | null)[];
-								/** @description Additional task-related metadata, if any. */
 								metadata?: Record<string, never>;
 							};
 						};
@@ -3133,7 +2198,6 @@ export interface paths {
 			requestBody: {
 				content: {
 					"application/json": {
-						/** @description The image to be processed. It can be a URL or base64 encoded data. */
 						init_image: string;
 					};
 				};
@@ -3156,10 +2220,9 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
 							result?: {
 								/** @description A list of processed image URLs */
-								images?: string[];
+								images: ((string | string)[] | null)[];
 							};
 						};
 					};
@@ -3226,66 +2289,9 @@ export interface paths {
 			requestBody: {
 				content: {
 					"application/json": {
-						/** @description The image to be processed. It can be a URL or base64 encoded data. */
+						/** @description The initial image to create the task from. */
 						init_image: string;
-						/**
-						 * AI Pipeline
-						 * @description Extra AI pipeline parameters
-						 */
-						pipeline?: {
-							/**
-							 * @description Apply bokeh effect to the image. This is a special effect that blurs the background and keeps the subject in focus.
-							 * @default background_blur_low
-							 * @example background_blur_medium
-							 * @enum {string}
-							 */
-							bokeh?:
-								| "background_blur_low"
-								| "background_blur_medium"
-								| "background_blur_high";
-							/**
-							 * @description Enhance the colors of the image. This can be used to make the image more vibrant, colorful, etc.
-							 * @default prism-blend
-							 * @example orange-teal_v2
-							 * @enum {string}
-							 */
-							color_enhance?:
-								| "prism-blend"
-								| "prism-expert-a"
-								| "prism-expert-c"
-								| "muted"
-								| "orange-teal"
-								| "silky"
-								| "lit_soft_warm"
-								| "orange-teal_v2";
-							/**
-							 * @description Enhance the background of the image. Add more details to the background.
-							 * @default shiba-strong-tensorrt
-							 * @example shiba-strong-tensorrt
-							 * @enum {string}
-							 */
-							background_enhance?:
-								| "shiba-strong-tensorrt"
-								| "rhino-tensorrt"
-								| "upsampler-bicubic";
-							/**
-							 * @description Enhance the face of the person in the image. This can be used to make the face look younger, smoother, etc.
-							 * @default pinko_bigger_dataset-style
-							 * @example movie-style
-							 * @enum {string}
-							 */
-							face_lifting?:
-								| "pinko_bigger_dataset-style"
-								| "movie-style"
-								| "marzipan-style";
-							/**
-							 * @description Enhance the face of the person in the image.
-							 * @default remini
-							 * @example remini
-							 * @enum {string}
-							 */
-							face_enhance?: "remini";
-						};
+						pipelines: components["schemas"]["ReminiPipelineSchema"];
 					};
 				};
 			};
@@ -3307,10 +2313,54 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
 							result?: {
-								images?: string[];
-								pipeline?: Record<string, never>;
+								/** @description Array of generated images. */
+								images: (string | string)[] | null;
+								/** @description The pipelines used to generate the images. */
+								pipelines: {
+									/**
+									 * Bokeh Pipeline Configurations
+									 * @description Bokeh effect configuration.
+									 */
+									bokeh?:
+										| "background_blur_low"
+										| "background_blur_medium"
+										| "background_blur_high";
+									/**
+									 * Color Enhance Pipeline Configurations
+									 * @description Color enhancement configuration.
+									 */
+									color_enhance?:
+										| "prism-blend"
+										| "prism-expert-a"
+										| "prism-expert-c"
+										| "muted"
+										| "orange-teal"
+										| "silky"
+										| "lit_soft_warm"
+										| "orange-teal_v2";
+									/**
+									 * Background Enhance Pipeline Configurations
+									 * @description Background enhancement configuration.
+									 */
+									background_enhance?:
+										| "shiba-strong-tensorrt"
+										| "rhino-tensorrt"
+										| "upsampler-bicubic";
+									/**
+									 * Face Lifting Pipeline Configurations
+									 * @description Face lifting effect configuration.
+									 */
+									face_lifting?:
+										| "pinko_bigger_dataset-style"
+										| "movie-style"
+										| "marzipan-style";
+									/**
+									 * @description Face enhancement using Remini model.
+									 * @enum {string}
+									 */
+									face_enhance?: "remini";
+								};
 							};
 						};
 					};
@@ -3359,1626 +2409,12 @@ export interface paths {
 		};
 		/**
 		 * Get Content
-		 * @description Fetch TikTok content information
-		 */
-		get: {
-			parameters: {
-				query?: {
-					/** @description Instagram content URL */
-					url?: string;
-				};
-				header?: never;
-				path?: never;
-				cookie?: never;
-			};
-			requestBody?: never;
-			responses: {
-				/** @description Default Response */
-				200: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": {
-							/**
-							 * @description Status of the request
-							 * @default true
-							 */
-							status: boolean;
-							/**
-							 * @description Additional message
-							 * @default success
-							 */
-							message: string;
-							/** @description Result of the request */
-							result?: {
-								/** @description Content owner username, if any. */
-								username?: string | null;
-								/** @description Content title, if any. */
-								title?: string | null;
-								/** @description Any related object metadata about the content. */
-								metadata?: Record<string, never>;
-								contents?: {
-									/** @description Media content type */
-									type?: string;
-									/** @description Media content ext */
-									ext?: string;
-									/** @description Mediaa content URL */
-									url?: string;
-								}[];
-							};
-						};
-					};
-				};
-				/** @description Invalid request error */
-				400: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Authorization error */
-				401: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Internal server error */
-				500: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-			};
-		};
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/sdapi/controlnet": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * ControlNet
-		 * @description Generate an image from an image with ControlNet
-		 */
-		post: {
-			parameters: {
-				query?: never;
-				header?: never;
-				path?: never;
-				cookie?: never;
-			};
-			requestBody: {
-				content: {
-					/**
-					 * @example {
-					 *       "server_id": "rose",
-					 *       "model_id": "dreamshaper",
-					 *       "controlnet_model": "canny",
-					 *       "controlnet_type": "canny",
-					 *       "auto_hint": "yes",
-					 *       "guess_mode": "no",
-					 *       "init_image": "",
-					 *       "control_image": "",
-					 *       "mask_image": "",
-					 *       "prompt": "1girl",
-					 *       "width": 512,
-					 *       "height": 768,
-					 *       "samples": 1,
-					 *       "num_inference_steps": 20,
-					 *       "scheduler": "UniPCMultistepScheduler",
-					 *       "clip_skip": 2
-					 *     }
-					 */
-					"application/json": {
-						/**
-						 * @description Each server have different stored models. Default: `rose`
-						 * @default rose
-						 * @enum {unknown}
-						 */
-						server_id: "rose" | "lovita";
-						/** @description The ID of the model to be used. */
-						model_id: string;
-						/** @description Text prompt with description of the things you want in the image to be generated */
-						prompt: string;
-						/** @description Items you don't want in the image */
-						negative_prompt?: string;
-						/**
-						 * @description Max Width: 1024x1024
-						 * @default 512
-						 * @example 512
-						 */
-						width: number;
-						/**
-						 * @description Max Height: 1024x1024
-						 * @default 512
-						 * @example 768
-						 */
-						height: number;
-						/**
-						 * @description Number of images to generate
-						 * @default 1
-						 * @example 1
-						 */
-						samples?: number;
-						/**
-						 * @description Number of denoising steps, The value accepts 21,31,41.
-						 * @default 21
-						 * @example 20
-						 */
-						num_inference_steps: number;
-						/**
-						 * @description A checker for NSFW images. If such an image is detected, it will be replaced by a blank image.
-						 * @enum {unknown}
-						 */
-						safety_checker?: "yes" | "no";
-						/**
-						 * @description Type of safety checker
-						 * @enum {unknown}
-						 */
-						safety_checker_type?:
-							| "blur"
-							| "sensitive_content_text"
-							| "pixelate"
-							| "black";
-						/**
-						 * @description Enhance prompts for better results.
-						 * @enum {unknown}
-						 */
-						enhance_prompt?: "yes" | "no";
-						/** @description Seed is used to reproduce results, same seed will give you same image in return again. Pass null for a random number. */
-						seed?: number | null;
-						/**
-						 * @description Scale for classifier-free guidance (minimum: 1; maximum: 20)
-						 * @default 7.5
-						 */
-						guidance_scale: number;
-						/**
-						 * @description Set this parameter to "yes" to generate a panorama image.
-						 * @enum {unknown}
-						 */
-						panorama?: "yes" | "no";
-						/**
-						 * @description If you want a high quality image, set this parameter to "yes". In this case the image generation will take more time.
-						 * @enum {unknown}
-						 */
-						self_attention?: "yes" | "no";
-						/**
-						 * @description Set this parameter to "yes" if you want to upscale the given image resolution two times (2x). If the requested resolution is 512 x 512 px, the generated image will be 1024 x 1024 px.
-						 * @enum {unknown}
-						 */
-						upscale?: "yes" | "no";
-						/** @description Use it to pass an embeddings model. */
-						embeddings_model?: string;
-						/**
-						 * @description Enable tomesd to generate images: gives really fast results
-						 * @enum {unknown}
-						 */
-						tomesd?: "yes" | "no";
-						/**
-						 * @description Use keras sigmas to generate images. Gives nice results.
-						 * @enum {unknown}
-						 */
-						use_karras_sigmas?: "yes" | "no";
-						/**
-						 * @description Used in DPMSolverMultistepScheduler scheduler.
-						 * @enum {unknown}
-						 */
-						algorithm_type?: "dpmsolver+++";
-						/** @description Use custom vae in generating images. */
-						vae?: string;
-						/** @description Specify the strength of the LoRa model you're using. If using multiple LoRa, provide each value as a comma-separated range from minimum 0.1 to maximum 1. */
-						lora_strength?: string;
-						/** @description Multi lora is supported, pass comma saparated values. Example `lora1,lora2` */
-						lora_model?: string;
-						/** @description Scheduler to be used for image generation. */
-						scheduler: string;
-						/**
-						 * @description Number of frames to skip in clip.
-						 * @default 2
-						 */
-						clip_skip?: number;
-						/**
-						 * @description Fix high resolution images.
-						 * @enum {unknown}
-						 */
-						highres_fix?: "yes" | "no";
-						/** @description The controlnet model id to be used. */
-						controlnet_model: string;
-						/** @description Type of controlnet model to be used. */
-						controlnet_type?: string;
-						/** @description The image to be used as input. */
-						init_image: string;
-						/** @description Link to the Controlnet Image */
-						control_image: string;
-						/** @description Link to the mask image for inpainting. */
-						mask_image: string;
-						/**
-						 * @description Auto hint image;options: yes/no
-						 * @enum {unknown}
-						 */
-						auto_hint?: "yes" | "no";
-						/** @description Controlnet conditioning scale; default: 1.0; range: 1.0 to 20.0 */
-						controlnet_conditioning_scale?: number;
-					};
-				};
-			};
-			responses: {
-				/** @description Default Response */
-				200: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": {
-							/**
-							 * @description Status of the request
-							 * @default true
-							 */
-							status: boolean;
-							/**
-							 * @description Additional message
-							 * @default success
-							 */
-							message: string;
-							/** @description Result of the request */
-							result?: {
-								generation_time?: number;
-								images: string[];
-								nsfw_content_detected?: boolean;
-							};
-						};
-					};
-				};
-				/** @description Invalid request error */
-				400: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Authorization error */
-				401: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Internal server error */
-				500: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-			};
-		};
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/sdapi/get_models": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Models
-		 * @description Get the list of available models.
+		 * @description Fetch Instagram content information
 		 */
 		get: {
 			parameters: {
 				query: {
-					/** @description Each server have different stored models. Default: `rose` */
-					server_id: "rose" | "lovita";
-				};
-				header?: never;
-				path?: never;
-				cookie?: never;
-			};
-			requestBody?: never;
-			responses: {
-				/** @description Default Response */
-				200: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": {
-							/**
-							 * @description Status of the request
-							 * @default true
-							 */
-							status: boolean;
-							/**
-							 * @description Additional message
-							 * @default success
-							 */
-							message: string;
-							/** @description Result of the request */
-							result?: {
-								models?: {
-									/** @description The ID of the model. */
-									model_id?: string;
-									/** @description The date the model was loaded. */
-									load_date?: string;
-								}[];
-								controlnet_models?: {
-									/** @description The ID of the model. */
-									model_id?: string;
-									/** @description The date the model was loaded. */
-									load_date?: string;
-								}[];
-								lora_models?: {
-									/** @description The ID of the model. */
-									model_id?: string;
-									/** @description The date the model was loaded. */
-									load_date?: string;
-								}[];
-								ip_adapter_models?: {
-									/** @description The ID of the model. */
-									model_id?: string;
-									/** @description The date the model was loaded. */
-									load_date?: string;
-								}[];
-								embeddings_models?: {
-									/** @description The ID of the model. */
-									model_id?: string;
-									/** @description The date the model was loaded. */
-									load_date?: string;
-								}[];
-								vae_models?: {
-									/** @description The ID of the model. */
-									model_id?: string;
-									/** @description The date the model was loaded. */
-									load_date?: string;
-								}[];
-							};
-						};
-					};
-				};
-				/** @description Invalid request error */
-				400: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Authorization error */
-				401: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Internal server error */
-				500: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-			};
-		};
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/sdapi/img2img": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Image to Image
-		 * @description Generate an image from an image
-		 */
-		post: {
-			parameters: {
-				query?: never;
-				header?: never;
-				path?: never;
-				cookie?: never;
-			};
-			requestBody: {
-				content: {
-					/**
-					 * @example {
-					 *       "server_id": "rose",
-					 *       "model_id": "dreamshaper",
-					 *       "init_image": "",
-					 *       "prompt": "1girl",
-					 *       "width": 512,
-					 *       "height": 768,
-					 *       "samples": 1,
-					 *       "num_inference_steps": 20,
-					 *       "scheduler": "DDPMScheduler",
-					 *       "clip_skip": 2
-					 *     }
-					 */
-					"application/json": {
-						/**
-						 * @description Each server have different stored models. Default: `rose`
-						 * @default rose
-						 * @enum {unknown}
-						 */
-						server_id: "rose" | "lovita";
-						/** @description The ID of the model to be used. */
-						model_id: string;
-						/** @description Text prompt with description of the things you want in the image to be generated */
-						prompt: string;
-						/** @description Items you don't want in the image */
-						negative_prompt?: string;
-						/**
-						 * @description Max Width: 1024x1024
-						 * @default 512
-						 * @example 512
-						 */
-						width: number;
-						/**
-						 * @description Max Height: 1024x1024
-						 * @default 512
-						 * @example 768
-						 */
-						height: number;
-						/**
-						 * @description Number of images to generate
-						 * @default 1
-						 * @example 1
-						 */
-						samples?: number;
-						/**
-						 * @description Number of denoising steps, The value accepts 21,31,41.
-						 * @default 21
-						 * @example 20
-						 */
-						num_inference_steps: number;
-						/**
-						 * @description A checker for NSFW images. If such an image is detected, it will be replaced by a blank image.
-						 * @enum {unknown}
-						 */
-						safety_checker?: "yes" | "no";
-						/**
-						 * @description Type of safety checker
-						 * @enum {unknown}
-						 */
-						safety_checker_type?:
-							| "blur"
-							| "sensitive_content_text"
-							| "pixelate"
-							| "black";
-						/**
-						 * @description Enhance prompts for better results.
-						 * @enum {unknown}
-						 */
-						enhance_prompt?: "yes" | "no";
-						/** @description Seed is used to reproduce results, same seed will give you same image in return again. Pass null for a random number. */
-						seed?: number | null;
-						/**
-						 * @description Scale for classifier-free guidance (minimum: 1; maximum: 20)
-						 * @default 7.5
-						 */
-						guidance_scale: number;
-						/**
-						 * @description Set this parameter to "yes" to generate a panorama image.
-						 * @enum {unknown}
-						 */
-						panorama?: "yes" | "no";
-						/**
-						 * @description If you want a high quality image, set this parameter to "yes". In this case the image generation will take more time.
-						 * @enum {unknown}
-						 */
-						self_attention?: "yes" | "no";
-						/**
-						 * @description Set this parameter to "yes" if you want to upscale the given image resolution two times (2x). If the requested resolution is 512 x 512 px, the generated image will be 1024 x 1024 px.
-						 * @enum {unknown}
-						 */
-						upscale?: "yes" | "no";
-						/** @description Use it to pass an embeddings model. */
-						embeddings_model?: string;
-						/**
-						 * @description Enable tomesd to generate images: gives really fast results
-						 * @enum {unknown}
-						 */
-						tomesd?: "yes" | "no";
-						/**
-						 * @description Use keras sigmas to generate images. Gives nice results.
-						 * @enum {unknown}
-						 */
-						use_karras_sigmas?: "yes" | "no";
-						/**
-						 * @description Used in DPMSolverMultistepScheduler scheduler.
-						 * @enum {unknown}
-						 */
-						algorithm_type?: "dpmsolver+++";
-						/** @description Use custom vae in generating images. */
-						vae?: string;
-						/** @description Specify the strength of the LoRa model you're using. If using multiple LoRa, provide each value as a comma-separated range from minimum 0.1 to maximum 1. */
-						lora_strength?: string;
-						/** @description Multi lora is supported, pass comma saparated values. Example `lora1,lora2` */
-						lora_model?: string;
-						/** @description Scheduler to be used for image generation. */
-						scheduler: string;
-						/**
-						 * @description Number of frames to skip in clip.
-						 * @default 2
-						 */
-						clip_skip?: number;
-						/**
-						 * @description Fix high resolution images.
-						 * @enum {unknown}
-						 */
-						highres_fix?: "yes" | "no";
-						/** @description The image to be used as input. */
-						init_image: string;
-					};
-				};
-			};
-			responses: {
-				/** @description Default Response */
-				200: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": {
-							/**
-							 * @description Status of the request
-							 * @default true
-							 */
-							status: boolean;
-							/**
-							 * @description Additional message
-							 * @default success
-							 */
-							message: string;
-							/** @description Result of the request */
-							result?: {
-								/** @description Time taken to generate the image. */
-								generation_time?: number;
-								images: string[];
-								nsfw_content_detected?: boolean;
-								meta?: {
-									/** @description The ID of the model to be used. */
-									model_id?: string;
-									/** @description Text prompt with description of the things you want in the image to be generated */
-									prompt?: string;
-									/** @description Items you don't want in the image */
-									negative_prompt?: string;
-									/**
-									 * @description Max Width: 1024x1024
-									 * @default 512
-									 * @example 512
-									 */
-									width: number;
-									/**
-									 * @description Max Height: 1024x1024
-									 * @default 512
-									 * @example 768
-									 */
-									height: number;
-									/**
-									 * @description Number of images to generate
-									 * @default 1
-									 * @example 1
-									 */
-									samples: number;
-									/**
-									 * @description Number of denoising steps, The value accepts 21,31,41.
-									 * @default 21
-									 * @example 20
-									 */
-									num_inference_steps: number;
-									/**
-									 * @description A checker for NSFW images. If such an image is detected, it will be replaced by a blank image.
-									 * @enum {unknown}
-									 */
-									safety_checker?: "yes" | "no";
-									/**
-									 * @description Type of safety checker
-									 * @enum {unknown}
-									 */
-									safety_checker_type?:
-										| "blur"
-										| "sensitive_content_text"
-										| "pixelate"
-										| "black";
-									/**
-									 * @description Enhance prompts for better results.
-									 * @enum {unknown}
-									 */
-									enhance_prompt?: "yes" | "no";
-									/** @description Seed is used to reproduce results, same seed will give you same image in return again. Pass null for a random number. */
-									seed?: number | null;
-									/**
-									 * @description Scale for classifier-free guidance (minimum: 1; maximum: 20)
-									 * @default 7.5
-									 */
-									guidance_scale: number;
-									/**
-									 * @description Set this parameter to "yes" to generate a panorama image.
-									 * @enum {unknown}
-									 */
-									panorama?: "yes" | "no";
-									/**
-									 * @description If you want a high quality image, set this parameter to "yes". In this case the image generation will take more time.
-									 * @enum {unknown}
-									 */
-									self_attention?: "yes" | "no";
-									/**
-									 * @description Set this parameter to "yes" if you want to upscale the given image resolution two times (2x). If the requested resolution is 512 x 512 px, the generated image will be 1024 x 1024 px.
-									 * @enum {unknown}
-									 */
-									upscale?: "yes" | "no";
-									/** @description Use it to pass an embeddings model. */
-									embeddings_model?: string;
-									/**
-									 * @description Enable tomesd to generate images: gives really fast results
-									 * @enum {unknown}
-									 */
-									tomesd?: "yes" | "no";
-									/**
-									 * @description Use keras sigmas to generate images. Gives nice results.
-									 * @enum {unknown}
-									 */
-									use_karras_sigmas?: "yes" | "no";
-									/**
-									 * @description Used in DPMSolverMultistepScheduler scheduler.
-									 * @enum {unknown}
-									 */
-									algorithm_type?: "dpmsolver+++";
-									/** @description Use custom vae in generating images. */
-									vae?: string;
-									/** @description Specify the strength of the LoRa model you're using. If using multiple LoRa, provide each value as a comma-separated range from minimum 0.1 to maximum 1. */
-									lora_strength?: string;
-									/** @description Multi lora is supported, pass comma saparated values. Example `lora1,lora2` */
-									lora_model?: string;
-									/** @description Scheduler to be used for image generation. */
-									scheduler?: string;
-									/**
-									 * @description Number of frames to skip in clip.
-									 * @default 2
-									 */
-									clip_skip: number;
-									/**
-									 * @description Fix high resolution images.
-									 * @enum {unknown}
-									 */
-									highres_fix?: "yes" | "no";
-									init_image?: string;
-								};
-							};
-						};
-					};
-				};
-				/** @description Invalid request error */
-				400: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Authorization error */
-				401: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Internal server error */
-				500: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-			};
-		};
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/sdapi/inpaint": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Inpaint
-		 * @description Inpaint an image
-		 */
-		post: {
-			parameters: {
-				query?: never;
-				header?: never;
-				path?: never;
-				cookie?: never;
-			};
-			requestBody: {
-				content: {
-					/**
-					 * @example {
-					 *       "server_id": "rose",
-					 *       "model_id": "dreamshaper",
-					 *       "init_image": "",
-					 *       "mask_image": "",
-					 *       "prompt": "1girl",
-					 *       "width": 512,
-					 *       "height": 768,
-					 *       "samples": 1,
-					 *       "num_inference_steps": 20,
-					 *       "scheduler": "DDPMScheduler",
-					 *       "clip_skip": 2
-					 *     }
-					 */
-					"application/json": {
-						/**
-						 * @description Each server have different stored models. Default: `rose`
-						 * @default rose
-						 * @enum {unknown}
-						 */
-						server_id: "rose" | "lovita";
-						/** @description The ID of the model to be used. */
-						model_id: string;
-						/** @description Text prompt with description of the things you want in the image to be generated */
-						prompt: string;
-						/** @description Items you don't want in the image */
-						negative_prompt?: string;
-						/**
-						 * @description Max Width: 1024x1024
-						 * @default 512
-						 * @example 512
-						 */
-						width: number;
-						/**
-						 * @description Max Height: 1024x1024
-						 * @default 512
-						 * @example 768
-						 */
-						height: number;
-						/**
-						 * @description Number of images to generate
-						 * @default 1
-						 * @example 1
-						 */
-						samples?: number;
-						/**
-						 * @description Number of denoising steps, The value accepts 21,31,41.
-						 * @default 21
-						 * @example 20
-						 */
-						num_inference_steps: number;
-						/**
-						 * @description A checker for NSFW images. If such an image is detected, it will be replaced by a blank image.
-						 * @enum {unknown}
-						 */
-						safety_checker?: "yes" | "no";
-						/**
-						 * @description Type of safety checker
-						 * @enum {unknown}
-						 */
-						safety_checker_type?:
-							| "blur"
-							| "sensitive_content_text"
-							| "pixelate"
-							| "black";
-						/**
-						 * @description Enhance prompts for better results.
-						 * @enum {unknown}
-						 */
-						enhance_prompt?: "yes" | "no";
-						/** @description Seed is used to reproduce results, same seed will give you same image in return again. Pass null for a random number. */
-						seed?: number | null;
-						/**
-						 * @description Scale for classifier-free guidance (minimum: 1; maximum: 20)
-						 * @default 7.5
-						 */
-						guidance_scale: number;
-						/**
-						 * @description Set this parameter to "yes" to generate a panorama image.
-						 * @enum {unknown}
-						 */
-						panorama?: "yes" | "no";
-						/**
-						 * @description If you want a high quality image, set this parameter to "yes". In this case the image generation will take more time.
-						 * @enum {unknown}
-						 */
-						self_attention?: "yes" | "no";
-						/**
-						 * @description Set this parameter to "yes" if you want to upscale the given image resolution two times (2x). If the requested resolution is 512 x 512 px, the generated image will be 1024 x 1024 px.
-						 * @enum {unknown}
-						 */
-						upscale?: "yes" | "no";
-						/** @description Use it to pass an embeddings model. */
-						embeddings_model?: string;
-						/**
-						 * @description Enable tomesd to generate images: gives really fast results
-						 * @enum {unknown}
-						 */
-						tomesd?: "yes" | "no";
-						/**
-						 * @description Use keras sigmas to generate images. Gives nice results.
-						 * @enum {unknown}
-						 */
-						use_karras_sigmas?: "yes" | "no";
-						/**
-						 * @description Used in DPMSolverMultistepScheduler scheduler.
-						 * @enum {unknown}
-						 */
-						algorithm_type?: "dpmsolver+++";
-						/** @description Use custom vae in generating images. */
-						vae?: string;
-						/** @description Specify the strength of the LoRa model you're using. If using multiple LoRa, provide each value as a comma-separated range from minimum 0.1 to maximum 1. */
-						lora_strength?: string;
-						/** @description Multi lora is supported, pass comma saparated values. Example `lora1,lora2` */
-						lora_model?: string;
-						/** @description Scheduler to be used for image generation. */
-						scheduler: string;
-						/**
-						 * @description Number of frames to skip in clip.
-						 * @default 2
-						 */
-						clip_skip?: number;
-						/**
-						 * @description Fix high resolution images.
-						 * @enum {unknown}
-						 */
-						highres_fix?: "yes" | "no";
-						/** @description The image to be used as input. */
-						init_image: string;
-						/** @description Link to the mask image for inpainting. */
-						mask_image: string;
-					};
-				};
-			};
-			responses: {
-				/** @description Default Response */
-				200: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": {
-							/**
-							 * @description Status of the request
-							 * @default true
-							 */
-							status: boolean;
-							/**
-							 * @description Additional message
-							 * @default success
-							 */
-							message: string;
-							/** @description Result of the request */
-							result?: {
-								generation_time?: number;
-								images: string[];
-								nsfw_content_detected?: boolean;
-								meta?: {
-									/** @description The ID of the model to be used. */
-									model_id?: string;
-									/** @description Text prompt with description of the things you want in the image to be generated */
-									prompt?: string;
-									/** @description Items you don't want in the image */
-									negative_prompt?: string;
-									/**
-									 * @description Max Width: 1024x1024
-									 * @default 512
-									 * @example 512
-									 */
-									width: number;
-									/**
-									 * @description Max Height: 1024x1024
-									 * @default 512
-									 * @example 768
-									 */
-									height: number;
-									/**
-									 * @description Number of images to generate
-									 * @default 1
-									 * @example 1
-									 */
-									samples: number;
-									/**
-									 * @description Number of denoising steps, The value accepts 21,31,41.
-									 * @default 21
-									 * @example 20
-									 */
-									num_inference_steps: number;
-									/**
-									 * @description A checker for NSFW images. If such an image is detected, it will be replaced by a blank image.
-									 * @enum {unknown}
-									 */
-									safety_checker?: "yes" | "no";
-									/**
-									 * @description Type of safety checker
-									 * @enum {unknown}
-									 */
-									safety_checker_type?:
-										| "blur"
-										| "sensitive_content_text"
-										| "pixelate"
-										| "black";
-									/**
-									 * @description Enhance prompts for better results.
-									 * @enum {unknown}
-									 */
-									enhance_prompt?: "yes" | "no";
-									/** @description Seed is used to reproduce results, same seed will give you same image in return again. Pass null for a random number. */
-									seed?: number | null;
-									/**
-									 * @description Scale for classifier-free guidance (minimum: 1; maximum: 20)
-									 * @default 7.5
-									 */
-									guidance_scale: number;
-									/**
-									 * @description Set this parameter to "yes" to generate a panorama image.
-									 * @enum {unknown}
-									 */
-									panorama?: "yes" | "no";
-									/**
-									 * @description If you want a high quality image, set this parameter to "yes". In this case the image generation will take more time.
-									 * @enum {unknown}
-									 */
-									self_attention?: "yes" | "no";
-									/**
-									 * @description Set this parameter to "yes" if you want to upscale the given image resolution two times (2x). If the requested resolution is 512 x 512 px, the generated image will be 1024 x 1024 px.
-									 * @enum {unknown}
-									 */
-									upscale?: "yes" | "no";
-									/** @description Use it to pass an embeddings model. */
-									embeddings_model?: string;
-									/**
-									 * @description Enable tomesd to generate images: gives really fast results
-									 * @enum {unknown}
-									 */
-									tomesd?: "yes" | "no";
-									/**
-									 * @description Use keras sigmas to generate images. Gives nice results.
-									 * @enum {unknown}
-									 */
-									use_karras_sigmas?: "yes" | "no";
-									/**
-									 * @description Used in DPMSolverMultistepScheduler scheduler.
-									 * @enum {unknown}
-									 */
-									algorithm_type?: "dpmsolver+++";
-									/** @description Use custom vae in generating images. */
-									vae?: string;
-									/** @description Specify the strength of the LoRa model you're using. If using multiple LoRa, provide each value as a comma-separated range from minimum 0.1 to maximum 1. */
-									lora_strength?: string;
-									/** @description Multi lora is supported, pass comma saparated values. Example `lora1,lora2` */
-									lora_model?: string;
-									/** @description Scheduler to be used for image generation. */
-									scheduler?: string;
-									/**
-									 * @description Number of frames to skip in clip.
-									 * @default 2
-									 */
-									clip_skip: number;
-									/**
-									 * @description Fix high resolution images.
-									 * @enum {unknown}
-									 */
-									highres_fix?: "yes" | "no";
-									init_image?: string;
-									mask_image?: string;
-								} & {
-									[key: string]: unknown;
-								};
-							};
-						};
-					};
-				};
-				/** @description Invalid request error */
-				400: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Authorization error */
-				401: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Internal server error */
-				500: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-			};
-		};
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/sdapi/schedulers_list": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Schedulers List
-		 * @description Get the list of available schedulers.
-		 */
-		get: {
-			parameters: {
-				query: {
-					/** @description Each server have different stored models. Default: `rose` */
-					server_id: "rose" | "lovita";
-				};
-				header?: never;
-				path?: never;
-				cookie?: never;
-			};
-			requestBody?: never;
-			responses: {
-				/** @description Default Response */
-				200: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": {
-							/**
-							 * @description Status of the request
-							 * @default true
-							 */
-							status: boolean;
-							/**
-							 * @description Additional message
-							 * @default success
-							 */
-							message: string;
-							/** @description Result of the request */
-							result?: {
-								/** @description List of schedulers available on the server. */
-								schedulers?: string[];
-							};
-						};
-					};
-				};
-				/** @description Invalid request error */
-				400: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Authorization error */
-				401: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Internal server error */
-				500: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-			};
-		};
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/sdapi/system_details": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * System Details
-		 * @description Get system details.
-		 */
-		get: {
-			parameters: {
-				query: {
-					/** @description Each server have different stored models. Default: `rose` */
-					server_id: "rose" | "lovita";
-				};
-				header?: never;
-				path?: never;
-				cookie?: never;
-			};
-			requestBody?: never;
-			responses: {
-				/** @description Default Response */
-				200: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": {
-							/**
-							 * @description Status of the request
-							 * @default true
-							 */
-							status: boolean;
-							/**
-							 * @description Additional message
-							 * @default success
-							 */
-							message: string;
-							/** @description Result of the request */
-							result?: {
-								/** @description Number of models available on the server. */
-								model_count?: number;
-								/** @description Current queue time in seconds. */
-								queue_time?: number;
-								/** @description Current number of requests in the queue. */
-								queue_num?: number;
-								vram?: {
-									/** @description Total VRAM available. */
-									total_vram?: number;
-									/** @description Used VRAM. */
-									used_vram?: number;
-									/** @description Free VRAM. */
-									free_vram?: number;
-								};
-							};
-						};
-					};
-				};
-				/** @description Invalid request error */
-				400: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Authorization error */
-				401: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Internal server error */
-				500: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-			};
-		};
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/sdapi/text2img": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Text to Image
-		 * @description Generate an image from text.
-		 */
-		post: {
-			parameters: {
-				query?: never;
-				header?: never;
-				path?: never;
-				cookie?: never;
-			};
-			requestBody: {
-				content: {
-					/**
-					 * @example {
-					 *       "server_id": "rose",
-					 *       "model_id": "dreamshaper",
-					 *       "prompt": "1girl",
-					 *       "width": 512,
-					 *       "height": 768,
-					 *       "samples": 1,
-					 *       "num_inference_steps": 20,
-					 *       "scheduler": "DDPMScheduler",
-					 *       "clip_skip": 2
-					 *     }
-					 */
-					"application/json": {
-						/**
-						 * @description Each server have different stored models. Default: `rose`
-						 * @default rose
-						 * @enum {unknown}
-						 */
-						server_id: "rose" | "lovita";
-						/** @description The ID of the model to be used. */
-						model_id: string;
-						/** @description Text prompt with description of the things you want in the image to be generated */
-						prompt: string;
-						/** @description Items you don't want in the image */
-						negative_prompt?: string;
-						/**
-						 * @description Max Width: 1024x1024
-						 * @default 512
-						 * @example 512
-						 */
-						width: number;
-						/**
-						 * @description Max Height: 1024x1024
-						 * @default 512
-						 * @example 768
-						 */
-						height: number;
-						/**
-						 * @description Number of images to generate
-						 * @default 1
-						 * @example 1
-						 */
-						samples?: number;
-						/**
-						 * @description Number of denoising steps, The value accepts 21,31,41.
-						 * @default 21
-						 * @example 20
-						 */
-						num_inference_steps: number;
-						/**
-						 * @description A checker for NSFW images. If such an image is detected, it will be replaced by a blank image.
-						 * @enum {unknown}
-						 */
-						safety_checker?: "yes" | "no";
-						/**
-						 * @description Type of safety checker
-						 * @enum {unknown}
-						 */
-						safety_checker_type?:
-							| "blur"
-							| "sensitive_content_text"
-							| "pixelate"
-							| "black";
-						/**
-						 * @description Enhance prompts for better results.
-						 * @enum {unknown}
-						 */
-						enhance_prompt?: "yes" | "no";
-						/** @description Seed is used to reproduce results, same seed will give you same image in return again. Pass null for a random number. */
-						seed?: number | null;
-						/**
-						 * @description Scale for classifier-free guidance (minimum: 1; maximum: 20)
-						 * @default 7.5
-						 */
-						guidance_scale: number;
-						/**
-						 * @description Set this parameter to "yes" to generate a panorama image.
-						 * @enum {unknown}
-						 */
-						panorama?: "yes" | "no";
-						/**
-						 * @description If you want a high quality image, set this parameter to "yes". In this case the image generation will take more time.
-						 * @enum {unknown}
-						 */
-						self_attention?: "yes" | "no";
-						/**
-						 * @description Set this parameter to "yes" if you want to upscale the given image resolution two times (2x). If the requested resolution is 512 x 512 px, the generated image will be 1024 x 1024 px.
-						 * @enum {unknown}
-						 */
-						upscale?: "yes" | "no";
-						/** @description Use it to pass an embeddings model. */
-						embeddings_model?: string;
-						/**
-						 * @description Enable tomesd to generate images: gives really fast results
-						 * @enum {unknown}
-						 */
-						tomesd?: "yes" | "no";
-						/**
-						 * @description Use keras sigmas to generate images. Gives nice results.
-						 * @enum {unknown}
-						 */
-						use_karras_sigmas?: "yes" | "no";
-						/**
-						 * @description Used in DPMSolverMultistepScheduler scheduler.
-						 * @enum {unknown}
-						 */
-						algorithm_type?: "dpmsolver+++";
-						/** @description Use custom vae in generating images. */
-						vae?: string;
-						/** @description Specify the strength of the LoRa model you're using. If using multiple LoRa, provide each value as a comma-separated range from minimum 0.1 to maximum 1. */
-						lora_strength?: string;
-						/** @description Multi lora is supported, pass comma saparated values. Example `lora1,lora2` */
-						lora_model?: string;
-						/** @description Scheduler to be used for image generation. */
-						scheduler: string;
-						/**
-						 * @description Number of frames to skip in clip.
-						 * @default 2
-						 */
-						clip_skip?: number;
-						/**
-						 * @description Fix high resolution images.
-						 * @enum {unknown}
-						 */
-						highres_fix?: "yes" | "no";
-					};
-				};
-			};
-			responses: {
-				/** @description Default Response */
-				200: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": {
-							/**
-							 * @description Status of the request
-							 * @default true
-							 */
-							status: boolean;
-							/**
-							 * @description Additional message
-							 * @default success
-							 */
-							message: string;
-							/** @description Result of the request */
-							result?: {
-								generation_time: string;
-								images: string[];
-								/** @description Whether NSFW content was detected. Not accurate. */
-								nsfw_content_detected?: boolean;
-								meta?: {
-									/** @description The ID of the model to be used. */
-									model_id?: string;
-									/** @description Text prompt with description of the things you want in the image to be generated */
-									prompt?: string;
-									/** @description Items you don't want in the image */
-									negative_prompt?: string;
-									/**
-									 * @description Max Width: 1024x1024
-									 * @default 512
-									 * @example 512
-									 */
-									width: number;
-									/**
-									 * @description Max Height: 1024x1024
-									 * @default 512
-									 * @example 768
-									 */
-									height: number;
-									/**
-									 * @description Number of images to generate
-									 * @default 1
-									 * @example 1
-									 */
-									samples: number;
-									/**
-									 * @description Number of denoising steps, The value accepts 21,31,41.
-									 * @default 21
-									 * @example 20
-									 */
-									num_inference_steps: number;
-									/**
-									 * @description A checker for NSFW images. If such an image is detected, it will be replaced by a blank image.
-									 * @enum {unknown}
-									 */
-									safety_checker?: "yes" | "no";
-									/**
-									 * @description Type of safety checker
-									 * @enum {unknown}
-									 */
-									safety_checker_type?:
-										| "blur"
-										| "sensitive_content_text"
-										| "pixelate"
-										| "black";
-									/**
-									 * @description Enhance prompts for better results.
-									 * @enum {unknown}
-									 */
-									enhance_prompt?: "yes" | "no";
-									/** @description Seed is used to reproduce results, same seed will give you same image in return again. Pass null for a random number. */
-									seed?: number | null;
-									/**
-									 * @description Scale for classifier-free guidance (minimum: 1; maximum: 20)
-									 * @default 7.5
-									 */
-									guidance_scale: number;
-									/**
-									 * @description Set this parameter to "yes" to generate a panorama image.
-									 * @enum {unknown}
-									 */
-									panorama?: "yes" | "no";
-									/**
-									 * @description If you want a high quality image, set this parameter to "yes". In this case the image generation will take more time.
-									 * @enum {unknown}
-									 */
-									self_attention?: "yes" | "no";
-									/**
-									 * @description Set this parameter to "yes" if you want to upscale the given image resolution two times (2x). If the requested resolution is 512 x 512 px, the generated image will be 1024 x 1024 px.
-									 * @enum {unknown}
-									 */
-									upscale?: "yes" | "no";
-									/** @description Use it to pass an embeddings model. */
-									embeddings_model?: string;
-									/**
-									 * @description Enable tomesd to generate images: gives really fast results
-									 * @enum {unknown}
-									 */
-									tomesd?: "yes" | "no";
-									/**
-									 * @description Use keras sigmas to generate images. Gives nice results.
-									 * @enum {unknown}
-									 */
-									use_karras_sigmas?: "yes" | "no";
-									/**
-									 * @description Used in DPMSolverMultistepScheduler scheduler.
-									 * @enum {unknown}
-									 */
-									algorithm_type?: "dpmsolver+++";
-									/** @description Use custom vae in generating images. */
-									vae?: string;
-									/** @description Specify the strength of the LoRa model you're using. If using multiple LoRa, provide each value as a comma-separated range from minimum 0.1 to maximum 1. */
-									lora_strength?: string;
-									/** @description Multi lora is supported, pass comma saparated values. Example `lora1,lora2` */
-									lora_model?: string;
-									/** @description Scheduler to be used for image generation. */
-									scheduler?: string;
-									/**
-									 * @description Number of frames to skip in clip.
-									 * @default 2
-									 */
-									clip_skip: number;
-									/**
-									 * @description Fix high resolution images.
-									 * @enum {unknown}
-									 */
-									highres_fix?: "yes" | "no";
-								};
-							};
-						};
-					};
-				};
-				/** @description Invalid request error */
-				400: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Authorization error */
-				401: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Internal server error */
-				500: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-			};
-		};
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/tiktok/get_content": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Content
-		 * @description Fetch TikTok content information
-		 */
-		get: {
-			parameters: {
-				query: {
-					/** @description URL of the TikTok video. Must be a valid TikTok video URL to retrieve data. */
+					/** @description The URL of the Instagram media to fetch. */
 					url: string;
 				};
 				header?: never;
@@ -5004,107 +2440,350 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
+							result?: {
+								/**
+								 * @description The author of the media list, if available.
+								 * @default null
+								 */
+								author: string | null;
+								/**
+								 * @description Description of the media list, if available.
+								 * @default null
+								 */
+								description: string | null;
+								/** @description List of media items. */
+								contents: {
+									/**
+									 * Format: uri
+									 * @description The URL of the media thumbnail image.
+									 */
+									thumbnail: string;
+									/**
+									 * Format: uri
+									 * @description The direct URL to the media file.
+									 */
+									url: string;
+									/** @description Indicates whether the media is a video. */
+									isVideo: boolean;
+								}[];
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/tiktok/get_content": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get Content
+		 * @description Fetch TikTok content information
+		 */
+		get: {
+			parameters: {
+				query: {
+					/** @description TikTok content URL */
+					url: string;
+				};
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody?: never;
+			responses: {
+				/** @description Default Response */
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
 							result?: {
 								/** @description Unique identifier (Aweme ID) for the TikTok content. */
 								aweme_id: string;
 								/** @description Unique identifier for the TikTok content. */
 								id: string;
 								/** @description Region code representing the country of origin. */
-								region?: string;
-								/** @description URL of the cover image for the TikTok content. */
-								cover?: string;
-								/** @description URL of the AI-generated dynamic cover image (e.g., GIF). */
-								ai_dynamic_cover?: string;
-								/** @description URL of the original cover image. */
-								origin_cover?: string;
+								region: string;
+								/**
+								 * Format: uri
+								 * @description URL of the cover image for the TikTok content.
+								 */
+								cover: string;
+								/**
+								 * Format: uri
+								 * @description URL of the AI-generated dynamic cover image.
+								 */
+								ai_dynamic_cover: string;
+								/**
+								 * Format: uri
+								 * @description URL of the original cover image for the TikTok content.
+								 */
+								origin_cover: string;
 								/** @description Duration of the TikTok content in seconds. */
-								duration?: number;
-								/** @description URL of the non-watermarked video. */
-								video_url?: string;
-								/** @description URL of the watermarked video. May not be available for all videos. */
-								watermarked_video_url?: string;
-								/** @description Size of the TikTok content in bytes. */
-								size?: number;
+								duration: number;
 								/**
-								 * Music information object
-								 * @description Details about the music associated with the TikTok content. May be empty if no music is present.
+								 * Format: uri
+								 * @description URL of the non-watermarked video.
 								 */
-								music?: {
+								video_url: string;
+								/**
+								 * Format: uri
+								 * @description URL of the watermarked video. May not be available for all videos.
+								 */
+								watermarked_video_url: string;
+								/** @description Size of the video file in bytes. */
+								size: number;
+								/** @description Music information associated with the content. */
+								music: {
 									/** @description Unique identifier for the music. */
-									id?: string;
+									id: string;
 									/** @description Title of the music. */
-									title?: string;
-									/** @description URL of the music cover image. */
-									cover?: string;
+									title: string;
+									/**
+									 * Format: uri
+									 * @description URL of the music cover image.
+									 */
+									cover: string;
 									/** @description Name of the music author. */
-									author?: string;
-									/** @description URL to play the music. */
-									play_url?: string;
+									author: string;
+									/**
+									 * Format: uri
+									 * @description URL to play the music.
+									 */
+									play_url: string;
 									/** @description Indicates whether the music is original. */
-									original?: boolean;
+									original: boolean;
 									/** @description Duration of the music in seconds. */
-									duration?: number;
+									duration: number;
 									/** @description Name of the album the music belongs to. */
-									album?: string;
+									album: string;
+								};
+								/** @description Author information associated with the content. */
+								author: {
+									/** @description Unique identifier for the author. */
+									id: string;
+									/** @description Unique username of the author. */
+									unique_id: string;
+									/** @description Nickname of the author. */
+									nickname: string;
+									/**
+									 * Format: uri
+									 * @description URL of the author's avatar image.
+									 */
+									avatar: string;
 								};
 								/**
-								 * Author information object
-								 * @description Details about the author of the TikTok content.
+								 * @description Array of images related to the TikTok content. If any.
+								 * @default null
 								 */
-								author?: {
-									/** @description Unique identifier for the author. */
-									id?: string;
-									/** @description Unique username of the author. */
-									unique_id?: string;
-									/** @description Nickname of the author. */
-									nickname?: string;
-									/** @description URL of the author's avatar image. */
-									avatar?: string;
-								};
-								/** @description Array of images associated with the TikTok content. May be empty if no images are present. */
-								images?: (string | Record<string, never>)[];
-								/** @description Total number of times the content has been played. */
+								images:
+									| (
+											| string
+											| {
+													[key: string]: unknown;
+											  }
+									  )[]
+									| null;
+								/** @description Number of times the content has been played. */
 								play_count?: number;
-								/** @description Total number of likes the content has received. */
+								/** @description Number of likes (diggs) the content has received. */
 								digg_count?: number;
-								/** @description Total number of comments on the content. */
+								/** @description Number of comments on the TikTok content. */
 								comment_count?: number;
-								/** @description Total number of shares for the content. */
+								/** @description Number of times the content has been shared. */
 								share_count?: number;
-								/** @description Total number of downloads for the content. */
+								/** @description Number of times the content has been downloaded. */
 								download_count?: number;
-								/** @description Total number of times the content has been added to collections. */
+								/** @description Number of times the content has been added to collections. */
 								collect_count?: number;
-								/** @description Timestamp indicating when the content was created. */
+								/** @description Unix timestamp representing the creation time of the content. */
 								create_time?: number;
-								/** @description Anchors associated with the content. */
-								anchors?: string | null | Record<string, never>;
-								/** @description Additional information about the anchors. */
+								/** @description Additional anchor data related to the content. */
+								anchors?:
+									| string
+									| null
+									| {
+											[key: string]: unknown;
+									  };
+								/** @description Extra anchor information. */
 								anchors_extras?: string;
 								/** @description Indicates whether the content is an advertisement. */
 								is_ad?: boolean;
-								commerce_info?: {
-									/** @description Indicates whether the content is promotable as an advertisement. */
-									adv_promotable?: boolean;
-									/** @description Indicates whether the content is invited for auction ads. */
-									auction_ad_invited?: boolean;
-									/** @description Type of branded content associated with the content. */
-									branded_content_type?: number;
-									/** @description Additional organic log information. */
-									organic_log_extra?: string;
-									/** @description Indicates whether the content has comment filter words enabled. */
-									with_comment_filter_words?: boolean;
-								};
-								/** @description Information about the commercial video associated with the content. */
-								commercial_video_info?:
-									| string
-									| null
-									| Record<string, never>;
-								/** @description Settings for comments on the content. */
-								item_comment_settings?: number;
-								/** @description List of users mentioned in the content. */
-								mentioned_users?: string;
+								/** @description Commerce-related information for the content. */
+								commerce_info?: unknown;
+								/** @description Commercial video information for the content. */
+								commercial_video_info?: unknown;
+								/** @description Settings related to comments on the content. */
+								item_comment_settings?: unknown;
+								/** @description Users mentioned in the content. */
+								mentioned_users?: string | unknown[] | null;
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/tiktok/get_content_v2": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get Content V2
+		 * @description Fetch TikTok content information
+		 */
+		get: {
+			parameters: {
+				query: {
+					/** @description The URL of the TikTok content to download. */
+					url: string;
+				};
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody?: never;
+			responses: {
+				/** @description Default Response */
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							result?: {
+								/** @description Unique identifier for the content. */
+								id: string;
+								/** @description Name of the content's author. */
+								author: string;
+								/** @description Region code of the content. */
+								region: string;
+								/** @description Description or caption of the content. */
+								description: string;
+								/**
+								 * Format: uri
+								 * @description URL of the AI-generated dynamic cover image.
+								 */
+								dynamic_cover: string;
+								/**
+								 * Format: uri
+								 * @description URL of the cover image.
+								 */
+								cover: string;
+								/**
+								 * Format: uri
+								 * @description Direct URL to download the TikTok video without watermark.
+								 */
+								video_url: string | null;
+								/**
+								 * Format: uri
+								 * @description URL of the TikTok video with watermark.
+								 */
+								video_watermark_url: string | null;
+								/**
+								 * Format: uri
+								 * @description URL of the background music used in the content.
+								 */
+								music_url: string | null;
+								/** @description Array of image URLs if the content is images. */
+								images_url: string[];
 							};
 						};
 					};
@@ -5160,7 +2839,7 @@ export interface paths {
 		get: {
 			parameters: {
 				query: {
-					/** @description The ID of the task to check status for. */
+					/** @description The submitted task id */
 					task_id: string;
 				};
 				header?: never;
@@ -5186,25 +2865,26 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
 							result?: {
 								/** @description The ID of the submitted task. */
-								task_id?: string;
+								task_id: string;
 								/**
-								 * @description The status of the task.
-								 * @enum {unknown}
+								 * @description The status of current task.
+								 * @enum {string}
 								 */
-								status?: "processing" | "completed" | "error";
-								/** @description List of separated audio files with their download URLs. */
-								audio_files?: {
-									/** @description The name of the separated audio file. */
-									name?: string;
-									/**
-									 * Format: uri
-									 * @description The download URL of the file.
-									 */
-									audio_url?: string;
-								}[];
+								status: "processing" | "completed" | "error";
+								/** @description The list of separated audio files. */
+								audio_files:
+									| {
+											/** @description The name of the separated audio file. */
+											name: string;
+											/**
+											 * Format: uri
+											 * @description The download URL of separated audio.
+											 */
+											audio_url: string;
+									  }[]
+									| null;
 							};
 						};
 					};
@@ -5269,32 +2949,32 @@ export interface paths {
 			requestBody: {
 				content: {
 					"multipart/form-data": {
+						init_audio: components["schemas"]["SharedInitAudioSchema"];
 						/**
 						 * @description Type of stems to separate:
 						 *     - `vocals_instrumental`: Separate into vocals and instrumental.
 						 *     - `voice_drums_bass_others`: Separate into voice, drums, bass, and others.
 						 *     - `voice_drums_bass_others_v2`: Improved voice/drums/bass/others separation.
-						 * @enum {unknown}
+						 * @enum {string}
 						 */
 						stems?:
 							| "vocals_instrumental"
 							| "voice_drums_bass_others"
 							| "voice_drums_bass_others_v2";
-						init_audio: string;
 					};
 					"application/json": {
+						init_audio: components["schemas"]["SharedInitAudioSchema"];
 						/**
 						 * @description Type of stems to separate:
 						 *     - `vocals_instrumental`: Separate into vocals and instrumental.
 						 *     - `voice_drums_bass_others`: Separate into voice, drums, bass, and others.
 						 *     - `voice_drums_bass_others_v2`: Improved voice/drums/bass/others separation.
-						 * @enum {unknown}
+						 * @enum {string}
 						 */
 						stems?:
 							| "vocals_instrumental"
 							| "voice_drums_bass_others"
 							| "voice_drums_bass_others_v2";
-						init_audio: string;
 					};
 				};
 			};
@@ -5316,25 +2996,26 @@ export interface paths {
 							 * @default success
 							 */
 							message: string;
-							/** @description Result of the request */
 							result?: {
 								/** @description The ID of the submitted task. */
-								task_id?: string;
+								task_id: string;
 								/**
-								 * @description The status of the task.
-								 * @enum {unknown}
+								 * @description The status of current task.
+								 * @enum {string}
 								 */
-								status?: "processing" | "completed" | "error";
-								/** @description List of separated audio files with their download URLs. */
-								audio_files?: {
-									/** @description The name of the separated audio file. */
-									name?: string;
-									/**
-									 * Format: uri
-									 * @description The download URL of the file.
-									 */
-									audio_url?: string;
-								}[];
+								status: "processing" | "completed" | "error";
+								/** @description The list of separated audio files. */
+								audio_files:
+									| {
+											/** @description The name of the separated audio file. */
+											name: string;
+											/**
+											 * Format: uri
+											 * @description The download URL of separated audio.
+											 */
+											audio_url: string;
+									  }[]
+									| null;
 							};
 						};
 					};
@@ -5387,8 +3068,741 @@ export interface components {
 			status: boolean;
 			/** @description Additional message */
 			message: string;
-			/** @description Result of the request */
-			result?: unknown;
+			/** @description Request result */
+			result?: Record<string, never>;
+		};
+		/**
+		 * AISong Submit Task Auto Schema
+		 * @description Auto generation mode allows the system to create music based on the provided prompt with minimal user input.
+		 */
+		AISongSubmitTaskAuto: {
+			/**
+			 * @description The action mode, must be `auto` (enum property replaced by openapi-typescript)
+			 * @enum {string}
+			 */
+			mode: "auto";
+			/**
+			 * @description Model used for generation.
+			 * @enum {string}
+			 */
+			model: "v3.0" | "v3.5" | "v4.0" | "v4.5" | "v4.5-plus";
+			/** @description The prompt parameter is used to control the melody, tune, style, and so on of the entire song. */
+			prompt: string;
+			/** @description Whether to generate instrumental music. */
+			instrumental?: boolean;
+			/**
+			 * @description Control the gender of the singer.
+			 * @enum {string}
+			 */
+			gender?: "male" | "female";
+		};
+		/**
+		 * AISong Submit Task Custom Schema
+		 * @description Custom generation allows for more detailed control over the song creation process.
+		 */
+		AISongSubmitTaskCustom: {
+			/**
+			 * @description Model used for generation.
+			 * @enum {string}
+			 */
+			model: "v3.0" | "v3.5" | "v4.0" | "v4.5" | "v4.5-plus";
+			/** @description Whether to generate instrumental music. */
+			instrumental?: boolean;
+			/**
+			 * @description Control the gender of the singer.
+			 * @enum {string}
+			 */
+			gender?: "male" | "female";
+			/**
+			 * @description The action mode, must be `custom` (enum property replaced by openapi-typescript)
+			 * @enum {string}
+			 */
+			mode: "custom";
+			/** @description The prompt parameter is used to control the melody, tune, style, and so on of the entire song. */
+			prompt?: string;
+			/** @description The lyrics parameter controls what the song is about, If this field is set to None, then pure music will be generated. */
+			lyrics?: string;
+			/** @description Create a title for the song you're writing. */
+			title?: string;
+		};
+		/**
+		 * ElevenLabs Clone Voice Input Schema
+		 * @description Schema for cloning a voice using ElevenLabs API.
+		 */
+		ElevenLabsCloneVoiceInput: {
+			/** @description Audio URLs (mp3, wav, ogg, opus, flac, m4a). */
+			audio_urls: string[];
+			/** @description Name of the new voice. */
+			name: string;
+			/** @description If true, remove background noise; may reduce quality if none exists. */
+			remove_background_noise?: boolean;
+			server_id: components["schemas"]["ElevenLabsServerId"];
+		};
+		/**
+		 * ElevenLabs Server ID Schema
+		 * @description Valid ElevenLabs server IDs: lovita, rose, frieren.
+		 * @enum {string}
+		 */
+		ElevenLabsServerId: "lovita" | "rose" | "frieren";
+		/**
+		 * ElevenLabs Search Voice Input Schema
+		 * @description Schema for searching voices using ElevenLabs API.
+		 */
+		ElevenLabsSearchVoiceInput: {
+			/**
+			 * @description Filter by category.
+			 * @enum {string}
+			 */
+			category?: "professional" | "premade" | "cloned" | "generated";
+			/** @description Search term (name, category, labels). */
+			query?: string;
+			/** @description Page number. */
+			page?: number;
+			/** @description Voices per page (default 10, max 100). */
+			page_size?: number;
+			server_id: components["schemas"]["ElevenLabsServerId"];
+		};
+		/**
+		 * ElevenLabs Inference Voice Input Schema
+		 * @description Voice inference payload supporting JSON and multipart/form-data submissions.
+		 */
+		ElevenLabsInferenceVoiceInput: {
+			server_id: components["schemas"]["ElevenLabsServerId"];
+			/** @description Voice ID. Example: 2vhwPPmYOBQ79F4vkznp */
+			voice_id: string;
+			/** @description If specified, generation is deterministic (0..4294967295). */
+			seed?: number;
+			/** @description Output format of the generated audio (e.g. mp3_44100_128, wav_44100). */
+			output_format?: string;
+			/**
+			 * @description Supported STS models.
+			 * @enum {string}
+			 */
+			model_id?: "eleven_english_sts_v2" | "eleven_multilingual_sts_v2";
+			/** @description Use audio isolation to remove background noise. */
+			remove_background_noise?: boolean;
+			/**
+			 * @description For pcm_s16le_16: 16-bit PCM, 16kHz mono, little-endian. Lower latency.
+			 * @enum {string}
+			 */
+			file_format?: "pcm_s16le_16" | "other";
+			init_audio: components["schemas"]["SharedInitAudioSchema"];
+			voice_settings?:
+				| components["schemas"]["ElevenLabsVoiceSetting"]
+				| string;
+		};
+		/**
+		 * Initial Audio Schema
+		 * @description Schema for initial audio input, either as a remote URL or a file upload.
+		 */
+		SharedInitAudioSchema: string | string;
+		/**
+		 * ElevenLabs Voice Setting Schema
+		 * @description Advanced settings for voice generation.
+		 */
+		ElevenLabsVoiceSetting: {
+			/** @description Lower = broader emotional range. Higher = more monotone. */
+			stability?: number;
+			/** @description How closely to adhere to the original voice. */
+			similarity_boost?: number;
+			/** @description Amplifies the style of the original speaker (may increase latency). */
+			style?: number;
+			/** @description Boost similarity to the original speaker (slightly higher latency). */
+			use_speaker_boost?: boolean;
+			/** @description 0.7-1.2 (1.0 default). Lower = slower; higher = faster. */
+			speed?: number;
+		};
+		/**
+		 * ElevenLabs Inference Text Input Schema
+		 * @description Schema for ElevenLabs text inference requests.
+		 */
+		ElevenLabsInferenceTextInput: {
+			server_id: components["schemas"]["ElevenLabsServerId"];
+			/** @description Model to use. */
+			model_id?: string;
+			/** @description Voice ID. Example: 2vhwPPmYOBQ79F4vkznp */
+			voice_id: string;
+			/** @description If specified, generation is deterministic (0..4294967295). */
+			seed?: number;
+			/** @description Output format of the generated audio (e.g. mp3_44100_128, wav_44100). */
+			output_format?: string;
+			voice_settings?: components["schemas"]["ElevenLabsVoiceSetting"];
+			/** @description Text to convert to speech. */
+			text: string;
+			/** @description ISO 639-1 language code. Only Turbo v2.5 / Flash v2.5 support this. */
+			language_code?: string;
+			/** @description Text preceding the current request; helps continuity. */
+			previous_text?: string;
+			/** @description Text following the current request; helps continuity. */
+			next_text?: string;
+			/**
+			 * @description Controls text normalization. Cannot be 'on' for eleven_turbo_v2_5 / eleven_flash_v2_5.
+			 * @enum {string}
+			 */
+			apply_text_normalization?: "auto" | "on" | "off";
+		};
+		/**
+		 * Chat Completion Request Body
+		 * @description Chat completion request body.
+		 * @example {
+		 *       "model": "gpt-4.1-mini",
+		 *       "messages": [
+		 *         {
+		 *           "role": "user",
+		 *           "content": "What is the capital of France?"
+		 *         }
+		 *       ]
+		 *     }
+		 */
+		GPTOpenAIChatCompletionRequest: {
+			/**
+			 * @description Whether to return the full response or just the message.
+			 *
+			 *     **Note:** if `full_response` is set to `true`, the response will include the full response object, any internal functions (i.e image generator) will not be executed.
+			 * @default false
+			 */
+			full_response: boolean;
+			/**
+			 * @description The model to use for the request. Fallback to fastest model available.
+			 * @enum {string}
+			 */
+			model:
+				| "gpt-3.5-turbo"
+				| "gpt-4o-mini"
+				| "gpt-4.1-mini"
+				| "gpt-4.1"
+				| "gpt-5-mini"
+				| "gpt-5"
+				| "gpt-5-codex"
+				| "x-ai/grok-code-fast-1";
+			/** @description The list of messages comprising the conversation. */
+			messages: components["schemas"]["GPTOpenAIRequestMessages"][];
+			/** @description Controls the randomness of the model's output. Lower values make the output more deterministic, while higher values make it more random. */
+			temperature?: number;
+			/** @description Deprecated in favor of tools. A list of functions the model may generate JSON inputs for. */
+			functions?: {
+				/**
+				 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
+				 * @example foo_bar
+				 */
+				name: string;
+				/** @description A description of what the function does, used by the model to choose when and how to call the function. */
+				description?: string;
+				/** @description The parameters the functions accepts, described as a JSON Schema object. See the guide for examples, and the JSON Schema reference for documentation about the format. */
+				parameters?: {
+					[key: string]: unknown;
+				};
+			}[];
+			/**
+			 * @description Controls which (if any) function is called by the model. `auto` lets the model decide, `none` disables function calling.
+			 * @enum {string}
+			 */
+			function_call?: "auto" | "none";
+			/** @description An object specifying the format that the model must output. */
+			response_format?:
+				| {
+						/**
+						 * @description Specifies the format that the model must output.
+						 * @enum {string}
+						 */
+						type: "text" | "json_object";
+				  }
+				| {
+						/**
+						 * @description JSON Schema format, used to specify the format of the response.
+						 * @enum {string}
+						 */
+						type: "json_schema";
+						/** @description JSON Schema format definition. */
+						schema: {
+							/**
+							 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
+							 * @example foo_bar
+							 */
+							name: string;
+							/** @description A description of what the function does, used by the model to choose when and how to call the function. */
+							description?: string;
+							/** @description The schema for the response format, described as a JSON Schema object. */
+							schema?: {
+								[key: string]: unknown;
+							};
+							/** @description Whether to enable strict schema adherence when generating the output. */
+							strict?: boolean;
+						};
+				  };
+			/** @description If set to `true`, the model response data will be streamed to the client as it is generated using server-sent events. */
+			stream?: boolean;
+			/**
+			 * @description `none` means the model will not call any tool. `auto` lets the model decide between generating a message or calling one or more tools. `required` means the model must call one or more tools.
+			 * @enum {string}
+			 */
+			tool_choice?: "none" | "auto" | "required";
+			/** @description A list of tools the model may call. */
+			tools?: {
+				/**
+				 * @description The type of the tool. Currently, only `function` is supported.
+				 * @default function
+				 * @enum {string}
+				 */
+				type: "function";
+				function: {
+					/**
+					 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
+					 * @example foo_bar
+					 */
+					name: string;
+					/** @description A description of what the function does, used by the model to choose when and how to call the function. */
+					description?: string;
+					/** @description The parameters the functions accepts, described as a JSON Schema object. See the guide for examples, and the JSON Schema reference for documentation about the format. */
+					parameters?: {
+						[key: string]: unknown;
+					};
+					/** @description Whether to enable `strict` schema adherence when generating the function call. If set to `true`, the model will follow the exact schema defined in the parameters field. */
+					strict?: boolean;
+				};
+			}[];
+			/** @description Options for the web search tool. */
+			web_search_options?: {
+				/**
+				 * @description High level guidance for the amount of context window space to use for the search.
+				 * @enum {string}
+				 */
+				search_context_size?: "low" | "medium" | "high";
+				user_location?: null | {
+					/**
+					 * @description The type of location approximation. Always `approximate`.
+					 * @enum {string}
+					 */
+					type: "approximate";
+					/** @description Approximate location parameters for the search. */
+					approximate: {
+						/** @description Free text input for the city of the user, e.g. `San Francisco`. */
+						city?: string;
+						/** @description The two-letter ISO country code of the user, e.g. `US`. */
+						country?: string;
+						/** @description Free text input for the region of the user, e.g. `CA` or `California`. */
+						region?: string;
+						/** @description The IANA timezone of the user, e.g. `America/Los_Angeles`. */
+						timezone?: string;
+					};
+				};
+			};
+		};
+		/**
+		 * Request Messages Schema
+		 * @description Schema for messages sent in a chat request.
+		 */
+		GPTOpenAIRequestMessages:
+			| {
+					/**
+					 * @description The role of the messages author, in this case `assistant`.
+					 * @enum {string}
+					 */
+					role: "assistant";
+					/**
+					 * Assistant Content
+					 * @description Assistant content
+					 */
+					content:
+						| string
+						| (
+								| {
+										/** @description The text content */
+										text: string;
+										/**
+										 * @description The content type
+										 * @enum {string}
+										 */
+										type: "text";
+								  }
+								| {
+										/** @description The refusal message generated by the model. */
+										refusal: string;
+										/** @description The type of the message. */
+										type: string;
+								  }
+						  )[];
+					/** @description An optional name for the participant. Provides the model information to differentiate between participants of the same role. */
+					name?: string;
+			  }
+			| {
+					/**
+					 * @description The role of the messages author, in this case `user`.
+					 * @example user
+					 * @enum {string}
+					 */
+					role: "user";
+					/**
+					 * User Content
+					 * @description User content
+					 */
+					content:
+						| string
+						| (
+								| {
+										/** @description The text content */
+										text: string;
+										/**
+										 * @description The content type
+										 * @enum {string}
+										 */
+										type: "text";
+								  }
+								| {
+										/** @description Image content, used when passing the image to the model. */
+										image_url: {
+											/** @description Absolute URL of the image or base64 encoded image data. */
+											url: string;
+											/** @description Specifies the detail level of the image. Learn more in the Vision guide. */
+											details?: string;
+										};
+										/**
+										 * @description The content type. Always `image_url`.
+										 * @enum {string}
+										 */
+										type: "image_url";
+								  }
+								| {
+										/** @description Audio content, used when passing the audio to the model. */
+										input_audio: {
+											/** @description Base64 encoded audio data. */
+											data: string;
+											/**
+											 * @description The format of the encoded audio data. Currently supports `wav` and `mp3`.
+											 * @enum {string}
+											 */
+											format: "wav" | "mp3";
+										};
+										/**
+										 * @description The type of the content part. Always `input_audio`.
+										 * @enum {string}
+										 */
+										type: "input_audio";
+								  }
+								| {
+										/** @description File content, used when passing the file to the model. */
+										file: {
+											/** @description The base64 encoded file data, used when passing the file to the model as a string. */
+											file_data: string;
+											/** @description The ID of an uploaded file to use as input. */
+											file_id?: string;
+											/** @description The name of the file, used when passing the file to the model as a string. */
+											file_name?: string;
+										};
+										/**
+										 * @description The type of the content part. Always `file`.
+										 * @enum {string}
+										 */
+										type: "file";
+								  }
+						  )[];
+					/** @description An optional name for the participant. Provides the model information to differentiate between participants of the same role. */
+					name?: string;
+			  }
+			| {
+					/**
+					 * @description The role of the messages author, in this case `system`.
+					 * @enum {string}
+					 */
+					role: "system";
+					/**
+					 * Base Content
+					 * @description The content of the message.
+					 */
+					content:
+						| string
+						| {
+								/** @description The text content */
+								text: string;
+								/**
+								 * @description The content type
+								 * @enum {string}
+								 */
+								type: "text";
+						  }[];
+					/** @description An optional name for the participant. Provides the model information to differentiate between participants of the same role. */
+					name?: string;
+			  }
+			| {
+					/**
+					 * @description The role of the messages author, in this case `tool`.
+					 * @enum {string}
+					 */
+					role: "tool";
+					/**
+					 * Base Content
+					 * @description The content of the message.
+					 */
+					content:
+						| string
+						| {
+								/** @description The text content */
+								text: string;
+								/**
+								 * @description The content type
+								 * @enum {string}
+								 */
+								type: "text";
+						  }[];
+					/** @description An optional name for the participant. Provides the model information to differentiate between participants of the same role. */
+					name?: string;
+			  }
+			| {
+					/**
+					 * @description The role of the function. Always `function`.
+					 * @enum {string}
+					 */
+					role: "function";
+					/** @description The name of the function to call. */
+					name: string;
+					/** @description The contents of the `function` message. */
+					content: string;
+			  }
+			| {
+					/**
+					 * @description The role of the messages author, in this case `developer`.
+					 * @enum {string}
+					 */
+					role: "developer";
+					/**
+					 * Base Content
+					 * @description The content of the message.
+					 */
+					content:
+						| string
+						| {
+								/** @description The text content */
+								text: string;
+								/**
+								 * @description The content type
+								 * @enum {string}
+								 */
+								type: "text";
+						  }[];
+					/** @description An optional name for the participant. Provides the model information to differentiate between participants of the same role. */
+					name?: string;
+			  };
+		/**
+		 * Remini AI Pipeline Schema
+		 * @description Schema for configuring the Remini AI image pipeline.
+		 */
+		ReminiPipelineSchema: {
+			/**
+			 * Bokeh Pipeline Configurations
+			 * @description Bokeh effect configuration.
+			 */
+			bokeh:
+				| "background_blur_low"
+				| "background_blur_medium"
+				| "background_blur_high";
+			/**
+			 * Color Enhance Pipeline Configurations
+			 * @description Color enhancement configuration.
+			 */
+			color_enhance:
+				| "prism-blend"
+				| "prism-expert-a"
+				| "prism-expert-c"
+				| "muted"
+				| "orange-teal"
+				| "silky"
+				| "lit_soft_warm"
+				| "orange-teal_v2";
+			/**
+			 * Background Enhance Pipeline Configurations
+			 * @description Background enhancement configuration.
+			 */
+			background_enhance:
+				| "shiba-strong-tensorrt"
+				| "rhino-tensorrt"
+				| "upsampler-bicubic";
+			/**
+			 * Face Lifting Pipeline Configurations
+			 * @description Face lifting effect configuration.
+			 */
+			face_lifting:
+				| "pinko_bigger_dataset-style"
+				| "movie-style"
+				| "marzipan-style";
+			/**
+			 * @description Face enhancement using Remini model.
+			 * @enum {string}
+			 */
+			face_enhance: "remini";
+		};
+		/**
+		 * AISong Task Output Schema
+		 * @description Schema for a task object in AISong.
+		 */
+		AISongTaskOutput: {
+			/**
+			 * @description The status of the task
+			 * @enum {string}
+			 */
+			status: "processing" | "completed" | "error";
+			/** @description The unique identifier of the generated song */
+			song_id: string;
+			/** @description The title of the generated song */
+			title: string;
+			/**
+			 * Format: uri
+			 * @description The audio URL of the generated song, null if not finished
+			 */
+			audio_url: string | null;
+			/** @description Duration of the audio in seconds */
+			audio_duration: number | null;
+			/**
+			 * Format: uri
+			 * @description The cover image URL of the song, null if not finished
+			 */
+			cover_url: string | null;
+			/** @description The lyrics of the song, null if not finished */
+			lyrics: string | null;
+		};
+		/**
+		 * ElevenLabs Voice Schema
+		 * @description Voice metadata returned from the search endpoint.
+		 */
+		ElevenLabsVoice: {
+			/** @description ID of the voice. */
+			voice_id: string;
+			/** @description Name of the voice. */
+			name: string;
+			/** @description Category of the voice. */
+			category: string;
+			/**
+			 * @description ISO language code.
+			 * @default UNKNOWN
+			 */
+			language: string;
+			/** @description Labels associated with the voice. */
+			labels: {
+				[key: string]: unknown;
+			};
+		};
+		/**
+		 * ElevenLabs Inference Output Schema
+		 * @description ElevenLabs inference response payload.
+		 */
+		ElevenLabsInferenceOutput: {
+			/** @description Audio URL. */
+			audio_url: string;
+		};
+		/**
+		 * OpenAI Full Chat Completion Response
+		 * @description Full chat completion response from OpenAI-compatible models.
+		 */
+		GPTOpenAIChatCompletionResponse: {
+			/** @description The ID of the response. */
+			id: string;
+			/** @description The type of the response. */
+			object: string;
+			/** @description The time the response was created. */
+			created: number;
+			/** @description The model used to generate the response. */
+			model: string;
+			/** @description The choices returned by the model. */
+			choices: (
+				| {
+						/** @description The index of the choice. */
+						index: number;
+						/** @description The message generated by the model. */
+						message:
+							| {
+									/**
+									 * @description The role of the message author.
+									 * @example assistant
+									 */
+									role: string;
+									/**
+									 * @description The content of the message.
+									 * @example The capital of France is Paris.
+									 */
+									content: string;
+									function_call?: {
+										/** @description The arguments to pass to the function, as a JSON string. */
+										arguments?: string;
+										/**
+										 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
+										 * @example foo_bar
+										 */
+										name: string;
+									} | null;
+									tool_calls?: {
+										/** @description The ID of the tool call. */
+										id?: string;
+										/**
+										 * @description The type of the tool call.
+										 * @enum {string}
+										 */
+										type: "function";
+										/**
+										 * Function Call
+										 * @description The function model wants to call, if any.
+										 */
+										function: {
+											/** @description The arguments to pass to the function, as a JSON string. */
+											arguments?: string;
+											/**
+											 * @description The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
+											 * @example foo_bar
+											 */
+											name: string;
+										};
+									} | null;
+									/** @description `web_search` annotations. */
+									annotations?: {
+										/**
+										 * @description The type of the URL citation. Always `url_citation`.
+										 * @enum {string}
+										 */
+										type: "url_citation";
+										/** @description A URL citation when using web search. */
+										url_citation: {
+											/** @description The index of the last character of the URL citation in the message. */
+											end_index: number;
+											/** @description The index of the first character of the URL citation in the message. */
+											start_index: number;
+											/** @description The title of the URL citation. */
+											title: string;
+											/** @description The URL of the citation. */
+											url: string;
+										};
+									}[];
+									/** @description An array of base64 encoded images, if the model generated any. */
+									images?: (string | null)[];
+							  }
+							| {
+									[key: string]: unknown;
+							  };
+						/** @description The reason the choice was finished. */
+						finish_reason: string;
+				  }
+				| {
+						[key: string]: unknown;
+				  }
+			)[];
+			/** @description Token usage information. */
+			usage: {
+				/** @description The number of tokens used in the prompt. */
+				prompt_tokens: number;
+				/** @description The number of tokens used to generate the completion. */
+				completion_tokens: number;
+				/** @description The total number of tokens used. */
+				total_tokens: number;
+				/** @description The number of tokens used in the prompt, including cached and audio tokens. */
+				prompt_tokens_details?: {
+					cached_tokens?: number;
+					audio_tokens?: number;
+				};
+				/** @description The number of tokens used to generate the completion, including reasoning, audio, accepted, and rejected prediction tokens. */
+				completion_tokens_details?: {
+					reasoning_tokens?: number;
+					audio_tokens?: number;
+					accepted_prediction_tokens?: number;
+					rejected_prediction_tokens?: number;
+				};
+			};
 		};
 	};
 	responses: never;
