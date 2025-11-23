@@ -1,4 +1,5 @@
 import { fetchClient } from "@/libs/fetch";
+import { scheduler } from "@/libs/scheduler";
 import type { IPlugin } from "@surya/plugin-manager";
 
 // a brief description of each restoration mode
@@ -34,32 +35,51 @@ export default {
 			return ctx.reply("Please attach or quote an image to enhance.");
 		}
 		const buffer = await media.download();
-
+		const { editReply } = await ctx.reply(
+			`Enhancing your image using *${restoration_mode}* mode, please wait...`
+		);
 		const { value, error } = await fetchClient.post("/image/restoration", {
 			init_image: Buffer.from(buffer).toString("base64"),
 			restoration_mode,
 		});
 
-		if (error) {
-			return ctx.reply(
-				`Failed to process image: ${error.message || "Unknown error"}`
+		if (error || !value) {
+			return editReply(
+				`Failed to process image: ${error?.message || "Unknown error"}`
 			);
 		}
-		const { status, result, message } = value!.data;
-		if (!status || !result?.images) {
-			return ctx.reply(message);
+		const { status, result, message } = value.data;
+		if (!status || !result) {
+			return editReply(
+				`Failed to process image: ${message || "Unknown error"}`
+			);
 		}
 
-		await sock.sendMessage(
-			ctx.from,
+		if (result.status === "completed") {
+			await editReply("Processing completed!");
+			const { images } = result!;
+			for (const img of images!) {
+				await sock.sendFile(ctx.from, img, { quoted: ctx });
+			}
+			return;
+		}
+		void scheduler.interval.add(
+			`${ctx.sender}:image-restoration`,
+			2000,
+			"fetch-image-status",
 			{
-				image: { url: result.images[0]! },
-				caption:
-					"Here is your enhanced image using the " +
-					restoration_mode +
-					" mode.",
-			},
-			{ quoted: ctx }
+				from: ctx.from,
+				sender: ctx.sender,
+				taskId: result.task_id,
+				caption: `Here's your restored image using *${restoration_mode}* mode.`,
+				quoted: {
+					key: ctx.key,
+					message: ctx.message,
+				},
+			}
+		);
+		await editReply(
+			"Your image is being processed. You will receive it once it's done."
 		);
 	},
 } satisfies IPlugin;
