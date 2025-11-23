@@ -8,7 +8,7 @@
 	"scripts": {
 		"build": "tsup",
 		"clean": "rimraf dist .turbo",
-		"dev": "NODE_ENV=development dotenvx run -- tsx src/index.ts",
+		"dev": "NODE_ENV=development tsx src/index.ts",
 		"gen:itsrose": "npx openapi-typescript https://api.itsrose.net/openapi.json --output src/types/itsrose-schema.ts",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
