@@ -1,0 +1,50 @@
+diff --git a/node_modules/baileys/lib/Socket/messages-send.js b/node_modules/baileys/lib/Socket/messages-send.js
+index e8ecdb1..17f1896 100644
+--- a/node_modules/baileys/lib/Socket/messages-send.js
++++ b/node_modules/baileys/lib/Socket/messages-send.js
+@@ -8,6 +8,7 @@ import { makeKeyedMutex } from '../Utils/make-mutex.js';
+ import { areJidsSameUser, getBinaryNodeChild, getBinaryNodeChildren, isHostedLidUser, isHostedPnUser, isJidGroup, isLidUser, isPnUser, jidDecode, jidEncode, jidNormalizedUser, S_WHATSAPP_NET } from '../WABinary/index.js';
+ import { USyncQuery, USyncUser } from '../WAUSync/index.js';
+ import { makeNewsletterSocket } from './newsletter.js';
++import { patchRelayMessageBusiness } from '@surya/baileys-utils';
+ export const makeMessagesSocket = (config) => {
+     const { logger, linkPreviewImageThumbnailWidth, generateHighQualityLinkPreview, options: httpRequestOptions, patchMessageBeforeSending, cachedGroupMetadata, enableRecentMessageCache, maxMsgRetryCount } = config;
+     const sock = makeNewsletterSocket(config);
+@@ -933,7 +934,8 @@ export const makeMessagesSocket = (config) => {
+                         }
+                     });
+                 }
+-                await relayMessage(jid, fullMsg.message, {
++                const relayMessageBusiness = patchRelayMessageBusiness(relayMessage);
++                await relayMessageBusiness(jid, fullMsg.message, {
+                     messageId: fullMsg.key.id,
+                     useCachedGroupMetadata: options.useCachedGroupMetadata,
+                     additionalAttributes,
+diff --git a/node_modules/baileys/lib/Utils/messages.js b/node_modules/baileys/lib/Utils/messages.js
+index 17b05b8..6b75a3c 100644
+--- a/node_modules/baileys/lib/Utils/messages.js
++++ b/node_modules/baileys/lib/Utils/messages.js
+@@ -9,6 +9,7 @@ import { isJidGroup, isJidNewsletter, isJidStatusBroadcast, jidNormalizedUser }
+ import { sha256 } from './crypto.js';
+ import { generateMessageIDV2, getKeyAuthor, unixTimestampSeconds } from './generics.js';
+ import { downloadContentFromMessage, encryptedStream, generateThumbnail, getAudioDuration, getAudioWaveform, getRawMediaUploadData } from './messages-media.js';
++import { patchGenerateWAMessageContent } from '@surya/baileys-utils';
+ const MIMETYPE_MAP = {
+     image: 'image/jpeg',
+     video: 'video/mp4',
+@@ -471,6 +472,7 @@ export const generateWAMessageContent = async (message, options) => {
+     else {
+         m = await prepareWAMessageMedia(message, options);
+     }
++    m = patchGenerateWAMessageContent(m, message);
+     if ('viewOnce' in message && !!message.viewOnce) {
+         m = { viewOnceMessage: { message: m } };
+     }
+@@ -506,6 +508,7 @@ export const generateWAMessageContent = async (message, options) => {
+             key.contextInfo = message.contextInfo;
+         }
+     }
++	console.log('Generated message content: ', JSON.stringify(m, null, 2));
+     return WAProto.Message.create(m);
+ };
+ export const generateWAMessageFromContent = (jid, message, options) => {
