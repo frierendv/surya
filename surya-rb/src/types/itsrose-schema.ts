@@ -21,7 +21,6 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -110,7 +109,6 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -194,7 +192,6 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -282,7 +279,6 @@ export interface paths {
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -303,6 +299,825 @@ export interface paths {
 							result?: {
 								/** @description The list of submitted task ids */
 								task_ids: string[];
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/different_me/get_styles": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get Styles
+		 * @description **Get** available styles for the Different Me transformation.
+		 *
+		 *     Retrieve a list of styles that can be used to transform images to look like you but different.
+		 *
+		 *     **Note:** Use the returned style IDs when calling the transformation API.
+		 */
+		get: {
+			parameters: {
+				query?: never;
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody?: never;
+			responses: {
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							result?: {
+								styles: string[];
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/different_me/get_styles_v2": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get Styles V2
+		 * @description **Get** available styles for the Different Me transformation.
+		 *
+		 *     Retrieve a list of styles that can be used to transform images to look like you but different.
+		 *
+		 *     **Note:** Use the returned style IDs when calling the transformation API.
+		 */
+		get: {
+			parameters: {
+				query?: {
+					/** @description Filter styles by category ID. If not provided, all styles are returned. */
+					category_id?: string;
+				};
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody?: never;
+			responses: {
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							result?: {
+								/** @description List of style IDs available for differentMeV2 */
+								styles: {
+									/** @description style category id */
+									category_id: string;
+									/** @description style category name */
+									name: string;
+									/** @description list of styles in this category */
+									items: {
+										/** @description style ID */
+										id: string;
+										/** @description style name */
+										name: string;
+										/** @description whether it supports multi-person */
+										is_multy: boolean;
+										/** @description whether it supports live photos */
+										is_live: boolean;
+										/** @description whether it supports stroke effects */
+										is_stroke: boolean;
+										/** @description whether it supports dynamic effects */
+										is_dynamic: boolean;
+										/** @description thumbnail URL */
+										thumbnail: string | null;
+										/** @description preview URL */
+										preview: string | null;
+										/** @description creation timestamp */
+										created_at: string | number;
+									}[];
+								}[];
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/different_me/get_task": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get Task
+		 * @description **Get** the status of an asynchronous task.
+		 *
+		 *     You may need to call this API if the any sync task is not completed.
+		 *
+		 *     **Note:** only call if status is `processing`
+		 */
+		get: {
+			parameters: {
+				query: {
+					/** @description The unique identifier for the task to retrieve */
+					task_id: string;
+				};
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody?: never;
+			responses: {
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							result?: {
+								/**
+								 * Status
+								 * @description Current processing state of the task.
+								 * @enum {string}
+								 */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+								/**
+								 * Metadata
+								 * @description Additional task-related metadata, if any
+								 */
+								metadata?: {
+									[key: string]: unknown;
+								};
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/different_me/transform": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Transform
+		 * @description **Transform** an image to look like you but different.
+		 *
+		 *     Upload an image and receive a transformed version that resembles you but with distinct features.
+		 *
+		 *     **Note:** This service uses advanced AI algorithms to ensure high-quality transformations.
+		 */
+		post: {
+			parameters: {
+				query?: never;
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody: {
+				content: {
+					"application/json": {
+						/**
+						 * Style ID
+						 * @description The style ID to be applied to the image
+						 * @enum {string}
+						 */
+						style_id:
+							| "animal_fest"
+							| "old"
+							| "doll"
+							| "metal"
+							| "8bit"
+							| "city"
+							| "blazing_torch"
+							| "clay"
+							| "realism"
+							| "simulife"
+							| "sketch"
+							| "zombie"
+							| "oil_stick"
+							| "balloon"
+							| "pipe_craft"
+							| "crystal"
+							| "felt"
+							| "jade"
+							| "pink_girl"
+							| "vivid"
+							| "eastern"
+							| "mythical"
+							| "pixel_game"
+							| "league"
+							| "lineage"
+							| "happiness"
+							| "manga"
+							| "sweet"
+							| "pixel_art"
+							| "catwoman"
+							| "loose"
+							| "sakura"
+							| "pocket"
+							| "grains"
+							| "graduation"
+							| "oil_pastel"
+							| "flora_tour"
+							| "loong_year"
+							| "figure"
+							| "prospera"
+							| "guardians"
+							| "expedition"
+							| "leisure"
+							| "giftify"
+							| "amiable"
+							| "3d_cartoon"
+							| "sketch_ii"
+							| "collage"
+							| "mini_doll"
+							| "sketchresize"
+							| "cartoon"
+							| "fluffy"
+							| "insta"
+							| "local_graffiti"
+							| "peking_opera"
+							| "opera"
+							| "torch"
+							| "sport"
+							| "dunk"
+							| "anime25d"
+							| "anime"
+							| "comic_rl"
+							| "manhwa"
+							| "manhwa_female"
+							| "manhwa_male"
+							| "samyang"
+							| "comic_idol"
+							| "anime_ghibli"
+							| "anime_shinchan"
+							| "anime_chibi"
+							| "powerpuff"
+							| "anime_splash"
+							| "anime_dream"
+							| "game_lol"
+							| "game_ps2"
+							| "game_gta"
+							| "game_sim"
+							| "game_lr"
+							| "game_dress_up"
+							| "game_persona"
+							| "game_stardew_valley"
+							| "game_undawn"
+							| "game_lineage"
+							| "game_fantasy"
+							| "k_comic"
+							| "minecraft"
+							| "card_game"
+							| "kartun_dress_up"
+							| "cyberpunk"
+							| "dora";
+						/**
+						 * Initial Image
+						 * @description The initial image to be processed.
+						 */
+						init_image: string;
+						/**
+						 * Synchronous Processing
+						 * @description Whether to process the task synchronously. Defaults to false.
+						 */
+						sync?: boolean;
+					};
+				};
+			};
+			responses: {
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							result?: {
+								/**
+								 * Status
+								 * @description Current processing state of the task.
+								 * @enum {string}
+								 */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+								/**
+								 * Metadata
+								 * @description Additional task-related metadata, if any
+								 */
+								metadata?: {
+									[key: string]: unknown;
+								};
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/different_me/transform_v2": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Transform V2
+		 * @description **Transform** an image to look like you but different.
+		 *
+		 *     Upload an image and receive a transformed version that resembles you but with distinct features.
+		 *
+		 *     **Note:** This service uses advanced AI algorithms to ensure high-quality transformations.
+		 */
+		post: {
+			parameters: {
+				query?: never;
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody: {
+				content: {
+					"application/json": {
+						/**
+						 * Style ID
+						 * @description The style ID to be applied to the image
+						 * @enum {string}
+						 */
+						style_id:
+							| "city-pop"
+							| "backlight"
+							| "hammy"
+							| "shibuya"
+							| "dora"
+							| "illustrations"
+							| "fairy-tale"
+							| "kasukabe"
+							| "jirai-kei"
+							| "banquet"
+							| "luna"
+							| "local-graffiti"
+							| "dream"
+							| "dunk"
+							| "sakura"
+							| "manga"
+							| "pixel"
+							| "catwoman"
+							| "sweet"
+							| "gorgeous"
+							| "clear-sky"
+							| "cuisine"
+							| "drawing"
+							| "azure-sky"
+							| "sunny"
+							| "fresh"
+							| "forest"
+							| "graceful"
+							| "snowfall"
+							| "cat-ears"
+							| "cold"
+							| "angel"
+							| "fighters"
+							| "recess"
+							| "princess"
+							| "cutie"
+							| "puff"
+							| "sketch"
+							| "chill"
+							| "relieve"
+							| "adventure"
+							| "piggy"
+							| "oil-pastel"
+							| "oil-stick"
+							| "artisan"
+							| "idealist"
+							| "guardian"
+							| "rational"
+							| "puff2"
+							| "flush"
+							| "chibi"
+							| "lite"
+							| "yonkoma"
+							| "soft-tone"
+							| "idol"
+							| "comic"
+							| "k-comic"
+							| "city"
+							| "comic-ii"
+							| "paris"
+							| "loose"
+							| "poster"
+							| "comic-2"
+							| "toon-me"
+							| "minime2"
+							| "cyberpunk"
+							| "versailles"
+							| "monet"
+							| "happiness"
+							| "vivid"
+							| "petrichor"
+							| "eastern"
+							| "charming"
+							| "stipple"
+							| "mythical"
+							| "peking-opera"
+							| "colouring"
+							| "gongbi"
+							| "realism"
+							| "graduation"
+							| "opera"
+							| "meimoji"
+							| "polardoll"
+							| "3d-anime"
+							| "3d-cartoon"
+							| "student"
+							| "younger"
+							| "figure"
+							| "prospera"
+							| "dawn"
+							| "guardians"
+							| "ps2"
+							| "expedition"
+							| "leisure"
+							| "simulife"
+							| "giftify"
+							| "amiable"
+							| "card-game"
+							| "cube"
+							| "grid"
+							| "memory"
+							| "laura"
+							| "dressblox"
+							| "valley"
+							| "league"
+							| "pixel-game"
+							| "adventurer"
+							| "dress-up"
+							| "island"
+							| "8-bit"
+							| "lineage"
+							| "gta"
+							| "fantasy"
+							| "persona"
+							| "craft"
+							| "felt"
+							| "clay"
+							| "jade-2"
+							| "doll"
+							| "pocket"
+							| "metal"
+							| "delft-blue"
+							| "wool-felt-doll"
+							| "jade"
+							| "clay2"
+							| "knitwear"
+							| "pipe-craft"
+							| "origami"
+							| "balloon"
+							| "inflated"
+							| "sport"
+							| "plastic-doll"
+							| "pearl"
+							| "bejeweled"
+							| "zombie"
+							| "id-photo"
+							| "festival"
+							| "carefree"
+							| "distinction"
+							| "victoria"
+							| "gentle"
+							| "newyear"
+							| "hanbok"
+							| "xmas"
+							| "toy"
+							| "fluffy"
+							| "wizard"
+							| "nana"
+							| "rebel"
+							| "toy-box"
+							| "bitpal"
+							| "micropix"
+							| "genie"
+							| "angela"
+							| "cecilia"
+							| "elegant"
+							| "neon"
+							| "punk"
+							| "fire"
+							| "ice"
+							| "#ps2"
+							| "sim-life"
+							| "dimension-breakthrough!"
+							| "plushpals"
+							| "us-cartoon"
+							| "wool"
+							| "wood"
+							| "ichiban-kuji"
+							| "1990s"
+							| "planet-pass"
+							| "bueno"
+							| "vice-city"
+							| "anime";
+						/**
+						 * Initial Image
+						 * @description The initial image to be processed.
+						 */
+						init_image: string;
+						/**
+						 * Synchronous Processing
+						 * @description Whether to process the task synchronously. Defaults to false.
+						 */
+						sync?: boolean;
+					};
+				};
+			};
+			responses: {
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							result?: {
+								/**
+								 * Status
+								 * @description Current processing state of the task.
+								 * @enum {string}
+								 */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+								/**
+								 * Metadata
+								 * @description Additional task-related metadata, if any
+								 */
+								metadata?: {
+									[key: string]: unknown;
+								};
 							};
 						};
 					};
@@ -374,7 +1189,6 @@ export interface paths {
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -456,7 +1270,6 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -542,7 +1355,6 @@ export interface paths {
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -564,7 +1376,23 @@ export interface paths {
 								/** @description Whether there are more results. */
 								has_more: boolean;
 								/** @description Voices. */
-								voices: components["schemas"]["ElevenLabsVoice"][];
+								voices: {
+									/** @description ID of the voice. */
+									voice_id?: string;
+									/** @description Name of the voice. */
+									name?: string;
+									/** @description Category of the voice. */
+									category?: string;
+									/**
+									 * @description ISO language code.
+									 * @default UNKNOWN
+									 */
+									language: string;
+									/** @description Labels associated with the voice. */
+									labels?: {
+										[key: string]: unknown;
+									};
+								}[];
 							};
 						};
 					};
@@ -632,7 +1460,6 @@ export interface paths {
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -715,7 +1542,6 @@ export interface paths {
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -798,7 +1624,6 @@ export interface paths {
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -978,7 +1803,6 @@ export interface paths {
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -1119,14 +1943,12 @@ export interface paths {
 						/**
 						 * Synchronous Processing
 						 * @description Whether to process the task synchronously. Defaults to false.
-						 * @default false
 						 */
 						sync?: boolean;
 					};
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -1164,7 +1986,9 @@ export interface paths {
 								 * Metadata
 								 * @description Additional task-related metadata, if any
 								 */
-								metadata?: Record<string, never>;
+								metadata?: {
+									[key: string]: unknown;
+								};
 							};
 						};
 					};
@@ -1239,14 +2063,12 @@ export interface paths {
 						/**
 						 * Synchronous Processing
 						 * @description Whether to process the task synchronously. Defaults to false.
-						 * @default false
 						 */
 						sync?: boolean;
 					};
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -1300,17 +2122,6 @@ export interface paths {
 									 */
 									url: string;
 								}[];
-								/**
-								 * Initial Image
-								 * @description The initial image to be processed.
-								 */
-								init_image: string;
-								/**
-								 * Synchronous Processing
-								 * @description Whether to process the task synchronously. Defaults to false.
-								 * @default false
-								 */
-								sync: boolean;
 							};
 						};
 					};
@@ -1361,7 +2172,10 @@ export interface paths {
 		put?: never;
 		/**
 		 * Different Me
-		 * @description **Different Me** is a service based on image2image technology. It can change the style of the input image to a different style.
+		 * @deprecated
+		 * @description Deprecated: Please use the dedicated Different Me `/different_me` service instead.
+		 *
+		 *     **Different Me** is a service based on image2image technology. It can change the style of the input image to a different style.
 		 */
 		post: {
 			parameters: {
@@ -1477,14 +2291,12 @@ export interface paths {
 						/**
 						 * Synchronous Processing
 						 * @description Whether to process the task synchronously. Defaults to false.
-						 * @default false
 						 */
 						sync?: boolean;
 					};
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -1522,99 +2334,9 @@ export interface paths {
 								 * Metadata
 								 * @description Additional task-related metadata, if any
 								 */
-								metadata?: Record<string, never>;
-							};
-						};
-					};
-				};
-				/** @description Invalid request error */
-				400: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Authorization error */
-				401: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-				/** @description Internal server error */
-				500: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": components["schemas"]["ResponseSchema"];
-					};
-				};
-			};
-		};
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/image/enhance": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Enhance
-		 * @description **Enhance** is a powerful image processing tool that can enhance basic images.
-		 *
-		 *     Allows you to improve the quality of your images.
-		 *     With few options, you can easily enhance your images to make them look better.
-		 */
-		post: {
-			parameters: {
-				query?: never;
-				header?: never;
-				path?: never;
-				cookie?: never;
-			};
-			requestBody: {
-				content: {
-					"application/json": {
-						init_image: string;
-						/** @default 2 */
-						type?: 1 | 2 | 3;
-					};
-				};
-			};
-			responses: {
-				/** @description Default Response */
-				200: {
-					headers: {
-						[name: string]: unknown;
-					};
-					content: {
-						"application/json": {
-							/**
-							 * @description Status of the request
-							 * @default true
-							 */
-							status: boolean;
-							/**
-							 * @description Additional message
-							 * @default success
-							 */
-							message: string;
-							result?: {
-								/** @description A list of processed image URLs */
-								images: ((string | string)[] | null)[];
+								metadata?: {
+									[key: string]: unknown;
+								};
 							};
 						};
 					};
@@ -1687,10 +2409,20 @@ export interface paths {
 						expression:
 							| "laugh"
 							| "smile"
-							| "pose_ps"
+							| "pursed_smile"
 							| "cool"
-							| "cspv"
-							| "dimples";
+							| "classic_smile"
+							| "classic_laugh";
+						/**
+						 * PCI
+						 * @description Enables the pursed-cooler interface to adjust image cooling dynamics.
+						 */
+						pci?: boolean;
+						/**
+						 * CTTP
+						 * @description Applies post-processing adjustments to color temperature and tonal balance.
+						 */
+						cttp?: boolean;
 						/**
 						 * Initial Image
 						 * @description The initial image to be processed.
@@ -1699,14 +2431,12 @@ export interface paths {
 						/**
 						 * Synchronous Processing
 						 * @description Whether to process the task synchronously. Defaults to false.
-						 * @default false
 						 */
 						sync?: boolean;
 					};
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -1744,7 +2474,9 @@ export interface paths {
 								 * Metadata
 								 * @description Additional task-related metadata, if any
 								 */
-								metadata?: Record<string, never>;
+								metadata?: {
+									[key: string]: unknown;
+								};
 							};
 						};
 					};
@@ -1811,7 +2543,6 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -1849,7 +2580,9 @@ export interface paths {
 								 * Metadata
 								 * @description Additional task-related metadata, if any
 								 */
-								metadata?: Record<string, never>;
+								metadata?: {
+									[key: string]: unknown;
+								};
 							};
 						};
 					};
@@ -1957,14 +2690,12 @@ export interface paths {
 						/**
 						 * Synchronous Processing
 						 * @description Whether to process the task synchronously. Defaults to false.
-						 * @default false
 						 */
 						sync?: boolean;
 					};
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -2002,7 +2733,9 @@ export interface paths {
 								 * Metadata
 								 * @description Additional task-related metadata, if any
 								 */
-								metadata?: Record<string, never>;
+								metadata?: {
+									[key: string]: unknown;
+								};
 							};
 						};
 					};
@@ -2070,15 +2803,30 @@ export interface paths {
 					"application/json": {
 						/**
 						 * Restoration Mode
-						 * @description The restoration quality level.
-						 *     Options: `HD`, `UHD`, `NG_UHD`.
+						 * @description Specifies the image restoration preset optimized for different content types and quality levels.
 						 *
-						 *     - `HD` High Definition mode.
-						 *     - `UHD` Ultra High Definition mode.
-						 *     - `NG_UHD` Next Generation Ultra High Definition mode. Recommended for high-quality restoration.
+						 *     **Quality Modes**
+						 *     - **HD** - Standard high-definition restoration.
+						 *     - **UHD** - Ultra high-definition restoration for enhanced clarity.
+						 *     - **NG_UHD** - Next-generation UHD mode offering the most advanced restoration quality.
+						 *
+						 *     **Content-Specific Modes**
+						 *     - **GAME** - Optimized for restoring game graphics and screenshots.
+						 *     - **ANIME** - Tuned for anime-style artwork and illustrations.
+						 *     - **PRODUCT** - Designed for product photos, maintaining sharp edges and accurate textures.
+						 *     - **TEXT** - Specialized for enhancing text clarity and readability.
+						 *
+						 *     Choose the mode that best matches your image type for optimal results.
 						 * @enum {string}
 						 */
-						restoration_mode: "HD" | "UHD" | "NG_UHD";
+						restoration_mode:
+							| "HD"
+							| "UHD"
+							| "NG_UHD"
+							| "GAME"
+							| "ANIME"
+							| "PRODUCT"
+							| "TEXT";
 						/**
 						 * Initial Image
 						 * @description The initial image to be processed.
@@ -2087,14 +2835,12 @@ export interface paths {
 						/**
 						 * Synchronous Processing
 						 * @description Whether to process the task synchronously. Defaults to false.
-						 * @default false
 						 */
 						sync?: boolean;
 					};
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -2132,7 +2878,233 @@ export interface paths {
 								 * Metadata
 								 * @description Additional task-related metadata, if any
 								 */
-								metadata?: Record<string, never>;
+								metadata?: {
+									[key: string]: unknown;
+								};
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/image/outpainting": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Outpainting
+		 * @description **Outpainting** is a technique used to extend the boundaries of an image by generating new content that seamlessly blends with the existing image.
+		 */
+		post: {
+			parameters: {
+				query?: never;
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			/**
+			 * @description Defines the expansion method for outpainting. Choose one of the following options:
+			 *
+			 *     - `expand_ratio`: A uniform ratio (0.0-1.0) applied to all sides.
+			 *     - `free_expand_ratio`: Individual ratios (0.0-1.0) for each side (left, right, top, bottom).
+			 *     - `free_expand_pixel`: Specific pixel values for each side (left, right, top, bottom).
+			 *
+			 *     **Note:** Only one expansion method can be specified at a time.
+			 */
+			requestBody: {
+				content: {
+					"application/json":
+						| ({
+								/**
+								 * Uniform Expand Ratio
+								 * @description Apply consistent expansion across all directions using a single ratio value (0.0-1.0).
+								 *
+								 *     For example:
+								 *     - 0.1 = 110% expansion in all directions
+								 *     - 0.5 = 150% expansion in all directions
+								 *
+								 *     **Note:** Mutually exclusive with `free_expand_ratio` and `free_expand_pixel`. Only one expansion method can be specified.
+								 */
+								expand_ratio: number;
+						  } & {
+								/**
+								 * Initial Image
+								 * @description The initial image to be processed.
+								 */
+								init_image: string;
+								/**
+								 * Synchronous Processing
+								 * @description Whether to process the task synchronously. Defaults to false.
+								 */
+								sync?: boolean;
+						  })
+						| ({
+								/**
+								 * Free Expand Ratio
+								 * @description The ratios to expand the image on each side.
+								 */
+								free_expand_ratio: {
+									/**
+									 * Left Expand Ratio
+									 * @description The ratio to expand the image on the left side. Value should be between 0 and 1.
+									 * @default 0
+									 */
+									left?: number;
+									/**
+									 * Right Expand Ratio
+									 * @description The ratio to expand the image on the right side. Value should be between 0 and 1.
+									 * @default 0
+									 */
+									right?: number;
+									/**
+									 * Top Expand Ratio
+									 * @description The ratio to expand the image on the top side. Value should be between 0 and 1.
+									 * @default 0
+									 */
+									top?: number;
+									/**
+									 * Bottom Expand Ratio
+									 * @description The ratio to expand the image on the bottom side. Value should be between 0 and 1.
+									 * @default 0
+									 */
+									bottom?: number;
+								};
+						  } & {
+								/**
+								 * Initial Image
+								 * @description The initial image to be processed.
+								 */
+								init_image: string;
+								/**
+								 * Synchronous Processing
+								 * @description Whether to process the task synchronously. Defaults to false.
+								 */
+								sync?: boolean;
+						  })
+						| ({
+								/**
+								 * Free Expand Pixel
+								 * @description The number of pixels to expand the image on each side.
+								 */
+								free_expand_pixel: {
+									/**
+									 * Left Expand Pixel
+									 * @description The number of pixels to expand the image on the left side.
+									 * @default 0
+									 */
+									left?: number;
+									/**
+									 * Right Expand Pixel
+									 * @description The number of pixels to expand the image on the right side.
+									 * @default 0
+									 */
+									right?: number;
+									/**
+									 * Top Expand Pixel
+									 * @description The number of pixels to expand the image on the top side.
+									 * @default 0
+									 */
+									top?: number;
+									/**
+									 * Bottom Expand Pixel
+									 * @description The number of pixels to expand the image on the bottom side.
+									 * @default 0
+									 */
+									bottom?: number;
+								};
+						  } & {
+								/**
+								 * Initial Image
+								 * @description The initial image to be processed.
+								 */
+								init_image: string;
+								/**
+								 * Synchronous Processing
+								 * @description Whether to process the task synchronously. Defaults to false.
+								 */
+								sync?: boolean;
+						  });
+				};
+			};
+			responses: {
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							result?: {
+								/**
+								 * Status
+								 * @description Current processing state of the task.
+								 * @enum {string}
+								 */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+								/**
+								 * Metadata
+								 * @description Additional task-related metadata, if any
+								 */
+								metadata?: {
+									[key: string]: unknown;
+								};
 							};
 						};
 					};
@@ -2203,7 +3175,6 @@ export interface paths {
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -2221,8 +3192,8 @@ export interface paths {
 							 */
 							message: string;
 							result?: {
-								/** @description A list of processed image URLs */
-								images: ((string | string)[] | null)[];
+								/** @description Array of generated images. */
+								images: (string | string)[] | null;
 							};
 						};
 					};
@@ -2291,12 +3262,11 @@ export interface paths {
 					"application/json": {
 						/** @description The initial image to create the task from. */
 						init_image: string;
-						pipelines: components["schemas"]["ReminiPipelineSchema"];
+						pipeline?: components["schemas"]["ReminiPipelineSchema"];
 					};
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -2316,51 +3286,11 @@ export interface paths {
 							result?: {
 								/** @description Array of generated images. */
 								images: (string | string)[] | null;
-								/** @description The pipelines used to generate the images. */
-								pipelines: {
-									/**
-									 * Bokeh Pipeline Configurations
-									 * @description Bokeh effect configuration.
-									 */
-									bokeh?:
-										| "background_blur_low"
-										| "background_blur_medium"
-										| "background_blur_high";
-									/**
-									 * Color Enhance Pipeline Configurations
-									 * @description Color enhancement configuration.
-									 */
-									color_enhance?:
-										| "prism-blend"
-										| "prism-expert-a"
-										| "prism-expert-c"
-										| "muted"
-										| "orange-teal"
-										| "silky"
-										| "lit_soft_warm"
-										| "orange-teal_v2";
-									/**
-									 * Background Enhance Pipeline Configurations
-									 * @description Background enhancement configuration.
-									 */
-									background_enhance?:
-										| "shiba-strong-tensorrt"
-										| "rhino-tensorrt"
-										| "upsampler-bicubic";
-									/**
-									 * Face Lifting Pipeline Configurations
-									 * @description Face lifting effect configuration.
-									 */
-									face_lifting?:
-										| "pinko_bigger_dataset-style"
-										| "movie-style"
-										| "marzipan-style";
-									/**
-									 * @description Face enhancement using Remini model.
-									 * @enum {string}
-									 */
-									face_enhance?: "remini";
-								};
+								/**
+								 * Remini AI Pipeline Schema
+								 * @description The pipelines used to generate the images.
+								 */
+								pipeline?: components["schemas"]["ReminiPipelineSchemaOutput"];
 							};
 						};
 					};
@@ -2409,7 +3339,7 @@ export interface paths {
 		};
 		/**
 		 * Get Content
-		 * @description Fetch Instagram content information
+		 * @description Fetch Instagram content
 		 */
 		get: {
 			parameters: {
@@ -2423,7 +3353,102 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description Default Response */
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							result?: {
+								/** @description List of media items. */
+								contents: {
+									/**
+									 * Format: uri
+									 * @description The URL of the media thumbnail image.
+									 */
+									thumbnail?: string;
+									/**
+									 * Format: uri
+									 * @description The direct URL to the media file.
+									 */
+									url: string;
+									/** @description Indicates whether the media is a video. */
+									is_video: boolean;
+								}[];
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/instagram/get_content_v2": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get Content V2
+		 * @description Fetch Instagram content with additional metadata
+		 */
+		get: {
+			parameters: {
+				query: {
+					/** @description The URL of the Instagram media to fetch. */
+					url: string;
+				};
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody?: never;
+			responses: {
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -2442,30 +3467,40 @@ export interface paths {
 							message: string;
 							result?: {
 								/**
-								 * @description The author of the media list, if available.
-								 * @default null
+								 * Format: uri
+								 * @description The URL of the thumbnail image of the content media.
 								 */
-								author: string | null;
-								/**
-								 * @description Description of the media list, if available.
-								 * @default null
-								 */
-								description: string | null;
+								thumbnail: string;
 								/** @description List of media items. */
 								contents: {
 									/**
 									 * Format: uri
 									 * @description The URL of the media thumbnail image.
 									 */
-									thumbnail: string;
+									thumbnail?: string;
 									/**
 									 * Format: uri
 									 * @description The direct URL to the media file.
 									 */
 									url: string;
 									/** @description Indicates whether the media is a video. */
-									isVideo: boolean;
+									is_video: boolean;
 								}[];
+								/** @description Metadata of the content media. */
+								metadata: {
+									/** @description The username of the content media author. */
+									username: string;
+									/** @description The title of the content media. */
+									title: string;
+									/** @description The number of likes on the content media. */
+									like_count: number;
+									/** @description The number of comments on the content media. */
+									comment_count: number;
+									/** @description The timestamp when the content media was taken. */
+									taken_at: number;
+									/** @description The source of the content media. */
+									source: string;
+								};
 							};
 						};
 					};
@@ -2521,7 +3556,7 @@ export interface paths {
 		get: {
 			parameters: {
 				query: {
-					/** @description TikTok content URL */
+					/** @description The URL of the TikTok content to download. */
 					url: string;
 				};
 				header?: never;
@@ -2530,7 +3565,6 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -2649,12 +3683,7 @@ export interface paths {
 								/** @description Unix timestamp representing the creation time of the content. */
 								create_time?: number;
 								/** @description Additional anchor data related to the content. */
-								anchors?:
-									| string
-									| null
-									| {
-											[key: string]: unknown;
-									  };
+								anchors?: unknown;
 								/** @description Extra anchor information. */
 								anchors_extras?: string;
 								/** @description Indicates whether the content is an advertisement. */
@@ -2666,7 +3695,7 @@ export interface paths {
 								/** @description Settings related to comments on the content. */
 								item_comment_settings?: unknown;
 								/** @description Users mentioned in the content. */
-								mentioned_users?: string | unknown[] | null;
+								mentioned_users?: unknown;
 							};
 						};
 					};
@@ -2731,7 +3760,6 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -2781,9 +3809,9 @@ export interface paths {
 								 * Format: uri
 								 * @description URL of the background music used in the content.
 								 */
-								music_url: string | null;
+								music_url?: string | null;
 								/** @description Array of image URLs if the content is images. */
-								images_url: string[];
+								images_url?: string[] | null;
 							};
 						};
 					};
@@ -2825,6 +3853,305 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	"/turn_me/get_task": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get Task
+		 * @description **Get** the status of an asynchronous task.
+		 *
+		 *     You may need to call this API if the any sync task is not completed.
+		 *
+		 *     **Note:** only call if status is `processing`
+		 */
+		get: {
+			parameters: {
+				query: {
+					/** @description The ID of the image generation task. */
+					task_id: string;
+				};
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody?: never;
+			responses: {
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							result?: {
+								/**
+								 * Status
+								 * @description Current processing state of the task.
+								 * @enum {string}
+								 */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/turn_me/transform": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Transform
+		 * @description **Transform** an image to look like you.
+		 *
+		 *     Upload an image and receive a transformed version that closely resembles you.
+		 *
+		 *     **Note:** This service uses advanced AI algorithms to ensure high-quality transformations.
+		 */
+		post: {
+			parameters: {
+				query?: never;
+				header?: never;
+				path?: never;
+				cookie?: never;
+			};
+			requestBody: {
+				content: {
+					"application/json": {
+						/**
+						 * Initial Image
+						 * @description The initial image to be processed.
+						 */
+						init_image: string;
+						/**
+						 * Image Number
+						 * @description The number of images to generate.
+						 * @default 1
+						 */
+						image_num?: number;
+						/**
+						 * Style ID
+						 * @description The style ID to be applied for face fusion.
+						 * @enum {string}
+						 */
+						style_id:
+							| "horrible-zombie"
+							| "halloween-makeup"
+							| "dark-gothic"
+							| "halloween-dark-makeup"
+							| "japanese-horror"
+							| "synthwave-punk"
+							| "chocolate-man"
+							| "crazy-scientist"
+							| "don-t-starve"
+							| "white-statue"
+							| "colorful-illustration"
+							| "paper-cut-craft"
+							| "blood-of-blue"
+							| "cyber-punk"
+							| "fanatic-adventure"
+							| "legend-of-elf"
+							| "realistic-muscle-man"
+							| "new-realistic-muscle"
+							| "racer"
+							| "cute-cartoon"
+							| "super-hero"
+							| "pixel-art"
+							| "retro-style"
+							| "black-swing"
+							| "fairy-tale"
+							| "thick-impasto"
+							| "rainbow-hair"
+							| "30-s-style"
+							| "water-magic"
+							| "on-fire"
+							| "luminous-cloud"
+							| "pocket-pet"
+							| "spirited-wind"
+							| "3d-style"
+							| "red-redemption"
+							| "boxing-man"
+							| "hell-kight"
+							| "calendar-girl"
+							| "cute-illustration"
+							| "aging-filter"
+							| "realistic-fire"
+							| "tattoo-magic"
+							| "christmas-girl"
+							| "ps-game-style-1"
+							| "thunderstruck-armor"
+							| "lightning-punk"
+							| "aether-punk"
+							| "new-world-s-pirates"
+							| "legend-fighters"
+							| "barbie-girl"
+							| "cool-guy"
+							| "muscle-man"
+							| "blindbox"
+							| "melted-chocolate"
+							| "90s-comic"
+							| "realistic-thunderstruck-armor"
+							| "anime-2d"
+							| "realistic-lightning-punk"
+							| "white-skin"
+							| "hourglass-body-shape"
+							| "pixel-style"
+							| "anime-hero"
+							| "christmas-3d"
+							| "christmas-family"
+							| "cartoon"
+							| "80-s-style"
+							| "christmas-cartoon"
+							| "ps-game-style-2"
+							| "anime"
+							| "city-punk"
+							| "cartoon-tattoo-muscle"
+							| "christmas-comic"
+							| "magic-muscle"
+							| "super-bowl"
+							| "romantic-anime"
+							| "animal-ears"
+							| "skeleton-bride"
+							| "joker";
+					};
+				};
+			};
+			responses: {
+				200: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": {
+							/**
+							 * @description Status of the request
+							 * @default true
+							 */
+							status: boolean;
+							/**
+							 * @description Additional message
+							 * @default success
+							 */
+							message: string;
+							result?: {
+								/**
+								 * Status
+								 * @description Current processing state of the task.
+								 * @enum {string}
+								 */
+								status: "processing" | "completed" | "error";
+								/**
+								 * Task ID
+								 * @description The unique identifier for the task
+								 */
+								task_id: string;
+								/**
+								 * Generated Images
+								 * @description Array of generated images.
+								 */
+								images: (string | string)[] | null;
+							};
+						};
+					};
+				};
+				/** @description Invalid request error */
+				400: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Authorization error */
+				401: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+				/** @description Internal server error */
+				500: {
+					headers: {
+						[name: string]: unknown;
+					};
+					content: {
+						"application/json": components["schemas"]["ResponseSchema"];
+					};
+				};
+			};
+		};
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	"/unmix/get_task": {
 		parameters: {
 			query?: never;
@@ -2848,7 +4175,6 @@ export interface paths {
 			};
 			requestBody?: never;
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -2979,7 +4305,6 @@ export interface paths {
 				};
 			};
 			responses: {
-				/** @description Default Response */
 				200: {
 					headers: {
 						[name: string]: unknown;
@@ -3155,7 +4480,7 @@ export interface components {
 			 */
 			category?: "professional" | "premade" | "cloned" | "generated";
 			/** @description Search term (name, category, labels). */
-			query?: string;
+			query: string;
 			/** @description Page number. */
 			page?: number;
 			/** @description Voices per page (default 10, max 100). */
@@ -3660,27 +4985,6 @@ export interface components {
 			lyrics: string | null;
 		};
 		/**
-		 * ElevenLabs Voice Schema
-		 * @description Voice metadata returned from the search endpoint.
-		 */
-		ElevenLabsVoice: {
-			/** @description ID of the voice. */
-			voice_id: string;
-			/** @description Name of the voice. */
-			name: string;
-			/** @description Category of the voice. */
-			category: string;
-			/**
-			 * @description ISO language code.
-			 * @default UNKNOWN
-			 */
-			language: string;
-			/** @description Labels associated with the voice. */
-			labels: {
-				[key: string]: unknown;
-			};
-		};
-		/**
 		 * ElevenLabs Inference Output Schema
 		 * @description ElevenLabs inference response payload.
 		 */
@@ -3803,6 +5107,54 @@ export interface components {
 					rejected_prediction_tokens?: number;
 				};
 			};
+		};
+		/**
+		 * Remini AI Pipeline Schema
+		 * @description Schema for configuring the Remini AI image pipeline.
+		 */
+		ReminiPipelineSchemaOutput: {
+			/**
+			 * Bokeh Pipeline Configurations
+			 * @description Bokeh effect configuration.
+			 */
+			bokeh:
+				| "background_blur_low"
+				| "background_blur_medium"
+				| "background_blur_high";
+			/**
+			 * Color Enhance Pipeline Configurations
+			 * @description Color enhancement configuration.
+			 */
+			color_enhance:
+				| "prism-blend"
+				| "prism-expert-a"
+				| "prism-expert-c"
+				| "muted"
+				| "orange-teal"
+				| "silky"
+				| "lit_soft_warm"
+				| "orange-teal_v2";
+			/**
+			 * Background Enhance Pipeline Configurations
+			 * @description Background enhancement configuration.
+			 */
+			background_enhance:
+				| "shiba-strong-tensorrt"
+				| "rhino-tensorrt"
+				| "upsampler-bicubic";
+			/**
+			 * Face Lifting Pipeline Configurations
+			 * @description Face lifting effect configuration.
+			 */
+			face_lifting:
+				| "pinko_bigger_dataset-style"
+				| "movie-style"
+				| "marzipan-style";
+			/**
+			 * @description Face enhancement using Remini model.
+			 * @enum {string}
+			 */
+			face_enhance: "remini";
 		};
 	};
 	responses: never;
