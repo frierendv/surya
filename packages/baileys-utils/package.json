@@ -32,6 +32,6 @@
 	"dependencies": {
 		"@surya/core": "1.0.0",
 		"@surya/ffmpeg-utils": "1.0.0",
-		"undici": "^7.16.0"
+		"undici": "^7.18.2"
 	}
 }
