@@ -86,16 +86,16 @@ export default {
 				`Failed to generate song: ${error.message || "Unknown error"}`
 			);
 		}
-		const { status: rspStatus, result, message } = value!.data;
-		if (!rspStatus || !result) {
+		const { ok, message, data } = value!.data;
+		if (!ok) {
 			return editReply(message);
 		}
-		if (!result?.task_ids?.length) {
+		if (!data?.task_ids?.length) {
 			return editReply("No song generated, please try again later.");
 		}
 
 		// song id
-		const taskId = result?.task_ids!.map((tid) => tid).filter(Boolean);
+		const taskId = data?.task_ids!.map((tid) => tid).filter(Boolean);
 		if (!taskId.length) {
 			return editReply(
 				"No song has been generated, please try again later."

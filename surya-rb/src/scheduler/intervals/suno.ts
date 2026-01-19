@@ -28,8 +28,8 @@ const handler: JobHandler<SunoJob> = async (payload, job) => {
 		void interval.remove(job.id);
 		return;
 	}
-	const { status: rspStatus, result, message } = value!.data;
-	if (!rspStatus || !result) {
+	const { ok, message, data } = value!.data;
+	if (!ok) {
 		await socket.sendMessage(
 			payload.from,
 			{
@@ -40,7 +40,7 @@ const handler: JobHandler<SunoJob> = async (payload, job) => {
 		void interval.remove(job.id);
 		return;
 	}
-	const completedSongs = result.filter((song) => song.status === "completed");
+	const completedSongs = data.filter((song) => song.status === "completed");
 	if (completedSongs.length) {
 		const firstCompletedSong = completedSongs[0];
 		const messageLines = [
@@ -69,7 +69,7 @@ const handler: JobHandler<SunoJob> = async (payload, job) => {
 		return;
 	}
 	// if all songs are error
-	const allError = result.every((song) => song.status === "error");
+	const allError = data.every((song) => song.status === "error");
 	if (allError) {
 		await socket.sendMessage(
 			payload.from,

@@ -14,7 +14,6 @@ export default {
 				`Please provide or quote an image to outpaint.\nUsage: *${usedPrefix + command}* <optional extra prompt>`
 			);
 		}
-		const extraPrompt = ctx.text?.trim() || undefined;
 		const buffer = await media.download();
 		const { editReply } = await ctx.reply(
 			"Processing your image, please wait..."
@@ -22,7 +21,6 @@ export default {
 		const { value, error } = await fetchClient.post("/image/outpainting", {
 			init_image: Buffer.from(buffer).toString("base64"),
 			expand_ratio: 0.125,
-			extra_prompt: extraPrompt,
 			sync: false,
 		});
 
@@ -31,15 +29,14 @@ export default {
 				`Failed to process image: ${error.message || "Unknown error"}`
 			);
 		}
-		const { status, result, message } = value!.data;
-		if (!status || !result) {
+		const { ok, message, data } = value!.data;
+		if (!ok) {
 			return editReply(message);
 		}
 
-		if (result.status === "completed") {
+		if (data.status === "completed") {
 			await editReply("Processing completed!");
-			const { images } = result!;
-			for (const img of images!) {
+			for (const img of data.images!) {
 				await sock.sendFile(ctx.from, img, { quoted: ctx });
 			}
 			return;
@@ -51,7 +48,7 @@ export default {
 			{
 				from: ctx.from,
 				sender: ctx.sender,
-				taskId: result.task_id!,
+				taskId: data.task_id!,
 				caption: "Here's your outpainted image",
 				quoted: {
 					key: ctx.key,
