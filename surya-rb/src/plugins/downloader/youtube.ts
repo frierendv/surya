@@ -37,7 +37,7 @@ export default {
 		const url = ctx.args?.[0];
 		if (!url) {
 			await ctx.reply(
-				`Please provide a valid Instagram URL.\nUsage: *${usedPrefix}${command}* <Instagram URL>`
+				`Please provide a valid Youtube URL.\nUsage: *${usedPrefix}${command}* <Youtube URL>`
 			);
 			return;
 		}
