@@ -83,7 +83,7 @@ export const createSendFile = async (
 	};
 	if (mediaType === "image" || mediaType === "video") {
 		message.caption = (opts as any).caption || "";
-		message.mimetype = fileType.mime;
+		message.mimetype = mediaType === "video" ? "video/mp4" : fileType.mime;
 	} else if (mediaType === "audio") {
 		const isPtt = (opts as any).ptt || fileType.mime === "audio/ogg";
 		message = {
