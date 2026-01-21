@@ -9,7 +9,7 @@ import {
 } from "@surya/ffmpeg-utils";
 import type { AnyMediaMessageContent } from "baileys";
 import { fetch } from "undici";
-import type { SendFile, SendFileOptions, WASocket } from "./types";
+import type { AsType, SendFile, SendFileOptions, WASocket } from "./types";
 
 let cachedFs: typeof import("fs") | undefined;
 
@@ -43,7 +43,7 @@ const downloadFile = async (content: any): Promise<Readable> => {
 
 	throw new Error("Unsupported content type for downloadFile");
 };
-const getMediaType = (mime: string) => {
+const getMediaType = (mime: string): AsType => {
 	if (mime.startsWith("image/")) {
 		return "image";
 	}
@@ -76,14 +76,14 @@ export const createSendFile = async (
 	const mContent = await downloadFile(content);
 	const { fileType, stream } = await getStreamType(mContent);
 
-	const mediaType = getMediaType(fileType.mime);
+	const mediaType = options?.as ?? getMediaType(fileType.mime);
+	delete options?.as;
 
 	let message: any = {
 		[mediaType]: { stream },
 	};
 	if (mediaType === "image" || mediaType === "video") {
 		message.caption = (opts as any).caption || "";
-		message.mimetype = mediaType === "video" ? "video/mp4" : fileType.mime;
 	} else if (mediaType === "audio") {
 		const isPtt = (opts as any).ptt || fileType.mime === "audio/ogg";
 		message = {

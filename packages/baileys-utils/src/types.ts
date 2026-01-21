@@ -5,9 +5,13 @@ import type {
 	WAMessage,
 } from "baileys";
 
+export type MediaKey = "image" | "video" | "audio" | "sticker" | "document";
+
+/**internal */
+export type AsType = MediaKey;
 export type SendFileOptions = Partial<
 	AnyMediaMessageContent & Pick<MiscMessageGenerationOptions, "quoted">
->;
+> & { as?: AsType };
 
 export type SendFile = (
 	jid: string,
