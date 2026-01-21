@@ -42,7 +42,7 @@ export default {
 			return;
 		}
 		const mediaKey: MediaKey = command === "ytmp3" ? "audio" : "video";
-		const mediaQuality = mediaKey === "video" ? "480" : "mp3";
+		const mediaQuality = mediaKey === "video" ? "480p" : "mp3";
 		const options = {
 			url,
 			[mediaKey]: mediaQuality,
