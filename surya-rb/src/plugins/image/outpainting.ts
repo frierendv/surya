@@ -23,6 +23,7 @@ export default {
 			init_image: Buffer.from(buffer).toString("base64"),
 			expand_ratio: 0.125,
 			extra_prompt: extraPrompt,
+			sync: false,
 		});
 
 		if (error) {
@@ -31,7 +32,7 @@ export default {
 			);
 		}
 		const { status, result, message } = value!.data;
-		if (!status || !result?.images) {
+		if (!status || !result) {
 			return editReply(message);
 		}
 
@@ -43,7 +44,7 @@ export default {
 			}
 			return;
 		}
-		scheduler.interval.add(
+		void scheduler.interval.add(
 			`${ctx.sender}:outpainting`,
 			2000,
 			"fetch-image-status",

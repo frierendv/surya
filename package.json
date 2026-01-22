@@ -9,9 +9,9 @@
 		"node": ">=20"
 	},
 	"scripts": {
-		"build": "turbo run build",
-		"build:pkg": "turbo run build --filter=./packages/**/*",
-		"clean": "turbo run clean --parallel",
+		"build": "turbo run build --no-daemon",
+		"build:pkg": "turbo run build --filter=./packages/**/* --no-daemon",
+		"clean": "turbo run clean --parallel --no-daemon",
 		"deps:check": "syncpack list",
 		"deps:fix": "syncpack fix",
 		"deps:upgrade": "syncpack update --target latest",

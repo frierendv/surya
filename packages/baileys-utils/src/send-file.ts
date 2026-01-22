@@ -5,6 +5,7 @@ import {
 	isBuffer,
 	isDataUrl,
 	isLocalFile,
+	streamFromBuffer,
 } from "@surya/ffmpeg-utils";
 import type { AnyMediaMessageContent } from "baileys";
 import { fetch } from "undici";
@@ -14,12 +15,12 @@ let cachedFs: typeof import("fs") | undefined;
 
 const downloadFile = async (content: any): Promise<Readable> => {
 	if (isBuffer(content)) {
-		return Readable.from(content);
+		return streamFromBuffer(content);
 	}
 
 	if (isDataUrl(content)) {
 		const base64 = content.split(",")[1] || "";
-		return Readable.from(Buffer.from(base64, "base64"));
+		return streamFromBuffer(Buffer.from(base64, "base64"));
 	}
 
 	if (isLocalFile(content)) {
@@ -30,26 +31,14 @@ const downloadFile = async (content: any): Promise<Readable> => {
 	}
 
 	if (typeof content === "string" && /^https?:\/\//.test(content)) {
-		const res = await fetch(content);
-		if (!res.ok) {
-			throw new Error(
-				`Failed to fetch file: ${res.status} ${res.statusText}`
-			);
+		const res = await fetch(content, {
+			method: "GET",
+			headers: { "accept-encoding": "identity" },
+		});
+		if (res.ok && res.body) {
+			return Readable.fromWeb(res.body, { highWaterMark: 4096 });
 		}
-		const body = res.body;
-		if (!body) {
-			throw new Error("Response body is null");
-		}
-
-		if ((body as any).pipe || (body as any).readable) {
-			return body as unknown as Readable;
-		}
-		if (typeof (body as any).getReader === "function") {
-			return Readable.fromWeb(body as any);
-		}
-
-		const buffer = Buffer.from(await res.arrayBuffer());
-		return Readable.from(buffer);
+		throw new Error("Failed to download file: " + res.status);
 	}
 
 	throw new Error("Unsupported content type for downloadFile");
@@ -84,44 +73,32 @@ export const createSendFile = async (
 
 	const opts = options ? { ...options } : {};
 
-	let stream = await downloadFile(content);
-	const { fileType, stream: sniffedStream } = await getStreamType(stream);
-	stream = sniffedStream;
+	const mContent = await downloadFile(content);
+	const { fileType, stream } = await getStreamType(mContent);
 
 	const mediaType = getMediaType(fileType.mime);
 
-	if (mediaType === "audio") {
-		const isPtt = (opts as any).ptt || fileType.mime === "audio/ogg";
-		stream = convertAudio(stream, !!isPtt);
-		(opts as any).ptt = !!isPtt;
-		(opts as any).mimetype = isPtt
-			? "audio/ogg; codecs=opus"
-			: "audio/mpeg";
-	}
-
-	const mPayload: any = {
+	let message: any = {
 		[mediaType]: { stream },
 	};
-	switch (mediaType) {
-		case "image":
-		case "video":
-			mPayload.caption = (opts as any).caption || "";
-			mPayload.mimetype = fileType.mime;
-			break;
-		case "audio":
-			mPayload.ptt = !!(opts as any).ptt;
-			mPayload.mimetype = (opts as any).mimetype || fileType.mime;
-			break;
-		case "document":
-			mPayload.mimetype =
-				(opts as any).mimetype ||
-				fileType.mime ||
-				"application/octet-stream";
-			mPayload.fileName =
-				(opts as any).fileName || `file.${fileType.ext}`;
-			break;
+	if (mediaType === "image" || mediaType === "video") {
+		message.caption = (opts as any).caption || "";
+		message.mimetype = fileType.mime;
+	} else if (mediaType === "audio") {
+		const isPtt = (opts as any).ptt || fileType.mime === "audio/ogg";
+		message = {
+			audio: { stream: convertAudio(stream, !!isPtt) },
+			ptt: !!isPtt,
+			mimetype: isPtt ? "audio/ogg; codecs=opus" : "audio/mpeg",
+		};
+	} else if (mediaType === "document") {
+		message.mimetype =
+			(opts as any).mimetype ||
+			fileType.mime ||
+			"application/octet-stream";
+		message.fileName = (opts as any).fileName || `file.${fileType.ext}`;
 	}
-	return { ...opts, ...mPayload } as AnyMediaMessageContent;
+	return { ...message, ...opts } as AnyMediaMessageContent;
 };
 
 /**

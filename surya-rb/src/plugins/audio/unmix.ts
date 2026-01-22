@@ -40,9 +40,7 @@ export default {
 		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/audio/i.test(media.mimetype)) {
 			return ctx.reply(
-				`Please reply/send an audio file.\n\nExample: *${usedPrefix + command}* <stems>\n\nAvailable options for <stems>:\n- ${stemsOptions.join(
-					"\n- "
-				)}`
+				`Please reply/send an audio file. Type *${usedPrefix}help ${command}* for more information.`
 			);
 		}
 		const stems = ctx.args[0]?.toLowerCase() || "vocals_instrumental";
