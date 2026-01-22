@@ -44,7 +44,6 @@ index 17b05b8..6b75a3c 100644
              key.contextInfo = message.contextInfo;
          }
      }
-+	console.log('Generated message content: ', JSON.stringify(m, null, 2));
      return WAProto.Message.create(m);
  };
  export const generateWAMessageFromContent = (jid, message, options) => {
