@@ -77,11 +77,12 @@ export default {
 		 * sock.sendMessage(ctx.from, { [mediaKey]: result[mediaKey] } as any);
 		 */
 		await sock.sendFile(ctx.from, result[mediaKey].url, {
+			as: mediaKey,
 			fileName:
 				(result?.title ?? result.id) + mediaKey === "audio"
 					? ".mp3"
 					: ".mp4",
-			...(mediaKey === "audio" ? { ptt: false } : { caption }),
+			...(mediaKey === "video" ? { caption } : {}),
 		});
 	},
 } satisfies IPlugin;
