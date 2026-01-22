@@ -48,17 +48,16 @@ export default {
 				`Failed to process image: ${error?.message || "Unknown error"}`
 			);
 		}
-		const { status, result, message } = value.data;
-		if (!status || !result) {
+		const { ok, message, data } = value!.data;
+		if (!ok) {
 			return editReply(
 				`Failed to process image: ${message || "Unknown error"}`
 			);
 		}
 
-		if (result.status === "completed") {
+		if (data.status === "completed") {
 			await editReply("Processing completed!");
-			const { images } = result!;
-			for (const img of images!) {
+			for (const img of data.images!) {
 				await sock.sendFile(ctx.from, img, { quoted: ctx });
 			}
 			return;
@@ -70,7 +69,7 @@ export default {
 			{
 				from: ctx.from,
 				sender: ctx.sender,
-				taskId: result.task_id,
+				taskId: data.task_id,
 				caption: `Here's your restored image using *${restoration_mode}* mode.`,
 				quoted: {
 					key: ctx.key,

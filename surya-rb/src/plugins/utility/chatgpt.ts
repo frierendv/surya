@@ -31,13 +31,13 @@ export default {
 			await editReply(error.message || "Failed to execute the command");
 			return;
 		}
-		const { status, result, message } = value!.data;
+		const { ok, message, data } = value!.data;
 
-		if (!status || !result?.message) {
+		if (!ok) {
 			await editReply(message || "No response, try again");
 			return;
 		}
-		const { content, images } = result.message;
+		const { content, images } = data.message;
 
 		await editReply(
 			content || "No response, please try again with cleared instruction."
@@ -45,6 +45,9 @@ export default {
 
 		if (images) {
 			for (const image of images) {
+				if (!image) {
+					continue;
+				}
 				await sock.sendMessage(
 					ctx.from,
 					{

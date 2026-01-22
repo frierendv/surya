@@ -74,11 +74,11 @@ export default {
 				`Failed to generate song: ${error.message || "Unknown error"}`
 			);
 		}
-		const { status, result, message } = value!.data;
-		if (!status || !result) {
+		const { ok, message, data } = value!.data;
+		if (!ok) {
 			return editReply(message);
 		}
-		const { task_id: taskId } = result;
+		const { task_id: taskId } = data;
 		if (!taskId) {
 			return editReply("Failed to get task ID. Please try again later.");
 		}

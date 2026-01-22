@@ -28,8 +28,8 @@ const handler: JobHandler<ImageJob> = async (payload, job) => {
 		void interval.remove(job.id);
 		return;
 	}
-	const { status: rspStatus, result, message } = value!.data;
-	if (!rspStatus || !result) {
+	const { ok, message, data } = value!.data;
+	if (!ok) {
 		await socket.sendMessage(
 			payload.from,
 			{
@@ -40,7 +40,7 @@ const handler: JobHandler<ImageJob> = async (payload, job) => {
 		void interval.remove(job.id);
 		return;
 	}
-	const { status, images } = result;
+	const { status, images } = data;
 
 	switch (status) {
 		case "processing":
@@ -52,7 +52,7 @@ const handler: JobHandler<ImageJob> = async (payload, job) => {
 					if (typeof img === "string") {
 						return img;
 					}
-					return img?.url as string;
+					return (img as any)?.url;
 				});
 
 				for (const img of parseImages) {

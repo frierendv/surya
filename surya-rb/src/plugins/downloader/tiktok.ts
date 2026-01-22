@@ -21,17 +21,17 @@ export default {
 			await ctx.reply(`Failed to fetch content: ${error?.message}`);
 			return;
 		}
-		const { status, message, result } = value!.data;
-		if (!status || !result) {
+		const { ok, message, data } = value!.data;
+		if (!ok) {
 			return ctx.reply(message);
 		}
-		for (const url of result.images && result.images
-			? [...result.images]
-			: [result.video_url ?? result.watermarked_video_url]) {
+		for (const url of data.images && data.images
+			? [...data.images]
+			: [data.video_url ?? data.watermarked_video_url]) {
 			await sock.sendFile(ctx.from, url, { quoted: ctx });
 		}
-		if (result.images && result.music) {
-			await sock.sendFile(ctx.from, result.music.play_url!, {
+		if (data.images && data.music) {
+			await sock.sendFile(ctx.from, data.music.play_url, {
 				ptt: false,
 				quoted: ctx,
 			});

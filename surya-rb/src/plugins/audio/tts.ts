@@ -38,12 +38,12 @@ export default {
 			);
 			return;
 		}
-		const { status, result, message } = value!.data;
-		if (!status || !result?.audio_url) {
+		const { ok, message, data } = value!.data;
+		if (!ok || !data?.audio_url) {
 			await ctx.reply(message);
 			return;
 		}
-		await sock.sendFile(ctx.from, result.audio_url, {
+		await sock.sendFile(ctx.from, data.audio_url, {
 			ptt: true,
 			quoted: ctx,
 		});
