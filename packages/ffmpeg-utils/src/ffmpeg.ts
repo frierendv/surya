@@ -1,6 +1,9 @@
+import FfmpegPath from "ffmpeg-static";
 import fluentFfmpeg from "fluent-ffmpeg";
 import type { FfmpegCommandOptions } from "fluent-ffmpeg";
 import { streamFromBuffer, streamToBuffer } from "./util";
+
+fluentFfmpeg.setFfmpegPath(FfmpegPath || "ffmpeg");
 
 export const ffmpeg = (options?: FfmpegCommandOptions) => {
 	const f = fluentFfmpeg(options);

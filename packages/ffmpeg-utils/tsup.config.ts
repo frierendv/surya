@@ -5,5 +5,6 @@ export default defineConfig({
 	clean: true,
 	dts: true,
 	target: "es2020",
+	external: ["fluent-ffmpeg", "ffmpeg-static", "file-type", "streamifier"],
 	format: ["cjs", "esm"],
 });

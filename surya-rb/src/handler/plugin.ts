@@ -69,8 +69,6 @@ export const pluginHandler = async (
 			);
 			return;
 		}
-
-		// TODO: Plugin limiting handling. Wait for merge of PR https://github.com/frierendv/surya/pull/34
 		if (plugin.rateLimit) {
 			if (user.limit < (plugin.rateLimit.uses ?? 1)) {
 				return localCtx.reply(

@@ -7,11 +7,6 @@ export default {
 	category: ["image"],
 	description:
 		"Enhance and upscale images using the ItsRose API Remini AI service.",
-
-	pre: async (ctx) => {
-		await ctx.react("⏳");
-		return true;
-	},
 	execute: async (ctx, { command, usedPrefix, sock }) => {
 		const media = ctx.quoted?.media ?? ctx.media;
 		if (!media || !/image/i.test(media.mimetype)) {
@@ -51,5 +46,4 @@ export default {
 			{ quoted: ctx }
 		);
 	},
-	post: async (ctx) => ctx.react("✅"),
 } satisfies IPlugin;
