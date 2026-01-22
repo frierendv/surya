@@ -26,7 +26,7 @@ export default {
 		const { value, error } = await fetchClient.post(
 			"/elevenlabs/inference_text",
 			{
-				voice_id: "EXAVITQu4vr4xnSDxMaL",
+				voice_id: "wlybWSBy4H1Bd4YABjqb", // rose cloned voice
 				server_id: "rose",
 				text,
 				...options,
@@ -39,11 +39,11 @@ export default {
 			return;
 		}
 		const { ok, message, data } = value!.data;
-		if (!ok || !data?.audio_url) {
+		if (!ok || !data?.audio_base64) {
 			await ctx.reply(message);
 			return;
 		}
-		await sock.sendFile(ctx.from, data.audio_url, {
+		await sock.sendFile(ctx.from, Buffer.from(data.audio_base64), {
 			ptt: true,
 			quoted: ctx,
 		});
