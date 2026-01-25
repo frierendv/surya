@@ -22,11 +22,11 @@ export default {
 			await ctx.reply(`Failed to fetch content: ${error.message}`);
 			return;
 		}
-		const { status, message, result } = value!.data;
-		if (!status || !result?.contents) {
+		const { ok, message, data } = value!.data;
+		if (!ok || !data?.contents) {
 			return ctx.reply(message);
 		}
-		for (const { url } of result.contents) {
+		for (const { url } of data.contents) {
 			await sock.sendFile(ctx.from, url, { quoted: ctx });
 		}
 	},

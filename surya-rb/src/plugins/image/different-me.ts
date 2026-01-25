@@ -42,15 +42,14 @@ export default {
 				`Failed to process image: ${error.message || "Unknown error"}`
 			);
 		}
-		const { status: rspStatus, result, message } = value!.data;
-		if (!rspStatus || !result) {
+		const { ok, message, data } = value!.data;
+		if (!ok || !data || !("status" in data)) {
 			return editReply(message);
 		}
 
-		if (result.status === "completed") {
+		if (data.status === "completed" && "images" in data) {
 			await editReply("Processing completed!");
-			const { images } = result!;
-			for (const img of images!) {
+			for (const img of data.images!) {
 				await sock.sendFile(ctx.from, img, { quoted: ctx });
 			}
 			return;
@@ -63,7 +62,7 @@ export default {
 			{
 				from: ctx.from,
 				sender: ctx.sender,
-				taskId: result.task_id!,
+				taskId: data.task_id,
 				caption: `Here's your different me image with style *${styleId}*`,
 				// idk mate, we'll figure it out later
 				quoted: {

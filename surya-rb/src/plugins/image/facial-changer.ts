@@ -2,14 +2,20 @@ import { fetchClient } from "@/libs/fetch";
 import { scheduler } from "@/libs/scheduler";
 import type { IPlugin } from "@surya/plugin-manager";
 
-type FaceType = "laugh" | "smile" | "pose_ps" | "cool" | "cspv" | "dimples";
+type FaceType =
+	| "laugh"
+	| "smile"
+	| "classic_laugh"
+	| "classic_smile"
+	| "cool"
+	| "pursed_smile";
 const faceTypes: readonly FaceType[] = [
 	"laugh",
 	"smile",
-	"pose_ps",
+	"classic_laugh",
 	"cool",
-	"cspv",
-	"dimples",
+	"classic_smile",
+	"pursed_smile",
 ];
 
 const description = `Change facial expression in images using ItsRose API.
@@ -71,16 +77,15 @@ export default {
 				`Failed to process image: ${error.message || "Unknown error"}`
 			);
 		}
-		const { status, result, message } = value!.data;
-		if (!status || !result) {
+		const { ok, message, data } = value!.data;
+		if (!ok) {
 			return editReply(
 				"Failed to process image: " + (message || "Unknown error")
 			);
 		}
-		if (result.status === "completed") {
+		if (data.status === "completed") {
 			await editReply("Processing completed!");
-			const { images } = result!;
-			for (const img of images!) {
+			for (const img of data.images!) {
 				await sock.sendFile(ctx.from, img, { quoted: ctx });
 			}
 			return;
@@ -92,7 +97,7 @@ export default {
 			{
 				from: ctx.from,
 				sender: ctx.sender,
-				taskId: result.task_id!,
+				taskId: data.task_id,
 				caption: `Here's your image with *${expression}* expression`,
 				quoted: {
 					key: ctx.key,

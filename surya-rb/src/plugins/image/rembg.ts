@@ -23,16 +23,19 @@ export default {
 				`Failed to process image: ${error.message || "Unknown error"}`
 			);
 		}
-		const { status, result, message } = value!.data;
-		if (!status || !result?.images) {
+		const { ok, message, data } = value!.data;
+		if (!ok) {
 			return ctx.reply(message);
+		}
+		if (!("images" in data) || !data?.images?.length) {
+			return ctx.reply("Failed to remove the image background.");
 		}
 
 		await sock.sendMessage(
 			ctx.from,
 			{
 				document: {
-					url: result.images[0]!,
+					url: data.images[0] as string,
 				},
 				fileName: `removebg-${
 					String(ctx.pushName) + "-" + Math.floor(Date.now() % 1000)

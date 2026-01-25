@@ -32,15 +32,19 @@ export default {
 				`Failed to process image: ${error.message || "Unknown error"}`
 			);
 		}
-		const { status, result, message } = value!.data;
-		if (!status || !result?.images) {
+		const { ok, message, data } = value!.data;
+		if (!ok) {
 			return ctx.reply(message);
+		}
+
+		if (!("images" in data) || !data?.images?.length) {
+			return ctx.reply("Failed to enhanced the image.");
 		}
 
 		await sock.sendMessage(
 			ctx.from,
 			{
-				image: { url: result.images[0]! },
+				image: { url: data.images[0] as string },
 				caption: "Here's your enhanced image using Remini AI.",
 			},
 			{ quoted: ctx }

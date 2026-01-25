@@ -28,8 +28,8 @@ const handler: JobHandler<UnmixJob> = async (payload, job) => {
 		void interval.remove(job.id);
 		return;
 	}
-	const { status: rspStatus, result, message } = value!.data;
-	if (!rspStatus || !result) {
+	const { ok, message, data } = value!.data;
+	if (!ok) {
 		await socket.sendMessage(
 			payload.from,
 			{
@@ -40,7 +40,7 @@ const handler: JobHandler<UnmixJob> = async (payload, job) => {
 		void interval.remove(job.id);
 		return;
 	}
-	const { status, audio_files } = result;
+	const { status, audio_files } = data;
 	switch (status) {
 		case "processing":
 			// still processing, do nothing
