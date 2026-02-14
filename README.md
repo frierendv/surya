@@ -78,12 +78,13 @@ npm run dev --workspace=surya-rb
 ```
 
 On first launch:
+
 - **With pairing code**: Set `SR_BOT_NUMBER` in `.env`, then enter the code on your phone
 - **With QR code**: Scan the QR displayed in the terminal
 
 The bot is ready when you see:
 
-```
+```text
 Connection successful
 Loaded X plugins
 ```
@@ -116,9 +117,9 @@ npm start --workspace=surya-rb
 
 Built-in plugin categories:
 
-| Category | Description | Examples |
-|----------|-------------|----------|
-| **Utility** | General-purpose commands | ping, test, ChatGPT |
+| Category     | Description | Examples |
+|--------------|-------------|----------|
+| **Utility**  | General-purpose commands | ping, test, ChatGPT |
 | **Downloader** | Download media from platforms | YouTube, TikTok, Instagram |
 | **Image** | Image processing | remini, background removal, face swap |
 | **Audio** | Audio manipulation | TTS, audio unmix, Suno AI |
@@ -127,13 +128,13 @@ Built-in plugin categories:
 
 ### Command Syntax
 
-```
+```text
 <prefix><command> [arguments]
 ```
 
 Examples:
 
-```
+```text
 !ping
 !youtube https://youtube.com/watch?v=...
 !remini <reply to image>
@@ -143,9 +144,9 @@ Examples:
 
 Edit `surya-rb/.env` to customize:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `LOG_LEVEL` | Logging level (trace, debug, info, warn, error, fatal) | `info` |
+| Variable     | Description | Default |
+|--------------|-------------|---------|
+| `LOG_LEVEL`  | Logging level (trace, debug, info, warn, error, fatal) | `info` |
 | `SR_PREFIXES` | Command prefixes (no spaces) | `!./` |
 | `SR_OWNER_NUMBER` | Owner phone numbers (comma-separated) | - |
 | `SR_BOT_NUMBER` | Bot phone number for pairing code | - |
@@ -160,7 +161,7 @@ Edit `surya-rb/.env` to customize:
 
 ## 📁 Project Structure
 
-```
+```text
 surya/
 ├── packages/                     # Shared packages (monorepo)
 │   ├── core/                    # Utilities (logger, helpers)
@@ -348,11 +349,13 @@ Contributions are welcome! Here's how you can help:
    - Add tests for new functionality
    - Update documentation as needed
 4. Run tests and linting:
+
    ```bash
    npm test
    npm run lint
    npm run typecheck
    ```
+
 5. Commit with a clear message: `git commit -m "feat: add feature"`
 6. Push to your fork: `git push origin feature/your-feature`
 7. Open a pull request
@@ -379,7 +382,8 @@ Copyright (c) 2024-2026 FrierenDv
 ## Acknowledgements
 
 Built with:
+
 - [Baileys](https://github.com/WhiskeySockets/Baileys) - WhatsApp Web API implementation
 - [ItsRose](https://itsrose.net) - API services
 
-Surya is the successor to [SuryaRB](https://github.com/xct007/SuryaRB), rebuilt from the ground up with improved performance and maintainability.
+Surya is the successor to [SuryaRB](https://github.com/frierendv/SuryaRB), rebuilt from the ground up with improved performance and maintainability.
