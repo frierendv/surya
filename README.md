@@ -46,9 +46,8 @@ npm install
 Configure environment variables:
 
 ```bash
-cd surya-rb
-cp .env.example .env
-# Edit .env with your configuration
+cp surya-rb/.env.example surya-rb/.env
+# Edit surya-rb/.env with your configuration
 ```
 
 Required environment variables:
@@ -372,7 +371,7 @@ Contributions are welcome! Here's how you can help:
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
-Copyright (c) 2024 FrierenDv
+Copyright (c) 2024-2026 FrierenDv
 
 ---
 
