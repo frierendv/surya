@@ -1,6 +1,6 @@
 # Surya
 
-A lightweight, modular WhatsApp bot runtime built with TypeScript and [Baileys](https://github.com/Baileys-Web/Baileys).
+A lightweight, modular WhatsApp bot runtime built with TypeScript and [Baileys](https://github.com/WhiskeySockets/Baileys).
 
 Surya provides a plugin-first architecture for building WhatsApp bots with fast hot-reload, persistent state management, job scheduling, and media processing capabilities.
 
@@ -379,7 +379,7 @@ Copyright (c) 2024 FrierenDv
 ## Acknowledgements
 
 Built with:
-- [Baileys](https://github.com/Baileys-Web/Baileys) - WhatsApp Web API implementation
-- [ItsRose](https://itsrose.net) - AI API services
+- [Baileys](https://github.com/WhiskeySockets/Baileys) - WhatsApp Web API implementation
+- [ItsRose](https://itsrose.net) - API services
 
 Surya is the successor to [SuryaRB](https://github.com/xct007/SuryaRB), rebuilt from the ground up with improved performance and maintainability.
