@@ -47,7 +47,8 @@ Configure environment variables:
 
 ```bash
 cp surya-rb/.env.example surya-rb/.env
-# Edit surya-rb/.env with your configuration
+# Edit the file with your preferred editor
+nano surya-rb/.env  # or use vim, code, etc.
 ```
 
 Required environment variables:
