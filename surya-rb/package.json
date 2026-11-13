@@ -28,15 +28,15 @@
 		"@surya/mongodb-auth-state": "1.0.0",
 		"@surya/plugin-manager": "1.0.0",
 		"audio-decode": "^2.2.3",
-		"baileys": "^7.0.0-rc.6",
+		"baileys": "^7.0.0-rc14",
 		"feature-fetch": "^0.0.52",
-		"link-preview-js": "^4.0.1",
+		"link-preview-js": "^6.0.0",
 		"lru-cache": "^11.2.2",
-		"mongoose": "^8.18.1",
+		"mongoose": "^9.12.1",
 		"node-webpmux": "^3.2.1",
 		"pretty-hrtime": "^1.0.3",
 		"qrcode": "^1.5.4",
-		"sharp": "^0.34.4"
+		"sharp": "^0.35.5"
 	},
 	"devDependencies": {
 		"@types/pretty-hrtime": "^1.0.3",
