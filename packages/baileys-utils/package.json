@@ -27,11 +27,11 @@
 	"bugs": "https://github.com/frierendv/surya/issues",
 	"homepage": "https://github.com/frierendv/surya#readme",
 	"peerDependencies": {
-		"baileys": "^7.0.0-rc.6"
+		"baileys": "^7.0.0-rc14"
 	},
 	"dependencies": {
 		"@surya/core": "1.0.0",
 		"@surya/ffmpeg-utils": "1.0.0",
-		"undici": "^7.25.0"
+		"undici": "^7.30.2"
 	}
 }
